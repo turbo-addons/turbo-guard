@@ -227,10 +227,12 @@ class Turbo_Guard_Bot_Protection {
 	public static function get_stats() {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom turbo_guard_traffic table; aggregate count for stats display.
 		$total = (int) $wpdb->get_var(
 			"SELECT COUNT(*) FROM {$wpdb->prefix}turbo_guard_traffic WHERE is_bot = 1"
 		);
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom turbo_guard_events table; aggregate count for stats display.
 		$blocked = (int) $wpdb->get_var(
 			"SELECT COUNT(*) FROM {$wpdb->prefix}turbo_guard_events
 			 WHERE event_type = 'bot_blocked'

@@ -120,6 +120,7 @@ class Turbo_Guard_Firewall {
 		}
 
 		// Fetch all active blocklist entries.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom turbo_guard_ip_blocklist table; per-request WAF lookup, plugin-specific data.
 		$entries = $wpdb->get_results(
 			"SELECT ip_address FROM {$wpdb->prefix}turbo_guard_ip_blocklist
 			 WHERE (expires_at IS NULL OR expires_at > NOW())"
@@ -419,6 +420,7 @@ class Turbo_Guard_Firewall {
 		$ip = Turbo_Guard_Scanner::get_client_ip();
 
 		// Log to firewall table.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_firewall_log table; one row per blocked request, plugin-specific data.
 		$wpdb->insert(
 			$wpdb->prefix . 'turbo_guard_firewall_log',
 			array(
@@ -473,6 +475,7 @@ class Turbo_Guard_Firewall {
 			$expires_at = gmdate( 'Y-m-d H:i:s', time() + absint( $duration ) );
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_ip_blocklist table; admin-triggered block, plugin-specific data.
 		$inserted = $wpdb->replace(
 			$wpdb->prefix . 'turbo_guard_ip_blocklist',
 			array(
@@ -513,6 +516,7 @@ class Turbo_Guard_Firewall {
 			return false;
 		}
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_ip_blocklist table; admin-triggered unblock, plugin-specific data.
 		$deleted = $wpdb->delete(
 			$wpdb->prefix . 'turbo_guard_ip_blocklist',
 			array( 'ip_address' => $ip_address ),
@@ -530,12 +534,14 @@ class Turbo_Guard_Firewall {
 	public function cleanup_old_logs() {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Scheduled cleanup of the custom turbo_guard_firewall_log table.
 		$wpdb->query(
 			"DELETE FROM {$wpdb->prefix}turbo_guard_firewall_log
 			 WHERE created_at < DATE_SUB(NOW(), INTERVAL 30 DAY)"
 		);
 
 		// Delete expired IP blocks.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Scheduled cleanup of the custom turbo_guard_ip_blocklist table.
 		$wpdb->query(
 			"DELETE FROM {$wpdb->prefix}turbo_guard_ip_blocklist
 			 WHERE expires_at IS NOT NULL AND expires_at < NOW()"

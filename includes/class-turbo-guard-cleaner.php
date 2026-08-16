@@ -43,6 +43,7 @@ class Turbo_Guard_Cleaner {
 		foreach ( $result_ids as $result_id ) {
 			$result_id = absint( $result_id );
 
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_scan_results table; row lookup by ID, plugin-specific data.
 			$row = $wpdb->get_row(
 				$wpdb->prepare(
 					"SELECT * FROM {$wpdb->prefix}turbo_guard_scan_results WHERE id = %d",
@@ -68,6 +69,7 @@ class Turbo_Guard_Cleaner {
 
 			if ( $moved ) {
 				// Mark as quarantined in DB.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_scan_results table; status update by ID, plugin-specific data.
 				$wpdb->update(
 					$wpdb->prefix . 'turbo_guard_scan_results',
 					array(
@@ -130,6 +132,7 @@ class Turbo_Guard_Cleaner {
 		$file_paths = array();
 		foreach ( $result_ids as $result_id ) {
 			$result_id = absint( $result_id );
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_scan_results table; row lookup by ID, plugin-specific data.
 			$row       = $wpdb->get_row(
 				$wpdb->prepare(
 					"SELECT * FROM {$wpdb->prefix}turbo_guard_scan_results WHERE id = %d",
@@ -148,6 +151,7 @@ class Turbo_Guard_Cleaner {
 		foreach ( $result_ids as $result_id ) {
 			$result_id = absint( $result_id );
 
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_scan_results table; row lookup by ID, plugin-specific data.
 			$row = $wpdb->get_row(
 				$wpdb->prepare(
 					"SELECT * FROM {$wpdb->prefix}turbo_guard_scan_results WHERE id = %d",
@@ -167,6 +171,7 @@ class Turbo_Guard_Cleaner {
 
 			if ( ! file_exists( $row->file_path ) ) {
 				// File already gone - mark as deleted.
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_scan_results table; status update by ID, plugin-specific data.
 				$wpdb->update(
 					$wpdb->prefix . 'turbo_guard_scan_results',
 					array( 'status' => 'deleted' ),
@@ -187,6 +192,7 @@ class Turbo_Guard_Cleaner {
 			$success = wp_delete_file( $row->file_path );
 
 			if ( $success || ! file_exists( $row->file_path ) ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_scan_results table; status update by ID, plugin-specific data.
 				$wpdb->update(
 					$wpdb->prefix . 'turbo_guard_scan_results',
 					array( 'status' => 'deleted' ),
@@ -259,7 +265,7 @@ class Turbo_Guard_Cleaner {
 
 		foreach ( $file_paths as $file_path ) {
 			if ( file_exists( $file_path ) ) {
-				$zip->addFile( $file_path, ltrim( str_replace( ABSPATH, '', $file_path ), '/' ) );
+				$zip->addFile( $file_path, ltrim( str_replace( ABSPATH, '', $file_path ), '/' ) ); // Display-only relative path inside the backup ZIP.
 			}
 		}
 

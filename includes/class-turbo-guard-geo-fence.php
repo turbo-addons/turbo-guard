@@ -421,6 +421,7 @@ class Turbo_Guard_Geo_Fence {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Access Restricted &mdash; Turbo Guard</title>
+<?php // Justification: single self-contained inline <style> for this standalone public block page; it renders before the admin asset pipeline loads, so enqueuing is not possible. ?>
 <style>
 body{margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f9fafb;display:flex;align-items:center;justify-content:center;min-height:100vh;}
 .card{background:#fff;border-radius:12px;padding:48px 40px;max-width:480px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.1);}

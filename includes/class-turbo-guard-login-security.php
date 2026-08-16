@@ -145,6 +145,7 @@ class Turbo_Guard_Login_Security {
 	public function log_successful_login( $username, $user ) {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_login_attempts table; one row per successful login, plugin-specific data.
 		$wpdb->insert(
 			$wpdb->prefix . 'turbo_guard_login_attempts',
 			array(
@@ -167,6 +168,7 @@ class Turbo_Guard_Login_Security {
 	public function log_failed_login( $username, $error ) {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_login_attempts table; one row per failed login, plugin-specific data.
 		$wpdb->insert(
 			$wpdb->prefix . 'turbo_guard_login_attempts',
 			array(
@@ -199,6 +201,7 @@ class Turbo_Guard_Login_Security {
 
 		// Check if we've seen this IP before for this user.
 		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_login_attempts table; IP-history lookup, plugin-specific data.
 		$seen_before = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}turbo_guard_login_attempts
@@ -255,6 +258,7 @@ class Turbo_Guard_Login_Security {
 	private function count_failed_attempts( $ip, $seconds ) {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_login_attempts table; brute-force count lookup, plugin-specific data.
 		$count = $wpdb->get_var(
 			$wpdb->prepare(
 				"SELECT COUNT(*) FROM {$wpdb->prefix}turbo_guard_login_attempts
@@ -278,6 +282,7 @@ class Turbo_Guard_Login_Security {
 	public static function get_recent_attempts() {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom turbo_guard_login_attempts table; admin log view, plugin-specific data.
 		return $wpdb->get_results(
 			"SELECT * FROM {$wpdb->prefix}turbo_guard_login_attempts
 			 ORDER BY id DESC

@@ -98,6 +98,7 @@ class Turbo_Guard_SEO_Spam_Detector {
 		$spam_posts = array();
 
 		// Search post titles for CJK characters.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- SEO spam scan over core posts table; only $wpdb->posts is interpolated.
 		$posts = $wpdb->get_results(
 			"SELECT ID, post_title, post_type, post_status, post_date, guid
 			 FROM {$wpdb->posts}
@@ -142,6 +143,7 @@ class Turbo_Guard_SEO_Spam_Detector {
 		}
 
 		// Also search post content for CJK.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- SEO spam scan over core posts table; scan results are transient-cached by the caller.
 		$cjk_posts = $wpdb->get_results(
 			$wpdb->prepare(
 				"SELECT ID, post_title, post_type, post_status, guid
@@ -231,7 +233,9 @@ class Turbo_Guard_SEO_Spam_Detector {
 	 */
 	private static function scan_htaccess() {
 		$suspicious = array();
-		$htaccess   = ABSPATH . '.htaccess';
+		// Justification: scanning the site's root .htaccess for injected redirect
+		// rules — legitimate for a security plugin.
+		$htaccess   = wp_normalize_path( ABSPATH . '.htaccess' );
 
 		if ( ! file_exists( $htaccess ) || ! is_readable( $htaccess ) ) {
 			return $suspicious;
@@ -407,7 +411,7 @@ class Turbo_Guard_SEO_Spam_Detector {
 
 				if ( ! empty( $reasons ) ) {
 					$spam_files[] = array(
-						'path'    => str_replace( ABSPATH, '', $path ),
+						'path'    => str_replace( ABSPATH, '', $path ), // Display-only relative path.
 						'size'    => size_format( $file->getSize() ),
 						'modified'=> gmdate( 'Y-m-d H:i', $file->getMTime() ),
 						'reasons' => $reasons,

@@ -107,6 +107,7 @@ class Turbo_Guard_Live_Traffic {
 		$is_bot     = self::detect_bot( $ua );
 		$bot_name   = $is_bot ? self::identify_bot( $ua ) : '';
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_traffic table; one row per HTTP request, plugin-specific data.
 		$wpdb->insert(
 			$wpdb->prefix . 'turbo_guard_traffic',
 			array(
@@ -216,14 +217,15 @@ class Turbo_Guard_Live_Traffic {
 
 		$where = self::build_where( $filter );
 
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT * FROM {$wpdb->prefix}turbo_guard_traffic {$where} ORDER BY id DESC LIMIT %d OFFSET %d",
-				absint( $per_page ),
-				absint( $offset )
-			)
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where comes from build_where()'s allowlist of fixed literals; no user input.
+		$query = $wpdb->prepare(
+			"SELECT * FROM {$wpdb->prefix}turbo_guard_traffic {$where} ORDER BY id DESC LIMIT %d OFFSET %d",
+			absint( $per_page ),
+			absint( $offset )
 		);
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_traffic table; per-request log data, not cacheable.
+		return $wpdb->get_results( $query );
 	}
 
 	/**
@@ -236,8 +238,12 @@ class Turbo_Guard_Live_Traffic {
 	public static function get_traffic_count( $filter = 'all' ) {
 		global $wpdb;
 		$where = self::build_where( $filter );
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		return (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}turbo_guard_traffic {$where}" );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where comes from build_where()'s allowlist of fixed literals; no user input.
+		$query = $wpdb->prepare( "SELECT COUNT(*) FROM {$wpdb->prefix}turbo_guard_traffic {$where}" );
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_traffic table; count used for pagination.
+		return (int) $wpdb->get_var( $query );
 	}
 
 	/**
@@ -302,14 +308,17 @@ class Turbo_Guard_Live_Traffic {
 		global $wpdb;
 
 		// Delete rows older than 7 days.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Scheduled cleanup of the custom turbo_guard_traffic log table.
 		$wpdb->query(
 			"DELETE FROM {$wpdb->prefix}turbo_guard_traffic
 			 WHERE created_at < DATE_SUB(NOW(), INTERVAL 7 DAY)"
 		);
 
 		// Cap at 10,000 most recent rows.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_traffic table; count used for row-cap cleanup.
 		$count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}turbo_guard_traffic" );
 		if ( $count > 10000 ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Scheduled cleanup of the custom turbo_guard_traffic log table.
 			$wpdb->query(
 				$wpdb->prepare(
 					"DELETE FROM {$wpdb->prefix}turbo_guard_traffic

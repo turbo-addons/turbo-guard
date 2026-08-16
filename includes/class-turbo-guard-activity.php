@@ -152,17 +152,20 @@ class Turbo_Guard_Activity {
 			// Check if the scans table exists first (avoids DB errors on fresh installs
 			// where the table hasn't been created yet).
 			$table_name = $wpdb->prefix . 'turbo_guard_scans';
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_scans table; existence check before one-time backfill.
 			$table_exists = $wpdb->get_var( $wpdb->prepare(
 				"SHOW TABLES LIKE %s", $table_name
 			) );
 
 			if ( $table_exists ) {
+				// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_scans table; one-time scan_count backfill.
 				$count = $wpdb->get_var(
 					"SELECT COUNT(*) FROM {$wpdb->prefix}turbo_guard_scans WHERE status = 'completed'"
 				);
 				if ( $count > 0 ) {
 					$this->data['scan_count'] = (int) $count;
 					// Get last scan timestamp.
+					// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Custom turbo_guard_scans table; one-time last-scan backfill.
 					$last = $wpdb->get_var(
 						"SELECT completed_at FROM {$wpdb->prefix}turbo_guard_scans 
 						 WHERE status = 'completed' ORDER BY completed_at DESC LIMIT 1"

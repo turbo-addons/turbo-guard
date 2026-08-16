@@ -269,6 +269,7 @@ class Turbo_Guard_AI_Advisor {
 	public static function get_security_trend() {
 		global $wpdb;
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Custom turbo_guard_scans table; 30-day trend read for the dashboard.
 		$scans = $wpdb->get_results(
 			"SELECT DATE(completed_at) AS scan_date, threats_found
 			 FROM {$wpdb->prefix}turbo_guard_scans
