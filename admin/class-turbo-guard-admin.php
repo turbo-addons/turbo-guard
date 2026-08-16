@@ -1007,6 +1007,7 @@ class Turbo_Guard_Admin {
 		global $wpdb;
 
 		// Fetch the file path from the scan result.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- custom security table / plugin stats, no WP core cache available.
 		$row = $wpdb->get_row( $wpdb->prepare(
 			"SELECT file_path FROM {$wpdb->prefix}turbo_guard_scan_results WHERE id = %d LIMIT 1",
 			$result_id
@@ -1019,6 +1020,7 @@ class Turbo_Guard_Admin {
 		// Add to ignore list and mark result as ignored in DB.
 		Turbo_Guard_Scanner::ignore_file( $row->file_path );
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- custom security table write, no WP core cache available.
 		$wpdb->update(
 			$wpdb->prefix . 'turbo_guard_scan_results',
 			array( 'status' => 'ignored' ),

@@ -165,6 +165,7 @@ class Turbo_Guard_Settings {
 		// Count threats from latest scan.
 		$threats_count = 0;
 		if ( $latest_scan ) {
+			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- custom security table / plugin stats, no WP core cache available.
 			$threats_count = $wpdb->get_var(
 				$wpdb->prepare(
 					"SELECT COUNT(*) FROM {$wpdb->prefix}turbo_guard_scan_results
@@ -175,18 +176,21 @@ class Turbo_Guard_Settings {
 		}
 
 		// Firewall blocks today.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- custom security table / plugin stats, no WP core cache available.
 		$blocks_today = $wpdb->get_var(
 			"SELECT COUNT(*) FROM {$wpdb->prefix}turbo_guard_firewall_log
 			 WHERE DATE(created_at) = CURDATE()"
 		);
 
 		// Failed login attempts today.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- custom security table / plugin stats, no WP core cache available.
 		$failed_logins_today = $wpdb->get_var(
 			"SELECT COUNT(*) FROM {$wpdb->prefix}turbo_guard_login_attempts
 			 WHERE success = 0 AND DATE(created_at) = CURDATE()"
 		);
 
 		// Recent events (last 10).
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- custom security table / plugin stats, no WP core cache available.
 		$recent_events = $wpdb->get_results(
 			"SELECT * FROM {$wpdb->prefix}turbo_guard_events
 			 ORDER BY id DESC
