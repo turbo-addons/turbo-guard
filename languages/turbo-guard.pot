@@ -1,0 +1,15 @@
+# Copyright (C) 2026 Turbo Addons
+# This file is distributed under the GPL-3.0-or-later.
+msgid ""
+msgstr ""
+"Project-Id-Version: Turbo Guard 1.2.0\n"
+"Report-Msgid-Bugs-To: https://turbo-addons.com/support\n"
+"POT-Creation-Date: 2026-07-27\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"X-Generator: Turbo Guard\n"
+"X-Domain: turbo-guard\n"

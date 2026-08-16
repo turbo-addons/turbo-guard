@@ -1,0 +1,139 @@
+<?php
+/**
+ * Firewall Page Template.
+ *
+ * @package TurboGuard
+ * @since 1.0.0
+ */
+
+// Exit if accessed directly.
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+?>
+
+<div class="wrap turbo-guard-firewall">
+
+	<!-- Page Header Banner -->
+	<div class="turbo-guard-page-header">
+		<div class="turbo-guard-page-header-left">
+			<div class="turbo-guard-page-header-icon">
+				<span class="dashicons dashicons-shield-alt"></span>
+			</div>
+			<div>
+				<h1><?php esc_html_e( 'Firewall', 'turbo-guard-security-malware-scanner' ); ?></h1>
+				<p><?php esc_html_e( 'WAF logs, IP blocklist &amp; attack monitoring', 'turbo-guard-security-malware-scanner' ); ?></p>
+			</div>
+		</div>
+	</div>
+
+	<!-- Firewall Status -->
+	<div class="turbo-guard-card">
+		<h2><?php esc_html_e( 'Firewall Status', 'turbo-guard-security-malware-scanner' ); ?></h2>
+		<div class="turbo-guard-status-row">
+			<?php
+			$enabled = 'yes' === get_option( 'turbo_guard_firewall_enabled', 'yes' );
+			?>
+			<span class="turbo-guard-status-dot <?php echo $enabled ? 'turbo-guard-status-on' : 'turbo-guard-status-off'; ?>"></span>
+			<strong>
+				<?php echo $enabled ? esc_html__( 'Firewall is Active', 'turbo-guard-security-malware-scanner' ) : esc_html__( 'Firewall is Disabled', 'turbo-guard-security-malware-scanner' ); ?>
+			</strong>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=turbo-guard-settings' ) ); ?>" class="button button-small">
+				<?php esc_html_e( 'Configure', 'turbo-guard-security-malware-scanner' ); ?>
+			</a>
+		</div>
+	</div>
+
+	<!-- Blocked IPs -->
+	<div class="turbo-guard-card">
+		<div class="turbo-guard-card-header">
+			<h2><?php esc_html_e( 'Blocked IP Addresses', 'turbo-guard-security-malware-scanner' ); ?></h2>
+			<!-- Block IP Form -->
+			<form id="turbo-guard-block-ip-form" class="turbo-guard-inline-form">
+				<input type="text" id="turbo-guard-block-ip-input" placeholder="<?php esc_attr_e( 'Enter IP address...', 'turbo-guard-security-malware-scanner' ); ?>" class="regular-text" />
+				<input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'turbo_guard_admin' ) ); ?>" />
+				<button type="submit" class="button button-secondary">
+					<?php esc_html_e( 'Block IP', 'turbo-guard-security-malware-scanner' ); ?>
+				</button>
+			</form>
+		</div>
+
+		<?php if ( ! empty( $blocked_ips ) ) : ?>
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'IP Address', 'turbo-guard-security-malware-scanner' ); ?></th>
+						<th><?php esc_html_e( 'Reason', 'turbo-guard-security-malware-scanner' ); ?></th>
+						<th><?php esc_html_e( 'Blocked', 'turbo-guard-security-malware-scanner' ); ?></th>
+						<th><?php esc_html_e( 'Expires', 'turbo-guard-security-malware-scanner' ); ?></th>
+						<th><?php esc_html_e( 'Actions', 'turbo-guard-security-malware-scanner' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $blocked_ips as $blocked_ip ) : ?>
+						<tr>
+							<td><code><?php echo esc_html( $blocked_ip->ip_address ); ?></code></td>
+							<td><?php echo esc_html( $blocked_ip->reason ? $blocked_ip->reason : '—' ); ?></td>
+							<td><?php echo esc_html( human_time_diff( strtotime( $blocked_ip->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard-security-malware-scanner' ) ); ?></td>
+							<td>
+								<?php
+								if ( $blocked_ip->expires_at ) {
+									echo esc_html( human_time_diff( current_time( 'timestamp' ), strtotime( $blocked_ip->expires_at ) ) );
+								} else {
+									esc_html_e( 'Permanent', 'turbo-guard-security-malware-scanner' );
+								}
+								?>
+							</td>
+							<td>
+								<button class="button button-small turbo-guard-unblock-ip"
+									data-ip="<?php echo esc_attr( $blocked_ip->ip_address ); ?>"
+									data-nonce="<?php echo esc_attr( wp_create_nonce( 'turbo_guard_admin' ) ); ?>">
+									<?php esc_html_e( 'Unblock', 'turbo-guard-security-malware-scanner' ); ?>
+								</button>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		<?php else : ?>
+			<p><?php esc_html_e( 'No IPs are currently blocked.', 'turbo-guard-security-malware-scanner' ); ?></p>
+		<?php endif; ?>
+	</div>
+
+	<!-- Recent Firewall Activity -->
+	<div class="turbo-guard-card">
+		<h2><?php esc_html_e( 'Recent Blocked Requests', 'turbo-guard-security-malware-scanner' ); ?></h2>
+		<?php if ( ! empty( $recent_blocks ) ) : ?>
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Time', 'turbo-guard-security-malware-scanner' ); ?></th>
+						<th><?php esc_html_e( 'IP Address', 'turbo-guard-security-malware-scanner' ); ?></th>
+						<th><?php esc_html_e( 'URL', 'turbo-guard-security-malware-scanner' ); ?></th>
+						<th><?php esc_html_e( 'Block Reason', 'turbo-guard-security-malware-scanner' ); ?></th>
+						<th><?php esc_html_e( 'Actions', 'turbo-guard-security-malware-scanner' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $recent_blocks as $block ) : ?>
+						<tr>
+							<td><?php echo esc_html( human_time_diff( strtotime( $block->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard-security-malware-scanner' ) ); ?></td>
+							<td><code><?php echo esc_html( $block->ip_address ); ?></code></td>
+							<td><small><?php echo esc_html( $block->request_uri ); ?></small></td>
+							<td><?php echo esc_html( $block->block_reason ); ?></td>
+							<td>
+								<button class="button button-small turbo-guard-block-from-log"
+									data-ip="<?php echo esc_attr( $block->ip_address ); ?>"
+									data-nonce="<?php echo esc_attr( wp_create_nonce( 'turbo_guard_admin' ) ); ?>">
+									<?php esc_html_e( 'Block IP', 'turbo-guard-security-malware-scanner' ); ?>
+								</button>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		<?php else : ?>
+			<p><?php esc_html_e( 'No blocked requests logged yet.', 'turbo-guard-security-malware-scanner' ); ?></p>
+		<?php endif; ?>
+	</div>
+</div>
