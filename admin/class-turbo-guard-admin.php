@@ -224,6 +224,12 @@ class Turbo_Guard_Admin {
 			true
 		);
 
+		// Page-specific data: security score trend for the AI Advisor chart.
+		$trend = array();
+		if ( strpos( $hook, 'turbo-guard-ai-report' ) !== false ) {
+			$trend = Turbo_Guard_AI_Advisor::get_security_trend();
+		}
+
 		// Pass data to JS.
 		wp_localize_script(
 			'turbo-guard-admin',
@@ -232,6 +238,7 @@ class Turbo_Guard_Admin {
 				'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
 				'nonce'      => wp_create_nonce( 'turbo_guard_admin' ),
 				'flushNonce' => wp_create_nonce( 'turbo_guard_flush_notices' ),
+				'trend'      => $trend,
 				'strings' => array(
 					'scanning'       => __( 'Scanning...', 'turbo-guard' ),
 					'scanComplete'   => __( 'Scan Complete!', 'turbo-guard' ),
@@ -241,6 +248,29 @@ class Turbo_Guard_Admin {
 					'selectFiles'    => __( 'Please select at least one file.', 'turbo-guard' ),
 					'savingSettings' => __( 'Saving...', 'turbo-guard' ),
 					'settingsSaved'  => __( 'Settings saved successfully!', 'turbo-guard' ),
+
+					// Live Traffic.
+					'blockIpConfirm' => __( 'Block IP %s?', 'turbo-guard' ),
+					'blocking'       => __( 'Blocking...', 'turbo-guard' ),
+					'blocked'        => __( 'Blocked', 'turbo-guard' ),
+					'block'          => __( 'Block', 'turbo-guard' ),
+
+					// SEO Spam Detector.
+					'seoSpamFound'              => __( 'spam indicator(s) found.', 'turbo-guard' ),
+					'noSeoSpamFound'            => __( 'No SEO spam found.', 'turbo-guard' ),
+					'seoScanFailed'             => __( 'Scan failed.', 'turbo-guard' ),
+					'confirmDeleteSpamPost'     => __( 'Permanently delete this spam post?', 'turbo-guard' ),
+					'deleting'                  => __( 'Deleting...', 'turbo-guard' ),
+					'deleteFree'                => __( 'Delete (Free)', 'turbo-guard' ),
+					'confirmDeleteAllSpamPosts' => __( 'Delete all spam posts? This cannot be undone.', 'turbo-guard' ),
+
+					// File Integrity.
+					'checking'               => __( 'Checking...', 'turbo-guard' ),
+					'runCheckNow'            => __( 'Run Check Now', 'turbo-guard' ),
+					'runNow'                 => __( 'Run Now', 'turbo-guard' ),
+					'building'               => __( 'Building...', 'turbo-guard' ),
+					'rebuildBaseline'        => __( 'Rebuild Baseline', 'turbo-guard' ),
+					'confirmRebuildBaseline' => __( 'Rebuild baseline? This marks all current files as trusted. Only do this on a clean site.', 'turbo-guard' ),
 				),
 			)
 		);

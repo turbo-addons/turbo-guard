@@ -248,23 +248,8 @@ $tg_filters     = array(
 
 </div>
 
-<script>
-jQuery(document).ready(function($) {
-	$('#turbo-guard-refresh-traffic').on('click', function() { location.reload(); });
-
-	$(document).on('click', '.turbo-guard-block-traffic-ip', function() {
-		var ip    = $(this).data('ip');
-		var nonce = $(this).data('nonce');
-		if ( ! ip || ! window.confirm( 'Block IP ' + ip + '?' ) ) return;
-		var $btn = $(this).prop('disabled', true).text('Blocking...');
-		$.post( ajaxurl, { action: 'turbo_guard_block_ip', nonce: nonce, ip_address: ip }, function(r) {
-			if ( r.success ) {
-				$btn.text( 'Blocked' ).css( 'color', '#16a34a' );
-			} else {
-				$btn.prop( 'disabled', false ).text( 'Block' );
-				alert( r.data ? r.data.message : 'Error' );
-			}
-		});
-	});
-});
-</script>
+<?php
+// Refresh and Block-IP handling is in admin/js/turbo-guard-admin-v3.js
+// (enqueued via admin_enqueue_scripts). Block buttons carry data-ip and
+// data-nonce attributes consumed by that script.
+?>

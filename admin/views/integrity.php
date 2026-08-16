@@ -203,60 +203,8 @@ $tg_baseline_at     = isset( $baseline_built_at ) ? $baseline_built_at : '';
 
 </div>
 
-<script>
-jQuery(function($){
-	function showNotice(msg, type) {
-		$('#turbo-guard-integrity-notice')
-			.removeClass('notice-success notice-error notice-warning notice')
-			.addClass('notice notice-' + type)
-			.html('<p>' + msg + '</p>')
-			.show();
-	}
-
-	$('#tg-run-integrity').on('click', function(){
-		var $btn = $(this).prop('disabled', true).text('<?php esc_html_e( 'Checking...', 'turbo-guard' ); ?>');
-		$.post(turboGuardAdmin.ajaxUrl, {
-			action: 'turbo_guard_run_integrity_check',
-			nonce:  turboGuardAdmin.nonce
-		}, function(r){
-			if (r.success) {
-				showNotice('✓ ' + r.data.message, r.data.modified + r.data.missing > 0 ? 'error' : 'success');
-				setTimeout(function(){ location.reload(); }, 1500);
-			} else {
-				showNotice('✗ ' + (r.data ? r.data.message : 'Failed.'), 'error');
-			}
-		}).always(function(){ $btn.prop('disabled', false).text('<?php esc_html_e( 'Run Check Now', 'turbo-guard' ); ?>'); });
-	});
-
-	$('#tg-run-watcher').on('click', function(){
-		var $btn = $(this).prop('disabled', true).text('<?php esc_html_e( 'Scanning...', 'turbo-guard' ); ?>');
-		$.post(turboGuardAdmin.ajaxUrl, {
-			action: 'turbo_guard_run_file_watcher',
-			nonce:  turboGuardAdmin.nonce
-		}, function(r){
-			if (r.success) {
-				showNotice('✓ ' + r.data.message, r.data.new > 0 ? 'error' : 'success');
-				setTimeout(function(){ location.reload(); }, 1500);
-			} else {
-				showNotice('✗ ' + (r.data ? r.data.message : 'Failed.'), 'error');
-			}
-		}).always(function(){ $btn.prop('disabled', false).text('<?php esc_html_e( 'Run Now', 'turbo-guard' ); ?>'); });
-	});
-
-	$('#tg-rebuild-baseline').on('click', function(){
-		if (!confirm('<?php esc_html_e( 'Rebuild baseline? This marks all current files as trusted. Only do this on a clean site.', 'turbo-guard' ); ?>')) return;
-		var $btn = $(this).prop('disabled', true).text('<?php esc_html_e( 'Building...', 'turbo-guard' ); ?>');
-		$.post(turboGuardAdmin.ajaxUrl, {
-			action: 'turbo_guard_rebuild_baseline',
-			nonce:  turboGuardAdmin.nonce
-		}, function(r){
-			if (r.success) {
-				showNotice('✓ ' + r.data.message, 'success');
-				setTimeout(function(){ location.reload(); }, 1500);
-			} else {
-				showNotice('✗ ' + (r.data ? r.data.message : 'Failed.'), 'error');
-			}
-		}).always(function(){ $btn.prop('disabled', false).text('<?php esc_html_e( 'Rebuild Baseline', 'turbo-guard' ); ?>'); });
-	});
-});
-</script>
+<?php
+// Integrity check / watcher / baseline rebuild handling lives in
+// admin/js/turbo-guard-admin-v3.js (enqueued via admin_enqueue_scripts).
+// User-facing strings are localised via wp_localize_script (turboGuardAdmin.strings).
+?>
