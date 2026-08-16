@@ -8,7 +8,7 @@ Requires PHP: 7.4
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-WordPress security plugin with malware scanner, bulk cleanup, firewall, 2FA, vulnerability scanner, file integrity checker, and SEO spam detection. 100% free.
+WordPress security plugin: malware scanner, firewall, 2FA, vulnerability scanner, file integrity checker, SEO spam cleanup. 100% free.
 
 == Description ==
 
@@ -75,7 +75,7 @@ Turbo Guard is a comprehensive, 100% free WordPress security plugin built by a t
 = Two-Factor Authentication (2FA) =
 
 * TOTP/RFC 6238 — compatible with Google Authenticator, Authy, and all TOTP apps
-* QR code setup on user profile page
+* Manual secret key setup on user profile page
 * Recovery codes (8 single-use)
 * Per-user enable/disable
 
@@ -109,7 +109,7 @@ Turbo Guard is a comprehensive, 100% free WordPress security plugin built by a t
 
 = Privacy =
 
-Turbo Guard does not send your website files or personal data to any external server. Vulnerability checks use only plugin/theme slugs and versions sent to WPScan public API. GSC integration uses your own Google OAuth credentials. AI analysis (optional OpenAI) sends only anonymised threat type data. No telemetry. No tracking. No account required.
+Turbo Guard does not send your website files to any external server. Vulnerability checks send only plugin/theme slugs and versions to the WPScan API — and only on manual scans or when scheduled vulnerability scans are enabled in Settings (off by default). Geo-Fence country blocking sends the visitor IP address to ipapi.co when enabled. 2FA is fully local: TOTP secrets are entered manually in your authenticator app and no QR service is used. GSC integration uses your own Google OAuth credentials. AI analysis (optional OpenAI) sends only anonymised threat type data. No telemetry. No tracking. No account required.
 
 == Installation ==
 
@@ -175,10 +175,19 @@ Used to verify WordPress core file integrity by comparing checksums.
 
 Used to check plugins and themes for known security vulnerabilities.
 * Data sent: Plugin/theme slugs and versions
-* When: Only when user initiates a vulnerability scan (requires user-provided API key)
+* When: Only when the user runs a manual vulnerability scan, or when scheduled vulnerability scans are enabled in Settings (off by default)
 * Service: https://wpscan.com/
 * Terms of Use: https://wpscan.com/terms
-* Privacy Policy: https://wpscan.com/privacy
+* Privacy Policy: https://automattic.com/privacy/
+
+= ipapi.co (Geo-Fence) =
+
+Used for IP geolocation to support country-based access and upload controls (Geo-Fence).
+* Data sent: Visitor IP address
+* When: Only when geo-fence country features are enabled
+* Service: https://ipapi.co/
+* Terms of Service: https://ipapi.co/terms/
+* Privacy Policy: https://ipapi.co/privacy/
 
 = OpenAI API =
 
@@ -194,26 +203,9 @@ Used to provide AI-powered security analysis and recommendations.
 Used for Google Search Console integration to detect SEO spam and manage indexed URLs.
 * Data sent: OAuth tokens, site URL for search analytics queries
 * When: Only when user connects their Google account and initiates GSC features
-* Service: https://googleapis.com/
+* Service: https://developers.google.com/webmaster-tools
 * Terms of Service: https://developers.google.com/terms
 * Privacy Policy: https://policies.google.com/privacy
-
-= QR Code Generator (goqr.me) =
-
-Used to generate QR codes for two-factor authentication setup.
-* Data sent: TOTP authentication URI (contains site name and account identifier)
-* When: Only when user enables 2FA and views the setup QR code
-* Service: https://api.qrserver.com/
-* Terms of Service: https://goqr.me/api/doc/
-* Privacy Policy: https://goqr.me/privacy-policy/
-
-= Turbo Addons Notifications =
-
-Used to display important plugin notices and updates (opt-in only, disabled by default).
-* Data sent: Site URL in User-Agent header
-* When: Only when user enables remote notifications in settings
-* Service: https://turbo-addons.com/
-* Privacy Policy: https://turbo-addons.com/privacy-policy/
 
 == Changelog ==
 
