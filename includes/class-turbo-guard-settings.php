@@ -28,20 +28,21 @@ class Turbo_Guard_Settings {
 	 */
 	public static function get_all() {
 		return array(
-			'scan_enabled'             => get_option( 'turbo_guard_scan_enabled', 'yes' ),
-			'scan_schedule'            => get_option( 'turbo_guard_scan_schedule', 'daily' ),
-			'scan_images'              => get_option( 'turbo_guard_scan_images', 'no' ),
-			'scan_outside_wp'          => get_option( 'turbo_guard_scan_outside_wp', 'no' ),
-			'firewall_enabled'         => get_option( 'turbo_guard_firewall_enabled', 'yes' ),
-			'login_security_enabled'   => get_option( 'turbo_guard_login_security_enabled', 'yes' ),
-			'brute_force_protection'   => get_option( 'turbo_guard_brute_force_protection', 'yes' ),
-			'max_login_attempts'       => absint( get_option( 'turbo_guard_max_login_attempts', 5 ) ),
-			'lockout_duration'         => absint( get_option( 'turbo_guard_lockout_duration', 3600 ) ),
-			'notify_admin_email'       => get_option( 'turbo_guard_notify_admin_email', get_option( 'admin_email' ) ),
-			'notify_on_threats'        => get_option( 'turbo_guard_notify_on_threats', 'yes' ),
-			'notify_on_scan_complete'  => get_option( 'turbo_guard_notify_on_scan_complete', 'no' ),
-			'quarantine_malware'       => get_option( 'turbo_guard_quarantine_malware', 'yes' ),
-			'remove_data_on_uninstall' => get_option( 'turbo_guard_remove_data_on_uninstall', 'no' ),
+			'scan_enabled'                => get_option( 'turbo_guard_scan_enabled', 'yes' ),
+			'scan_schedule'               => get_option( 'turbo_guard_scan_schedule', 'daily' ),
+			'scan_images'                 => get_option( 'turbo_guard_scan_images', 'no' ),
+			'scan_outside_wp'             => get_option( 'turbo_guard_scan_outside_wp', 'no' ),
+			'enable_scheduled_vuln_scan'  => get_option( 'turbo_guard_enable_scheduled_vuln_scan', 'no' ),
+			'firewall_enabled'            => get_option( 'turbo_guard_firewall_enabled', 'yes' ),
+			'login_security_enabled'      => get_option( 'turbo_guard_login_security_enabled', 'yes' ),
+			'brute_force_protection'      => get_option( 'turbo_guard_brute_force_protection', 'yes' ),
+			'max_login_attempts'          => absint( get_option( 'turbo_guard_max_login_attempts', 5 ) ),
+			'lockout_duration'            => absint( get_option( 'turbo_guard_lockout_duration', 3600 ) ),
+			'notify_admin_email'          => get_option( 'turbo_guard_notify_admin_email', get_option( 'admin_email' ) ),
+			'notify_on_threats'           => get_option( 'turbo_guard_notify_on_threats', 'yes' ),
+			'notify_on_scan_complete'     => get_option( 'turbo_guard_notify_on_scan_complete', 'no' ),
+			'quarantine_malware'          => get_option( 'turbo_guard_quarantine_malware', 'yes' ),
+			'remove_data_on_uninstall'    => get_option( 'turbo_guard_remove_data_on_uninstall', 'no' ),
 		);
 	}
 
@@ -58,6 +59,7 @@ class Turbo_Guard_Settings {
 			'scan_schedule',
 			'scan_images',
 			'scan_outside_wp',
+			'enable_scheduled_vuln_scan',
 			'firewall_enabled',
 			'login_security_enabled',
 			'brute_force_protection',
