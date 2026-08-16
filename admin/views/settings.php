@@ -517,16 +517,4 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 	<div id="turbo-guard-settings-result" class="turbo-guard-notice" style="display:none;"></div>
 
-	<!-- Notification Cache Flush -->
-	<div class="turbo-guard-card" style="margin-top:20px;">
-		<h2>📢 <?php esc_html_e( 'Notification Cache', 'turbo-guard' ); ?></h2>
-		<p class="description" style="margin-bottom:12px;">
-			<?php esc_html_e( 'Force-refresh the notification feed from turbo-addons.com. Use this to see new campaigns immediately without waiting for the cache to expire.', 'turbo-guard' ); ?>
-		</p>
-		<button type="button" id="turbo-guard-flush-notices" class="button button-secondary">
-			🔄 <?php esc_html_e( 'Refresh Notifications Now', 'turbo-guard' ); ?>
-		</button>
-		<span id="turbo-guard-flush-result" style="margin-left:10px;font-size:13px;"></span>
-	</div>
-
 </div><!-- /.wrap -->
