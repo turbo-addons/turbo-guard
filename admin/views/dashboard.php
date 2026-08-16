@@ -12,10 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Determine score color for SVG circle.
-$score       = $stats['security_score'];
-$circumference = 314; // 2 * pi * 50.
-$dash_offset   = $circumference - ( ( $score / 100 ) * $circumference );
-$circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc2626' );
+$turbo_guard_score       = $stats['security_score'];
+$turbo_guard_circumference = 314; // 2 * pi * 50.
+$turbo_guard_dash_offset   = $turbo_guard_circumference - ( ( $turbo_guard_score / 100 ) * $turbo_guard_circumference );
+$turbo_guard_circle_color  = $turbo_guard_score >= 90 ? '#16a34a' : ( $turbo_guard_score >= 70 ? '#d97706' : '#dc2626' );
 ?>
 
 <div class="wrap turbo-guard-dashboard">
@@ -54,23 +54,23 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 				<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
 					<circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" stroke-width="10"/>
 					<circle cx="60" cy="60" r="50" fill="none"
-						stroke="<?php echo esc_attr( $circle_color ); ?>"
+						stroke="<?php echo esc_attr( $turbo_guard_circle_color ); ?>"
 						stroke-width="10"
 						stroke-linecap="round"
-						stroke-dasharray="<?php echo esc_attr( ( $score / 100 ) * $circumference ); ?> <?php echo esc_attr( $circumference ); ?>"
+						stroke-dasharray="<?php echo esc_attr( ( $turbo_guard_score / 100 ) * $turbo_guard_circumference ); ?> <?php echo esc_attr( $turbo_guard_circumference ); ?>"
 						transform="rotate(-90 60 60)"
 						style="transition: stroke-dasharray .6s ease;"
 					/>
 				</svg>
-				<span class="turbo-guard-score-value" style="color:<?php echo esc_attr( $circle_color ); ?>">
-					<?php echo esc_html( $score ); ?>
+				<span class="turbo-guard-score-value" style="color:<?php echo esc_attr( $turbo_guard_circle_color ); ?>">
+					<?php echo esc_html( $turbo_guard_score ); ?>
 				</span>
 			</div>
 			<p class="turbo-guard-score-label">
 				<?php
-				if ( $score >= 90 ) {
+				if ( $turbo_guard_score >= 90 ) {
 					esc_html_e( 'Excellent protection', 'turbo-guard' );
-				} elseif ( $score >= 70 ) {
+				} elseif ( $turbo_guard_score >= 70 ) {
 					esc_html_e( 'Good — can improve', 'turbo-guard' );
 				} else {
 					esc_html_e( 'Action required', 'turbo-guard' );
@@ -181,19 +181,19 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $stats['recent_events'] as $event ) : ?>
+					<?php foreach ( $stats['recent_events'] as $turbo_guard_event ) : ?>
 						<tr>
 							<td style="color:#9ca3af;font-size:12px;">
-								<?php echo esc_html( human_time_diff( strtotime( $event->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?>
+								<?php echo esc_html( human_time_diff( strtotime( $turbo_guard_event->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?>
 							</td>
-							<td class="turbo-guard-event-message"><?php echo esc_html( $event->message ); ?></td>
+							<td class="turbo-guard-event-message"><?php echo esc_html( $turbo_guard_event->message ); ?></td>
 							<td>
-								<span class="turbo-guard-badge turbo-guard-badge-<?php echo esc_attr( $event->severity ); ?>">
-									<?php echo esc_html( ucfirst( $event->severity ) ); ?>
+								<span class="turbo-guard-badge turbo-guard-badge-<?php echo esc_attr( $turbo_guard_event->severity ); ?>">
+									<?php echo esc_html( ucfirst( $turbo_guard_event->severity ) ); ?>
 								</span>
 							</td>
 							<td style="font-family:monospace;font-size:12px;color:#6b7280;">
-								<?php echo $event->ip_address ? esc_html( $event->ip_address ) : '<span style="color:#d1d5db;">—</span>'; ?>
+								<?php echo $turbo_guard_event->ip_address ? esc_html( $turbo_guard_event->ip_address ) : '<span style="color:#d1d5db;">—</span>'; ?>
 							</td>
 						</tr>
 					<?php endforeach; ?>

@@ -14,9 +14,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 delete_transient( 'turbo_guard_seo_spam_results' );
 
 // Prefixed variables: satisfies WordPress.NamingConventions.PrefixAllGlobals.
-$tg_seo_results = Turbo_Guard_SEO_Spam_Detector::get_cached_results();
-$tg_seo_total   = $tg_seo_results ? (int) $tg_seo_results['total'] : 0;
-$tg_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
+$turbo_guard_seo_results = Turbo_Guard_SEO_Spam_Detector::get_cached_results();
+$turbo_guard_seo_total   = $turbo_guard_seo_results ? (int) $turbo_guard_seo_results['total'] : 0;
+$turbo_guard_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 ?>
 
 <div class="wrap turbo-guard-seo-spam">
@@ -31,13 +31,13 @@ $tg_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 				<p><?php esc_html_e( 'Find Japanese/Chinese spam pages on your site — no Google setup required', 'turbo-guard' ); ?></p>
 			</div>
 		</div>
-		<?php if ( $tg_seo_results ) : ?>
+		<?php if ( $turbo_guard_seo_results ) : ?>
 			<span class="turbo-guard-header-badge">
 				<?php
 				printf(
 					/* translators: %s: human-readable time since last scan */
 					esc_html__( 'Last scan: %s ago', 'turbo-guard' ),
-					esc_html( human_time_diff( strtotime( $tg_seo_results['scanned_at'] ), current_time( 'timestamp' ) ) )
+					esc_html( human_time_diff( strtotime( $turbo_guard_seo_results['scanned_at'] ), current_time( 'timestamp' ) ) )
 				);
 				?>
 			</span>
@@ -66,13 +66,13 @@ $tg_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 				<p style="font-size:12px;color:#78350f;margin:0 0 10px;line-height:1.5;">
 					<?php esc_html_e( 'If spam pages are already in Google, connect Google Search Console in GSC Cleanup to remove them. First — clean the source files here.', 'turbo-guard' ); ?>
 				</p>
-				<a href="<?php echo esc_url( 'https://www.google.com/search?q=site:' . rawurlencode( $tg_domain ) ); ?>"
+				<a href="<?php echo esc_url( 'https://www.google.com/search?q=site:' . rawurlencode( $turbo_guard_domain ) ); ?>"
 					target="_blank" rel="noopener noreferrer" class="button button-small" style="margin-right:6px;">
 					<?php
 					printf(
 						/* translators: %s: domain name */
 						esc_html__( 'Check site:%s on Google', 'turbo-guard' ),
-						esc_html( $tg_domain )
+						esc_html( $turbo_guard_domain )
 					);
 					?>
 				</a>
@@ -102,29 +102,29 @@ $tg_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 		<div id="turbo-guard-seo-notice" class="turbo-guard-notice" style="display:none;margin-top:12px;"></div>
 	</div>
 
-	<?php if ( $tg_seo_results ) : ?>
+	<?php if ( $turbo_guard_seo_results ) : ?>
 
 		<!-- Summary stats -->
 		<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
 			<?php
-			$tg_seo_cards = array(
-				array( 'label' => __( 'Total Found', 'turbo-guard' ),      'value' => $tg_seo_total,                                        'sub' => __( 'spam indicators', 'turbo-guard' ) ),
-				array( 'label' => __( 'Spam Posts', 'turbo-guard' ),       'value' => count( $tg_seo_results['spam_posts'] ),               'sub' => __( 'in database', 'turbo-guard' ) ),
-				array( 'label' => __( 'Spam Files', 'turbo-guard' ),       'value' => count( $tg_seo_results['spam_files'] ),               'sub' => __( 'on disk', 'turbo-guard' ) ),
-				array( 'label' => __( '.htaccess Hacks', 'turbo-guard' ),  'value' => count( $tg_seo_results['htaccess_hacks'] ),           'sub' => __( 'redirect rules', 'turbo-guard' ) ),
+			$turbo_guard_seo_cards = array(
+				array( 'label' => __( 'Total Found', 'turbo-guard' ),      'value' => $turbo_guard_seo_total,                                        'sub' => __( 'spam indicators', 'turbo-guard' ) ),
+				array( 'label' => __( 'Spam Posts', 'turbo-guard' ),       'value' => count( $turbo_guard_seo_results['spam_posts'] ),               'sub' => __( 'in database', 'turbo-guard' ) ),
+				array( 'label' => __( 'Spam Files', 'turbo-guard' ),       'value' => count( $turbo_guard_seo_results['spam_files'] ),               'sub' => __( 'on disk', 'turbo-guard' ) ),
+				array( 'label' => __( '.htaccess Hacks', 'turbo-guard' ),  'value' => count( $turbo_guard_seo_results['htaccess_hacks'] ),           'sub' => __( 'redirect rules', 'turbo-guard' ) ),
 			);
-			foreach ( $tg_seo_cards as $tg_seo_card ) :
-				$tg_seo_card_val = (int) $tg_seo_card['value'];
+			foreach ( $turbo_guard_seo_cards as $turbo_guard_seo_card ) :
+				$turbo_guard_seo_card_val = (int) $turbo_guard_seo_card['value'];
 			?>
-			<div class="turbo-guard-card" style="padding:16px;text-align:center;border-top:3px solid <?php echo $tg_seo_card_val > 0 ? '#dc2626' : '#16a34a'; ?>;">
-				<h3><?php echo esc_html( $tg_seo_card['label'] ); ?></h3>
-				<div class="turbo-guard-stat-value <?php echo $tg_seo_card_val > 0 ? 'tg-red' : 'tg-green'; ?>" style="font-size:36px;"><?php echo absint( $tg_seo_card_val ); ?></div>
-				<p class="turbo-guard-stat-label"><?php echo esc_html( $tg_seo_card['sub'] ); ?></p>
+			<div class="turbo-guard-card" style="padding:16px;text-align:center;border-top:3px solid <?php echo $turbo_guard_seo_card_val > 0 ? '#dc2626' : '#16a34a'; ?>;">
+				<h3><?php echo esc_html( $turbo_guard_seo_card['label'] ); ?></h3>
+				<div class="turbo-guard-stat-value <?php echo $turbo_guard_seo_card_val > 0 ? 'tg-red' : 'tg-green'; ?>" style="font-size:36px;"><?php echo absint( $turbo_guard_seo_card_val ); ?></div>
+				<p class="turbo-guard-stat-label"><?php echo esc_html( $turbo_guard_seo_card['sub'] ); ?></p>
 			</div>
 			<?php endforeach; ?>
 		</div>
 
-		<?php if ( 0 === $tg_seo_total ) : ?>
+		<?php if ( 0 === $turbo_guard_seo_total ) : ?>
 			<div class="turbo-guard-card">
 				<div style="text-align:center;padding:40px 20px;">
 					<span class="dashicons dashicons-yes-alt" style="font-size:52px;width:52px;height:52px;color:#16a34a;display:block;margin:0 auto 12px;"></span>
@@ -134,7 +134,7 @@ $tg_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 						printf(
 							/* translators: %s: Google site search URL */
 							esc_html__( 'Tip: Also check Google manually: %s', 'turbo-guard' ),
-							'<a href="' . esc_url( $tg_seo_results['google_link'] ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $tg_seo_results['google_link'] ) . '</a>'
+							'<a href="' . esc_url( $turbo_guard_seo_results['google_link'] ) . '" target="_blank" rel="noopener noreferrer">' . esc_html( $turbo_guard_seo_results['google_link'] ) . '</a>'
 						);
 						?>
 					</p>
@@ -143,7 +143,7 @@ $tg_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 		<?php endif; ?>
 
 		<!-- Spam Posts -->
-		<?php if ( ! empty( $tg_seo_results['spam_posts'] ) ) : ?>
+		<?php if ( ! empty( $turbo_guard_seo_results['spam_posts'] ) ) : ?>
 		<div class="turbo-guard-card">
 			<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
 				<h2 style="margin:0;color:#dc2626;">
@@ -152,19 +152,19 @@ $tg_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 					printf(
 						/* translators: %d: number of spam posts found */
 						esc_html__( '%d Spam Posts/Pages Found in Database', 'turbo-guard' ),
-						count( $tg_seo_results['spam_posts'] )
+						count( $turbo_guard_seo_results['spam_posts'] )
 					);
 					?>
 				</h2>
 				<button id="turbo-guard-delete-all-spam-posts" class="button"
 					style="background:#dc2626;border-color:#b91c1c;color:#fff;"
-					data-ids="<?php echo esc_attr( implode( ',', array_column( $tg_seo_results['spam_posts'], 'id' ) ) ); ?>">
+					data-ids="<?php echo esc_attr( implode( ',', array_column( $turbo_guard_seo_results['spam_posts'], 'id' ) ) ); ?>">
 					<span class="dashicons dashicons-trash" style="font-size:14px;width:14px;height:14px;vertical-align:middle;"></span>
 					<?php
 					printf(
 						/* translators: %d: number of spam posts to delete */
 						esc_html__( 'Delete All %d Spam Posts (Free)', 'turbo-guard' ),
-						count( $tg_seo_results['spam_posts'] )
+						count( $turbo_guard_seo_results['spam_posts'] )
 					);
 					?>
 				</button>
@@ -183,32 +183,32 @@ $tg_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $tg_seo_results['spam_posts'] as $tg_spam_post ) : ?>
+					<?php foreach ( $turbo_guard_seo_results['spam_posts'] as $turbo_guard_spam_post ) : ?>
 					<tr>
 						<td>
-							<strong style="font-size:13px;"><?php echo esc_html( $tg_spam_post['title'] ? $tg_spam_post['title'] : __( '(no title)', 'turbo-guard' ) ); ?></strong>
-							<?php if ( $tg_spam_post['url'] ) : ?>
-								<br><a href="<?php echo esc_url( $tg_spam_post['url'] ); ?>" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:#9ca3af;">
-									<?php echo esc_html( $tg_spam_post['url'] ); ?>
+							<strong style="font-size:13px;"><?php echo esc_html( $turbo_guard_spam_post['title'] ? $turbo_guard_spam_post['title'] : __( '(no title)', 'turbo-guard' ) ); ?></strong>
+							<?php if ( $turbo_guard_spam_post['url'] ) : ?>
+								<br><a href="<?php echo esc_url( $turbo_guard_spam_post['url'] ); ?>" target="_blank" rel="noopener noreferrer" style="font-size:11px;color:#9ca3af;">
+									<?php echo esc_html( $turbo_guard_spam_post['url'] ); ?>
 								</a>
 							<?php endif; ?>
 						</td>
-						<td style="font-size:12px;"><?php echo esc_html( $tg_spam_post['type'] ); ?></td>
+						<td style="font-size:12px;"><?php echo esc_html( $turbo_guard_spam_post['type'] ); ?></td>
 						<td>
-							<span class="turbo-guard-badge <?php echo 'publish' === $tg_spam_post['status'] ? 'turbo-guard-badge-critical' : 'turbo-guard-badge-medium'; ?>">
-								<?php echo esc_html( $tg_spam_post['status'] ); ?>
+							<span class="turbo-guard-badge <?php echo 'publish' === $turbo_guard_spam_post['status'] ? 'turbo-guard-badge-critical' : 'turbo-guard-badge-medium'; ?>">
+								<?php echo esc_html( $turbo_guard_spam_post['status'] ); ?>
 							</span>
 						</td>
-						<td style="font-size:12px;color:#6b7280;"><?php echo esc_html( implode( ', ', $tg_spam_post['reasons'] ) ); ?></td>
+						<td style="font-size:12px;color:#6b7280;"><?php echo esc_html( implode( ', ', $turbo_guard_spam_post['reasons'] ) ); ?></td>
 						<td>
 							<button class="button button-small turbo-guard-delete-spam-post"
 								style="color:#dc2626;border-color:#fca5a5;"
-								data-id="<?php echo absint( $tg_spam_post['id'] ); ?>"
+								data-id="<?php echo absint( $turbo_guard_spam_post['id'] ); ?>"
 								data-nonce="<?php echo esc_attr( wp_create_nonce( 'turbo_guard_admin' ) ); ?>">
 								<?php esc_html_e( 'Delete (Free)', 'turbo-guard' ); ?>
 							</button>
-							<?php if ( $tg_spam_post['edit_url'] ) : ?>
-							<a href="<?php echo esc_url( $tg_spam_post['edit_url'] ); ?>" class="button button-small" style="margin-left:4px;">
+							<?php if ( $turbo_guard_spam_post['edit_url'] ) : ?>
+							<a href="<?php echo esc_url( $turbo_guard_spam_post['edit_url'] ); ?>" class="button button-small" style="margin-left:4px;">
 								<?php esc_html_e( 'Edit', 'turbo-guard' ); ?>
 							</a>
 							<?php endif; ?>
@@ -221,14 +221,14 @@ $tg_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 		<?php endif; ?>
 
 		<!-- .htaccess Hacks -->
-		<?php if ( ! empty( $tg_seo_results['htaccess_hacks'] ) ) : ?>
+		<?php if ( ! empty( $turbo_guard_seo_results['htaccess_hacks'] ) ) : ?>
 		<div class="turbo-guard-card" style="border-left:4px solid #dc2626;">
 			<h2 style="color:#dc2626;">
 				<?php
 				printf(
 					/* translators: %d: number of suspicious htaccess rules */
 					esc_html__( '%d Suspicious .htaccess Rules', 'turbo-guard' ),
-					count( $tg_seo_results['htaccess_hacks'] )
+					count( $turbo_guard_seo_results['htaccess_hacks'] )
 				);
 				?>
 			</h2>
@@ -244,11 +244,11 @@ $tg_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $tg_seo_results['htaccess_hacks'] as $tg_htaccess_hack ) : ?>
+					<?php foreach ( $turbo_guard_seo_results['htaccess_hacks'] as $turbo_guard_htaccess_hack ) : ?>
 					<tr style="background:#fff5f5;">
-						<td style="font-family:monospace;font-size:12px;"><?php echo absint( $tg_htaccess_hack['line'] ); ?></td>
-						<td><code style="font-size:11px;word-break:break-all;"><?php echo esc_html( $tg_htaccess_hack['rule'] ); ?></code></td>
-						<td style="font-size:12px;color:#dc2626;"><?php echo esc_html( $tg_htaccess_hack['reason'] ); ?></td>
+						<td style="font-family:monospace;font-size:12px;"><?php echo absint( $turbo_guard_htaccess_hack['line'] ); ?></td>
+						<td><code style="font-size:11px;word-break:break-all;"><?php echo esc_html( $turbo_guard_htaccess_hack['rule'] ); ?></code></td>
+						<td style="font-size:12px;color:#dc2626;"><?php echo esc_html( $turbo_guard_htaccess_hack['reason'] ); ?></td>
 					</tr>
 					<?php endforeach; ?>
 				</tbody>
@@ -257,14 +257,14 @@ $tg_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 		<?php endif; ?>
 
 		<!-- Spam Files -->
-		<?php if ( ! empty( $tg_seo_results['spam_files'] ) ) : ?>
+		<?php if ( ! empty( $turbo_guard_seo_results['spam_files'] ) ) : ?>
 		<div class="turbo-guard-card">
 			<h2 style="color:#dc2626;">
 				<?php
 				printf(
 					/* translators: %d: number of spam files found on disk */
 					esc_html__( '%d Spam Files Found on Disk', 'turbo-guard' ),
-					count( $tg_seo_results['spam_files'] )
+					count( $turbo_guard_seo_results['spam_files'] )
 				);
 				?>
 			</h2>
@@ -284,12 +284,12 @@ $tg_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $tg_seo_results['spam_files'] as $tg_spam_file ) : ?>
+					<?php foreach ( $turbo_guard_seo_results['spam_files'] as $turbo_guard_spam_file ) : ?>
 					<tr style="background:#fff5f5;">
-						<td><code style="font-size:11px;"><?php echo esc_html( $tg_spam_file['path'] ); ?></code></td>
-						<td style="font-size:12px;color:#9ca3af;"><?php echo esc_html( $tg_spam_file['size'] ); ?></td>
-						<td style="font-size:12px;color:#9ca3af;"><?php echo esc_html( $tg_spam_file['modified'] ); ?></td>
-						<td style="font-size:12px;color:#dc2626;"><?php echo esc_html( implode( ', ', $tg_spam_file['reasons'] ) ); ?></td>
+						<td><code style="font-size:11px;"><?php echo esc_html( $turbo_guard_spam_file['path'] ); ?></code></td>
+						<td style="font-size:12px;color:#9ca3af;"><?php echo esc_html( $turbo_guard_spam_file['size'] ); ?></td>
+						<td style="font-size:12px;color:#9ca3af;"><?php echo esc_html( $turbo_guard_spam_file['modified'] ); ?></td>
+						<td style="font-size:12px;color:#dc2626;"><?php echo esc_html( implode( ', ', $turbo_guard_spam_file['reasons'] ) ); ?></td>
 					</tr>
 					<?php endforeach; ?>
 				</tbody>
@@ -304,12 +304,12 @@ $tg_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 				<?php esc_html_e( 'After cleaning files and spam posts, check if Google has already indexed any spam pages. Look for any pages with Japanese, Chinese, or spam product titles.', 'turbo-guard' ); ?>
 			</p>
 			<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
-				<a href="<?php echo esc_url( $tg_seo_results['google_link'] ); ?>" target="_blank" rel="noopener noreferrer" class="button button-primary">
+				<a href="<?php echo esc_url( $turbo_guard_seo_results['google_link'] ); ?>" target="_blank" rel="noopener noreferrer" class="button button-primary">
 					<?php
 					printf(
 						/* translators: %s: domain name */
 						esc_html__( 'View site:%s on Google', 'turbo-guard' ),
-						esc_html( $tg_domain )
+						esc_html( $turbo_guard_domain )
 					);
 					?>
 				</a>

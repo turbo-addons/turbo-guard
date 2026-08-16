@@ -11,8 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$is_connected = $gsc->is_connected();
-$site_url     = esc_url( home_url( '/' ) );
+$turbo_guard_is_connected = $gsc->is_connected();
+$turbo_guard_site_url     = esc_url( home_url( '/' ) );
 ?>
 
 <div class="wrap turbo-guard-gsc">
@@ -35,7 +35,7 @@ $site_url     = esc_url( home_url( '/' ) );
 	<div class="turbo-guard-card">
 		<h2><?php esc_html_e( 'Connection Status', 'turbo-guard' ); ?></h2>
 
-		<?php if ( $is_connected ) : ?>
+		<?php if ( $turbo_guard_is_connected ) : ?>
 			<div class="turbo-guard-status-row">
 				<span class="turbo-guard-status-dot turbo-guard-status-on"></span>
 				<strong><?php esc_html_e( 'Connected to Google Search Console', 'turbo-guard' ); ?></strong>
@@ -48,7 +48,7 @@ $site_url     = esc_url( home_url( '/' ) );
 				printf(
 					/* translators: %s: site URL */
 					esc_html__( 'Managing property: %s', 'turbo-guard' ),
-					'<code>' . esc_html( $site_url ) . '</code>'
+					'<code>' . esc_html( $turbo_guard_site_url ) . '</code>'
 				);
 				?>
 			</p>
@@ -134,8 +134,8 @@ $site_url     = esc_url( home_url( '/' ) );
 				</div>
 
 				<?php
-				$client_id = get_option( 'turbo_guard_gsc_client_id', '' );
-				if ( ! $client_id ) : ?>
+				$turbo_guard_client_id = get_option( 'turbo_guard_gsc_client_id', '' );
+				if ( ! $turbo_guard_client_id ) : ?>
 					<div class="notice notice-warning inline" style="margin-top:16px;">
 						<p>
 							<?php
@@ -159,7 +159,7 @@ $site_url     = esc_url( home_url( '/' ) );
 		<?php endif; ?>
 	</div>
 
-	<?php if ( $is_connected ) : ?>
+	<?php if ( $turbo_guard_is_connected ) : ?>
 		<!-- Fetch Indexed URLs -->
 		<div class="turbo-guard-card">
 			<h2><?php esc_html_e( 'Indexed URLs', 'turbo-guard' ); ?></h2>

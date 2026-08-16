@@ -32,15 +32,15 @@ define( 'TURBO_GUARD_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
 try {
 	require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard.php';
 } catch ( Throwable $e ) {
-	$upload_dir = wp_upload_dir();
-	$log_dir    = $upload_dir['basedir'] . '/turbo-guard';
-	if ( ! is_dir( $log_dir ) ) {
-		wp_mkdir_p( $log_dir );
+	$turbo_guard_upload_dir = wp_upload_dir();
+	$turbo_guard_log_dir    = $turbo_guard_upload_dir['basedir'] . '/turbo-guard';
+	if ( ! is_dir( $turbo_guard_log_dir ) ) {
+		wp_mkdir_p( $turbo_guard_log_dir );
 	}
-	$log  = $log_dir . '/error.log';
-	$line = '[' . gmdate( 'Y-m-d H:i:s' ) . '] LOAD ERROR: ' . $e->getMessage()
+	$turbo_guard_log  = $turbo_guard_log_dir . '/error.log';
+	$turbo_guard_line = '[' . gmdate( 'Y-m-d H:i:s' ) . '] LOAD ERROR: ' . $e->getMessage()
 	        . ' in ' . $e->getFile() . ' on line ' . $e->getLine() . "\n";
-	file_put_contents( $log, $line, FILE_APPEND | LOCK_EX ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+	file_put_contents( $turbo_guard_log, $turbo_guard_line, FILE_APPEND | LOCK_EX ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 	return; // Stop here — don't register hooks if core class failed to load.
 }
 
@@ -55,15 +55,15 @@ function turbo_guard_init() {
 	try {
 		Turbo_Guard::get_instance();
 	} catch ( Throwable $e ) {
-		$upload_dir = wp_upload_dir();
-		$log_dir    = $upload_dir['basedir'] . '/turbo-guard';
-		if ( ! is_dir( $log_dir ) ) {
-			wp_mkdir_p( $log_dir );
+		$turbo_guard_upload_dir = wp_upload_dir();
+		$turbo_guard_log_dir    = $turbo_guard_upload_dir['basedir'] . '/turbo-guard';
+		if ( ! is_dir( $turbo_guard_log_dir ) ) {
+			wp_mkdir_p( $turbo_guard_log_dir );
 		}
-		$log  = $log_dir . '/error.log';
-		$line = '[' . gmdate( 'Y-m-d H:i:s' ) . '] INIT ERROR: ' . $e->getMessage()
+		$turbo_guard_log  = $turbo_guard_log_dir . '/error.log';
+		$turbo_guard_line = '[' . gmdate( 'Y-m-d H:i:s' ) . '] INIT ERROR: ' . $e->getMessage()
 		        . ' in ' . $e->getFile() . ' on line ' . $e->getLine() . "\n";
-		file_put_contents( $log, $line, FILE_APPEND | LOCK_EX ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		file_put_contents( $turbo_guard_log, $turbo_guard_line, FILE_APPEND | LOCK_EX ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
 	}
 }
 add_action( 'plugins_loaded', 'turbo_guard_init' );

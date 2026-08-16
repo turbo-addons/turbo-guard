@@ -32,11 +32,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<h2><?php esc_html_e( 'Firewall Status', 'turbo-guard' ); ?></h2>
 		<div class="turbo-guard-status-row">
 			<?php
-			$enabled = 'yes' === get_option( 'turbo_guard_firewall_enabled', 'yes' );
+			$turbo_guard_enabled = 'yes' === get_option( 'turbo_guard_firewall_enabled', 'yes' );
 			?>
-			<span class="turbo-guard-status-dot <?php echo $enabled ? 'turbo-guard-status-on' : 'turbo-guard-status-off'; ?>"></span>
+			<span class="turbo-guard-status-dot <?php echo $turbo_guard_enabled ? 'turbo-guard-status-on' : 'turbo-guard-status-off'; ?>"></span>
 			<strong>
-				<?php echo $enabled ? esc_html__( 'Firewall is Active', 'turbo-guard' ) : esc_html__( 'Firewall is Disabled', 'turbo-guard' ); ?>
+				<?php echo $turbo_guard_enabled ? esc_html__( 'Firewall is Active', 'turbo-guard' ) : esc_html__( 'Firewall is Disabled', 'turbo-guard' ); ?>
 			</strong>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=turbo-guard-settings' ) ); ?>" class="button button-small">
 				<?php esc_html_e( 'Configure', 'turbo-guard' ); ?>
@@ -58,7 +58,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</form>
 		</div>
 
-		<?php if ( ! empty( $blocked_ips ) ) : ?>
+		<?php if ( ! empty( $turbo_guard_blocked_ips ) ) : ?>
 			<table class="widefat striped">
 				<thead>
 					<tr>
@@ -70,15 +70,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $blocked_ips as $blocked_ip ) : ?>
+					<?php foreach ( $turbo_guard_blocked_ips as $turbo_guard_blocked_ip ) : ?>
 						<tr>
-							<td><code><?php echo esc_html( $blocked_ip->ip_address ); ?></code></td>
-							<td><?php echo esc_html( $blocked_ip->reason ? $blocked_ip->reason : '—' ); ?></td>
-							<td><?php echo esc_html( human_time_diff( strtotime( $blocked_ip->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?></td>
+							<td><code><?php echo esc_html( $turbo_guard_blocked_ip->ip_address ); ?></code></td>
+							<td><?php echo esc_html( $turbo_guard_blocked_ip->reason ? $turbo_guard_blocked_ip->reason : '—' ); ?></td>
+							<td><?php echo esc_html( human_time_diff( strtotime( $turbo_guard_blocked_ip->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?></td>
 							<td>
 								<?php
-								if ( $blocked_ip->expires_at ) {
-									echo esc_html( human_time_diff( current_time( 'timestamp' ), strtotime( $blocked_ip->expires_at ) ) );
+								if ( $turbo_guard_blocked_ip->expires_at ) {
+									echo esc_html( human_time_diff( current_time( 'timestamp' ), strtotime( $turbo_guard_blocked_ip->expires_at ) ) );
 								} else {
 									esc_html_e( 'Permanent', 'turbo-guard' );
 								}
@@ -86,7 +86,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 							</td>
 							<td>
 								<button class="button button-small turbo-guard-unblock-ip"
-									data-ip="<?php echo esc_attr( $blocked_ip->ip_address ); ?>"
+									data-ip="<?php echo esc_attr( $turbo_guard_blocked_ip->ip_address ); ?>"
 									data-nonce="<?php echo esc_attr( wp_create_nonce( 'turbo_guard_admin' ) ); ?>">
 									<?php esc_html_e( 'Unblock', 'turbo-guard' ); ?>
 								</button>
@@ -115,15 +115,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $recent_blocks as $block ) : ?>
+					<?php foreach ( $recent_blocks as $turbo_guard_block ) : ?>
 						<tr>
-							<td><?php echo esc_html( human_time_diff( strtotime( $block->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?></td>
-							<td><code><?php echo esc_html( $block->ip_address ); ?></code></td>
-							<td><small><?php echo esc_html( $block->request_uri ); ?></small></td>
-							<td><?php echo esc_html( $block->block_reason ); ?></td>
+							<td><?php echo esc_html( human_time_diff( strtotime( $turbo_guard_block->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?></td>
+							<td><code><?php echo esc_html( $turbo_guard_block->ip_address ); ?></code></td>
+							<td><small><?php echo esc_html( $turbo_guard_block->request_uri ); ?></small></td>
+							<td><?php echo esc_html( $turbo_guard_block->block_reason ); ?></td>
 							<td>
 								<button class="button button-small turbo-guard-block-from-log"
-									data-ip="<?php echo esc_attr( $block->ip_address ); ?>"
+									data-ip="<?php echo esc_attr( $turbo_guard_block->ip_address ); ?>"
 									data-nonce="<?php echo esc_attr( wp_create_nonce( 'turbo_guard_admin' ) ); ?>">
 									<?php esc_html_e( 'Block IP', 'turbo-guard' ); ?>
 								</button>

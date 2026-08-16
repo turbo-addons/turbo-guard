@@ -11,14 +11,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$latest_scan = Turbo_Guard_Scanner::get_latest_scan();
-$report      = $latest_scan ? Turbo_Guard_AI_Advisor::get_cached_report( $latest_scan->id ) : null;
-$trend       = Turbo_Guard_AI_Advisor::get_security_trend();
-$openai_key  = get_option( 'turbo_guard_openai_api_key', '' );
+$turbo_guard_latest_scan = Turbo_Guard_Scanner::get_latest_scan();
+$turbo_guard_report      = $turbo_guard_latest_scan ? Turbo_Guard_AI_Advisor::get_cached_report( $turbo_guard_latest_scan->id ) : null;
+$turbo_guard_trend       = Turbo_Guard_AI_Advisor::get_security_trend();
+$turbo_guard_openai_key  = get_option( 'turbo_guard_openai_api_key', '' );
 
 // If no cached report, generate one from latest scan.
-if ( ! $report && $latest_scan ) {
-	$report = Turbo_Guard_AI_Advisor::analyse_scan( $latest_scan->id, false );
+if ( ! $turbo_guard_report && $turbo_guard_latest_scan ) {
+	$turbo_guard_report = Turbo_Guard_AI_Advisor::analyse_scan( $turbo_guard_latest_scan->id, false );
 }
 ?>
 
@@ -38,7 +38,7 @@ if ( ! $report && $latest_scan ) {
 		<span class="turbo-guard-header-badge"><?php esc_html_e( 'Powered by Turbo Guard AI', 'turbo-guard' ); ?></span>
 	</div>
 
-	<?php if ( ! $latest_scan ) : ?>
+	<?php if ( ! $turbo_guard_latest_scan ) : ?>
 		<div class="turbo-guard-card">
 			<div class="turbo-guard-no-scan">
 				<span class="dashicons dashicons-superhero-alt"></span>
@@ -50,50 +50,50 @@ if ( ! $report && $latest_scan ) {
 		</div>
 	<?php else : ?>
 
-		<?php if ( $report ) : ?>
+		<?php if ( $turbo_guard_report ) : ?>
 
 			<!-- Status Banner -->
 			<?php
-			$status_colors = array(
+			$turbo_guard_status_colors = array(
 				'clean'    => array( 'bg' => '#f0fdf4', 'border' => '#16a34a', 'text' => '#15803d', 'icon' => 'dashicons-yes-alt' ),
 				'warning'  => array( 'bg' => '#fffbeb', 'border' => '#d97706', 'text' => '#92400e', 'icon' => 'dashicons-warning' ),
 				'high'     => array( 'bg' => '#fff7ed', 'border' => '#ea580c', 'text' => '#c2410c', 'icon' => 'dashicons-warning' ),
 				'critical' => array( 'bg' => '#fef2f2', 'border' => '#dc2626', 'text' => '#b91c1c', 'icon' => 'dashicons-dismiss' ),
 			);
-			$sc = $status_colors[ $report['overall_status'] ] ?? $status_colors['warning'];
+			$turbo_guard_sc = $turbo_guard_status_colors[ $turbo_guard_report['overall_status'] ] ?? $turbo_guard_status_colors['warning'];
 			?>
-			<div style="background:<?php echo esc_attr( $sc['bg'] ); ?>;border-left:5px solid <?php echo esc_attr( $sc['border'] ); ?>;padding:16px 20px;border-radius:6px;margin-bottom:16px;display:flex;align-items:flex-start;gap:14px;">
-				<span class="dashicons <?php echo esc_attr( $sc['icon'] ); ?>" style="font-size:28px;width:28px;height:28px;color:<?php echo esc_attr( $sc['border'] ); ?>;flex-shrink:0;margin-top:2px;"></span>
+			<div style="background:<?php echo esc_attr( $turbo_guard_sc['bg'] ); ?>;border-left:5px solid <?php echo esc_attr( $turbo_guard_sc['border'] ); ?>;padding:16px 20px;border-radius:6px;margin-bottom:16px;display:flex;align-items:flex-start;gap:14px;">
+				<span class="dashicons <?php echo esc_attr( $turbo_guard_sc['icon'] ); ?>" style="font-size:28px;width:28px;height:28px;color:<?php echo esc_attr( $turbo_guard_sc['border'] ); ?>;flex-shrink:0;margin-top:2px;"></span>
 				<div>
-					<strong style="font-size:15px;color:<?php echo esc_attr( $sc['text'] ); ?>;display:block;margin-bottom:4px;">
+					<strong style="font-size:15px;color:<?php echo esc_attr( $turbo_guard_sc['text'] ); ?>;display:block;margin-bottom:4px;">
 						<?php
-						$labels = array(
+						$turbo_guard_labels = array(
 							'clean'    => __( 'Your site is clean and well-protected.', 'turbo-guard' ),
 							'warning'  => __( 'Security issues detected — action recommended.', 'turbo-guard' ),
 							'high'     => __( 'High-severity threats found — address within 24 hours.', 'turbo-guard' ),
 							'critical' => __( 'CRITICAL: Your site is actively compromised — act immediately.', 'turbo-guard' ),
 						);
-						echo esc_html( $labels[ $report['overall_status'] ] ?? $labels['warning'] );
+						echo esc_html( $turbo_guard_labels[ $turbo_guard_report['overall_status'] ] ?? $turbo_guard_labels['warning'] );
 						?>
 					</strong>
-					<p style="margin:0;color:<?php echo esc_attr( $sc['text'] ); ?>;font-size:13px;opacity:.85;">
-						<?php echo esc_html( $report['summary'] ); ?>
+					<p style="margin:0;color:<?php echo esc_attr( $turbo_guard_sc['text'] ); ?>;font-size:13px;opacity:.85;">
+						<?php echo esc_html( $turbo_guard_report['summary'] ); ?>
 					</p>
 				</div>
 			</div>
 
 			<!-- OpenAI Enhanced Narrative -->
-			<?php if ( ! empty( $report['ai_narrative'] ) ) : ?>
+			<?php if ( ! empty( $turbo_guard_report['ai_narrative'] ) ) : ?>
 				<div class="turbo-guard-card" style="border-left:4px solid #7c3aed;">
 					<h2 style="color:#7c3aed;">
 						<span class="dashicons dashicons-superhero-alt" style="vertical-align:middle;margin-right:6px;"></span>
 						<?php esc_html_e( 'AI Security Analysis (GPT-Enhanced)', 'turbo-guard' ); ?>
 					</h2>
 					<div style="font-size:13px;line-height:1.7;color:#374151;white-space:pre-wrap;">
-						<?php echo esc_html( $report['ai_narrative'] ); ?>
+						<?php echo esc_html( $turbo_guard_report['ai_narrative'] ); ?>
 					</div>
 				</div>
-			<?php elseif ( ! $openai_key ) : ?>
+			<?php elseif ( ! $turbo_guard_openai_key ) : ?>
 				<div class="turbo-guard-card" style="border:1px dashed #7c3aed;background:#faf5ff;">
 					<div style="display:flex;align-items:center;gap:16px;">
 						<span class="dashicons dashicons-superhero-alt" style="font-size:36px;width:36px;height:36px;color:#7c3aed;flex-shrink:0;"></span>
@@ -114,30 +114,30 @@ if ( ! $report && $latest_scan ) {
 			<?php endif; ?>
 
 			<!-- Attack Campaigns Identified -->
-			<?php if ( ! empty( $report['campaigns'] ) && 'clean' !== $report['overall_status'] ) : ?>
+			<?php if ( ! empty( $turbo_guard_report['campaigns'] ) && 'clean' !== $turbo_guard_report['overall_status'] ) : ?>
 				<div class="turbo-guard-card">
 					<h2><?php esc_html_e( 'Attack Analysis', 'turbo-guard' ); ?></h2>
-					<?php foreach ( $report['campaigns'] as $campaign ) : ?>
+					<?php foreach ( $turbo_guard_report['campaigns'] as $turbo_guard_campaign ) : ?>
 						<?php
-						$badge_class = 'turbo-guard-badge-' . ( $campaign['severity'] ?? 'high' );
+						$turbo_guard_badge_class = 'turbo-guard-badge-' . ( $turbo_guard_campaign['severity'] ?? 'high' );
 						?>
 						<div style="border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:12px;">
 							<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
-								<strong style="font-size:14px;"><?php echo esc_html( $campaign['name'] ); ?></strong>
-								<span class="turbo-guard-badge <?php echo esc_attr( $badge_class ); ?>">
-									<?php echo esc_html( ucfirst( $campaign['severity'] ) ); ?>
+								<strong style="font-size:14px;"><?php echo esc_html( $turbo_guard_campaign['name'] ); ?></strong>
+								<span class="turbo-guard-badge <?php echo esc_attr( $turbo_guard_badge_class ); ?>">
+									<?php echo esc_html( ucfirst( $turbo_guard_campaign['severity'] ) ); ?>
 								</span>
 							</div>
 							<p style="font-size:13px;color:#374151;line-height:1.6;margin:0 0 12px;">
-								<?php echo esc_html( $campaign['explanation'] ); ?>
+								<?php echo esc_html( $turbo_guard_campaign['explanation'] ); ?>
 							</p>
 
-							<?php if ( ! empty( $campaign['impact'] ) ) : ?>
+							<?php if ( ! empty( $turbo_guard_campaign['impact'] ) ) : ?>
 								<div style="background:#fef2f2;border-radius:6px;padding:10px 14px;margin-bottom:12px;">
 									<strong style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#dc2626;"><?php esc_html_e( 'Business Impact', 'turbo-guard' ); ?></strong>
 									<ul style="margin:6px 0 0;padding-left:18px;">
-										<?php foreach ( $campaign['impact'] as $impact ) : ?>
-											<li style="font-size:12px;color:#7f1d1d;margin-bottom:2px;"><?php echo esc_html( $impact ); ?></li>
+										<?php foreach ( $turbo_guard_campaign['impact'] as $turbo_guard_impact ) : ?>
+											<li style="font-size:12px;color:#7f1d1d;margin-bottom:2px;"><?php echo esc_html( $turbo_guard_impact ); ?></li>
 										<?php endforeach; ?>
 									</ul>
 								</div>
@@ -146,8 +146,8 @@ if ( ! $report && $latest_scan ) {
 							<div style="background:#f0fdf4;border-radius:6px;padding:10px 14px;">
 								<strong style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:#16a34a;"><?php esc_html_e( 'Step-by-Step Fix', 'turbo-guard' ); ?></strong>
 								<ol style="margin:6px 0 0;padding-left:18px;">
-									<?php foreach ( $campaign['steps'] as $step ) : ?>
-										<li style="font-size:12px;color:#14532d;margin-bottom:4px;line-height:1.5;"><?php echo esc_html( $step ); ?></li>
+									<?php foreach ( $turbo_guard_campaign['steps'] as $turbo_guard_step ) : ?>
+										<li style="font-size:12px;color:#14532d;margin-bottom:4px;line-height:1.5;"><?php echo esc_html( $turbo_guard_step ); ?></li>
 									<?php endforeach; ?>
 								</ol>
 							</div>
@@ -157,7 +157,7 @@ if ( ! $report && $latest_scan ) {
 			<?php endif; ?>
 
 			<!-- Security Trend Chart -->
-			<?php if ( count( $trend ) > 1 ) : ?>
+			<?php if ( count( $turbo_guard_trend ) > 1 ) : ?>
 				<div class="turbo-guard-card">
 					<h2><?php esc_html_e( 'Security Score Trend (30 Days)', 'turbo-guard' ); ?></h2>
 					<canvas id="turbo-guard-trend-chart" height="80"></canvas>

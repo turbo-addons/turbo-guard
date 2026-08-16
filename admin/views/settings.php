@@ -240,14 +240,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php esc_html_e( 'Reduce your attack surface. These settings follow security best practices used by Wordfence, MalCare, and Patchstack.', 'turbo-guard' ); ?>
 			</p>
 
-			<?php $h = Turbo_Guard_Hardening::get_hardening_options(); ?>
+			<?php $turbo_guard_h = Turbo_Guard_Hardening::get_hardening_options(); ?>
 
 			<table class="form-table">
 				<tr>
 					<th scope="row"><label for="security_headers"><?php esc_html_e( 'HTTP Security Headers', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="security_headers" name="security_headers" value="yes" <?php checked( $h['security_headers'], 'yes' ); ?> />
+							<input type="checkbox" id="security_headers" name="security_headers" value="yes" <?php checked( $turbo_guard_h['security_headers'], 'yes' ); ?> />
 							<?php esc_html_e( 'Add X-Frame-Options, X-Content-Type-Options, HSTS, Referrer-Policy headers', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Protects against clickjacking, MIME sniffing, and browser XSS attacks.', 'turbo-guard' ); ?></p>
@@ -257,7 +257,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><label for="hide_wp_version"><?php esc_html_e( 'Hide WordPress Version', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="hide_wp_version" name="hide_wp_version" value="yes" <?php checked( $h['hide_wp_version'], 'yes' ); ?> />
+							<input type="checkbox" id="hide_wp_version" name="hide_wp_version" value="yes" <?php checked( $turbo_guard_h['hide_wp_version'], 'yes' ); ?> />
 							<?php esc_html_e( 'Remove WordPress version from page source and RSS feeds', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Prevents attackers from targeting your specific WordPress version.', 'turbo-guard' ); ?></p>
@@ -267,7 +267,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><label for="prevent_user_enum"><?php esc_html_e( 'Block User Enumeration', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="prevent_user_enum" name="prevent_user_enum" value="yes" <?php checked( $h['prevent_user_enum'], 'yes' ); ?> />
+							<input type="checkbox" id="prevent_user_enum" name="prevent_user_enum" value="yes" <?php checked( $turbo_guard_h['prevent_user_enum'], 'yes' ); ?> />
 							<?php esc_html_e( 'Block ?author=1 and /wp-json/wp/v2/users for guests', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Prevents attackers from discovering valid admin usernames.', 'turbo-guard' ); ?></p>
@@ -277,7 +277,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><label for="remove_readme_links"><?php esc_html_e( 'Remove RSD/WLW Links', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="remove_readme_links" name="remove_readme_links" value="yes" <?php checked( $h['remove_readme_links'], 'yes' ); ?> />
+							<input type="checkbox" id="remove_readme_links" name="remove_readme_links" value="yes" <?php checked( $turbo_guard_h['remove_readme_links'], 'yes' ); ?> />
 							<?php esc_html_e( 'Remove RSD and Windows Live Writer manifest links from &lt;head&gt;', 'turbo-guard' ); ?>
 						</label>
 					</td>
@@ -286,7 +286,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><label for="disable_xmlrpc"><?php esc_html_e( 'Disable XML-RPC', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="disable_xmlrpc" name="disable_xmlrpc" value="yes" <?php checked( $h['disable_xmlrpc'], 'yes' ); ?> />
+							<input type="checkbox" id="disable_xmlrpc" name="disable_xmlrpc" value="yes" <?php checked( $turbo_guard_h['disable_xmlrpc'], 'yes' ); ?> />
 							<?php esc_html_e( 'Completely disable XML-RPC (used for brute force amplification attacks)', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Only enable if you do not use Jetpack, mobile WordPress app, or remote publishing.', 'turbo-guard' ); ?></p>
@@ -296,7 +296,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><label for="protect_rest_api"><?php esc_html_e( 'Protect REST API', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="protect_rest_api" name="protect_rest_api" value="yes" <?php checked( $h['protect_rest_api'], 'yes' ); ?> />
+							<input type="checkbox" id="protect_rest_api" name="protect_rest_api" value="yes" <?php checked( $turbo_guard_h['protect_rest_api'], 'yes' ); ?> />
 							<?php esc_html_e( 'Require login for REST API access (allows CF7, WooCommerce, and Gutenberg routes)', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Use with caution — some themes and plugins need public REST API access.', 'turbo-guard' ); ?></p>
@@ -306,7 +306,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><label for="disable_file_edit"><?php esc_html_e( 'Disable Theme/Plugin Editor', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="disable_file_edit" name="disable_file_edit" value="yes" <?php checked( $h['disable_file_edit'], 'yes' ); ?> />
+							<input type="checkbox" id="disable_file_edit" name="disable_file_edit" value="yes" <?php checked( $turbo_guard_h['disable_file_edit'], 'yes' ); ?> />
 							<?php esc_html_e( 'Disable the WordPress file editor (Appearance → Editor, Plugins → Editor)', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Prevents attackers who gain admin access from editing PHP files directly.', 'turbo-guard' ); ?></p>
@@ -316,7 +316,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><label for="block_php_uploads"><?php esc_html_e( 'Block PHP in Uploads Folder', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="block_php_uploads" name="block_php_uploads" value="yes" <?php checked( $h['block_php_uploads'], 'yes' ); ?> />
+							<input type="checkbox" id="block_php_uploads" name="block_php_uploads" value="yes" <?php checked( $turbo_guard_h['block_php_uploads'], 'yes' ); ?> />
 							<?php esc_html_e( 'Add .htaccess rule to block PHP execution in wp-content/uploads/', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Strongest protection against upload-based backdoors. Even if a hacker uploads a PHP shell, the server will refuse to run it. Recommended: ON.', 'turbo-guard' ); ?></p>
@@ -377,14 +377,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><label for="allowed_countries"><?php esc_html_e( 'Allowed Countries', 'turbo-guard' ); ?></label></th>
 					<td>
 						<?php
-						$allowed   = Turbo_Guard_Geo_Fence::get_allowed_countries();
-						$countries = Turbo_Guard_Geo_Fence::get_countries_list();
+						$turbo_guard_allowed   = Turbo_Guard_Geo_Fence::get_allowed_countries();
+						$turbo_guard_countries = Turbo_Guard_Geo_Fence::get_countries_list();
 						?>
 						<select id="allowed_countries" name="allowed_countries[]" multiple size="8" class="large-text">
-							<?php foreach ( $countries as $code => $name ) : ?>
-								<option value="<?php echo esc_attr( $code ); ?>"
-									<?php echo in_array( $code, $allowed, true ) ? 'selected' : ''; ?>>
-									<?php echo esc_html( $name . ' (' . $code . ')' ); ?>
+							<?php foreach ( $turbo_guard_countries as $turbo_guard_code => $turbo_guard_name ) : ?>
+								<option value="<?php echo esc_attr( $turbo_guard_code ); ?>"
+									<?php echo in_array( $turbo_guard_code, $turbo_guard_allowed, true ) ? 'selected' : ''; ?>>
+									<?php echo esc_html( $turbo_guard_name . ' (' . $turbo_guard_code . ')' ); ?>
 								</option>
 							<?php endforeach; ?>
 						</select>

@@ -14,11 +14,11 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 global $wpdb;
 
 // Only remove data if user opts in.
-$remove_data = get_option( 'turbo_guard_remove_data_on_uninstall', false );
+$turbo_guard_remove_data = get_option( 'turbo_guard_remove_data_on_uninstall', false );
 
-if ( $remove_data ) {
+if ( $turbo_guard_remove_data ) {
 	// Drop custom tables.
-	$tables = array(
+	$turbo_guard_tables = array(
 		$wpdb->prefix . 'turbo_guard_scans',
 		$wpdb->prefix . 'turbo_guard_scan_results',
 		$wpdb->prefix . 'turbo_guard_firewall_log',
@@ -27,9 +27,9 @@ if ( $remove_data ) {
 		$wpdb->prefix . 'turbo_guard_login_attempts',
 	);
 
-	foreach ( $tables as $table ) {
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Schema cleanup on uninstall; $table is built from $wpdb->prefix plus fixed table names, no user input.
-		$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
+	foreach ( $turbo_guard_tables as $turbo_guard_table ) {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.SchemaChange, WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Schema cleanup on uninstall; $turbo_guard_table is built from $wpdb->prefix plus fixed table names, no user input.
+		$wpdb->query( "DROP TABLE IF EXISTS {$turbo_guard_table}" );
 	}
 
 	// Delete all plugin options.

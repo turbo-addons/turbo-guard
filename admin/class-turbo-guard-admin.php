@@ -298,11 +298,11 @@ class Turbo_Guard_Admin {
 	 */
 	public function render_scanner_page() {
 		Turbo_Guard_Activity::get_instance()->record_visit( 'scanner' );
-		$latest_scan = Turbo_Guard_Scanner::get_latest_scan();
-		$results     = array();
+		$turbo_guard_latest_scan = Turbo_Guard_Scanner::get_latest_scan();
+		$turbo_guard_results     = array();
 
-		if ( $latest_scan ) {
-			$results = Turbo_Guard_Scanner::get_scan_results( $latest_scan->id );
+		if ( $turbo_guard_latest_scan ) {
+			$turbo_guard_results = Turbo_Guard_Scanner::get_scan_results( $turbo_guard_latest_scan->id );
 		}
 
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/scanner.php';
@@ -325,15 +325,15 @@ class Turbo_Guard_Admin {
 			$recent_blocks = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				"SELECT * FROM {$wpdb->prefix}turbo_guard_firewall_log ORDER BY id DESC LIMIT 50"
 			);
-			$blocked_ips = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+			$turbo_guard_blocked_ips = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				"SELECT * FROM {$wpdb->prefix}turbo_guard_ip_blocklist ORDER BY id DESC"
 			);
-			$tg_cache_data = array( 'blocks' => $recent_blocks, 'ips' => $blocked_ips );
+			$tg_cache_data = array( 'blocks' => $recent_blocks, 'ips' => $turbo_guard_blocked_ips );
 			wp_cache_set( $cache_key, $tg_cache_data, 'turbo_guard', 60 );
 		}
 
-		$recent_blocks = $tg_cache_data['blocks'];
-		$blocked_ips   = $tg_cache_data['ips'];
+		$recent_blocks          = $tg_cache_data['blocks'];
+		$turbo_guard_blocked_ips = $tg_cache_data['ips'];
 
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/firewall.php';
 	}
