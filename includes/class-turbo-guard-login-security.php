@@ -90,7 +90,7 @@ class Turbo_Guard_Login_Security {
 				'turbo_guard_locked_out',
 				sprintf(
 					/* translators: %d: minutes remaining */
-					__( 'Too many failed login attempts. Please try again in %d minutes.', 'turbo-guard-security-malware-scanner' ),
+					__( 'Too many failed login attempts. Please try again in %d minutes.', 'turbo-guard' ),
 					ceil( $remaining / 60 )
 				)
 			);
@@ -108,7 +108,7 @@ class Turbo_Guard_Login_Security {
 			// Auto-block IP temporarily.
 			Turbo_Guard_Firewall::block_ip(
 				$ip,
-				__( 'Too many failed login attempts', 'turbo-guard-security-malware-scanner' ),
+				__( 'Too many failed login attempts', 'turbo-guard' ),
 				$lockout_duration
 			);
 
@@ -117,7 +117,7 @@ class Turbo_Guard_Login_Security {
 				'critical',
 				sprintf(
 					/* translators: %s: IP address */
-					__( 'Brute force attack detected from IP: %s', 'turbo-guard-security-malware-scanner' ),
+					__( 'Brute force attack detected from IP: %s', 'turbo-guard' ),
 					$ip
 				)
 			);
@@ -126,7 +126,7 @@ class Turbo_Guard_Login_Security {
 				'turbo_guard_locked_out',
 				sprintf(
 					/* translators: %d: minutes */
-					__( 'Too many failed login attempts. Please try again in %d minutes.', 'turbo-guard-security-malware-scanner' ),
+					__( 'Too many failed login attempts. Please try again in %d minutes.', 'turbo-guard' ),
 					ceil( $lockout_duration / 60 )
 				)
 			);
@@ -217,13 +217,13 @@ class Turbo_Guard_Login_Security {
 		$admin_email = get_option( 'turbo_guard_notify_admin_email', get_option( 'admin_email' ) );
 		$subject     = sprintf(
 			/* translators: %s: Site name */
-			__( '[%s] New Administrator Login from Unknown IP', 'turbo-guard-security-malware-scanner' ),
+			__( '[%s] New Administrator Login from Unknown IP', 'turbo-guard' ),
 			get_bloginfo( 'name' )
 		);
 
 		$message = sprintf(
 			/* translators: 1: Username, 2: IP address, 3: Date/time */
-			__( "Hello,\n\nA new administrator login was detected:\n\nUsername: %1\$s\nIP Address: %2\$s\nTime: %3\$s\n\nIf this wasn't you, please secure your account immediately.\n\n-- Turbo Guard Security", 'turbo-guard-security-malware-scanner' ),
+			__( "Hello,\n\nA new administrator login was detected:\n\nUsername: %1\$s\nIP Address: %2\$s\nTime: %3\$s\n\nIf this wasn't you, please secure your account immediately.\n\n-- Turbo Guard Security", 'turbo-guard' ),
 			$username,
 			$ip,
 			current_time( 'mysql' )
@@ -237,7 +237,7 @@ class Turbo_Guard_Login_Security {
 			'info',
 			sprintf(
 				/* translators: 1: Username, 2: IP address */
-				__( 'New admin login: %1$s from IP %2$s', 'turbo-guard-security-malware-scanner' ),
+				__( 'New admin login: %1$s from IP %2$s', 'turbo-guard' ),
 				$username,
 				$ip
 			)

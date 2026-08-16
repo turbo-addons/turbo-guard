@@ -130,7 +130,7 @@ class Turbo_Guard_2FA {
 		if ( '' === $code ) {
 			return new WP_Error(
 				'turbo_guard_2fa_required',
-				esc_html__( 'Please enter your two-factor authentication code to log in.', 'turbo-guard-security-malware-scanner' )
+				esc_html__( 'Please enter your two-factor authentication code to log in.', 'turbo-guard' )
 			);
 		}
 
@@ -153,7 +153,7 @@ class Turbo_Guard_2FA {
 
 		return new WP_Error(
 			'turbo_guard_2fa_invalid',
-			esc_html__( 'Invalid two-factor authentication code. Please try again.', 'turbo-guard-security-malware-scanner' )
+			esc_html__( 'Invalid two-factor authentication code. Please try again.', 'turbo-guard' )
 		);
 	}
 
@@ -166,7 +166,7 @@ class Turbo_Guard_2FA {
 		?>
 		<p>
 			<label for="turbo_guard_2fa_code">
-				<?php esc_html_e( '2FA Code (if enabled)', 'turbo-guard-security-malware-scanner' ); ?><br>
+				<?php esc_html_e( '2FA Code (if enabled)', 'turbo-guard' ); ?><br>
 				<input type="text"
 					id="turbo_guard_2fa_code"
 					name="turbo_guard_2fa_code"
@@ -403,7 +403,7 @@ class Turbo_Guard_2FA {
 			'info',
 			sprintf(
 				/* translators: %d: user ID */
-				__( '2FA enabled for user ID: %d', 'turbo-guard-security-malware-scanner' ),
+				__( '2FA enabled for user ID: %d', 'turbo-guard' ),
 				$user_id
 			)
 		);
@@ -427,7 +427,7 @@ class Turbo_Guard_2FA {
 			'warning',
 			sprintf(
 				/* translators: %d: user ID */
-				__( '2FA disabled for user ID: %d', 'turbo-guard-security-malware-scanner' ),
+				__( '2FA disabled for user ID: %d', 'turbo-guard' ),
 				$user_id
 			)
 		);
@@ -465,32 +465,32 @@ class Turbo_Guard_2FA {
 
 		wp_nonce_field( 'turbo_guard_2fa_profile_' . $user->ID, 'turbo_guard_2fa_nonce' );
 		?>
-		<h2><?php esc_html_e( 'Two-Factor Authentication (Turbo Guard)', 'turbo-guard-security-malware-scanner' ); ?></h2>
+		<h2><?php esc_html_e( 'Two-Factor Authentication (Turbo Guard)', 'turbo-guard' ); ?></h2>
 		<table class="form-table">
 			<tr>
-				<th><?php esc_html_e( '2FA Status', 'turbo-guard-security-malware-scanner' ); ?></th>
+				<th><?php esc_html_e( '2FA Status', 'turbo-guard' ); ?></th>
 				<td>
 					<?php if ( $enabled ) : ?>
-						<span style="color:#16a34a;font-weight:600;">&#10003; <?php esc_html_e( 'Enabled', 'turbo-guard-security-malware-scanner' ); ?></span>
+						<span style="color:#16a34a;font-weight:600;">&#10003; <?php esc_html_e( 'Enabled', 'turbo-guard' ); ?></span>
 					<?php else : ?>
-						<span style="color:#9ca3af;"><?php esc_html_e( 'Disabled', 'turbo-guard-security-malware-scanner' ); ?></span>
+						<span style="color:#9ca3af;"><?php esc_html_e( 'Disabled', 'turbo-guard' ); ?></span>
 					<?php endif; ?>
 				</td>
 			</tr>
 			<?php if ( ! $enabled ) : ?>
 			<tr>
-				<th><?php esc_html_e( 'Scan QR Code', 'turbo-guard-security-malware-scanner' ); ?></th>
+				<th><?php esc_html_e( 'Scan QR Code', 'turbo-guard' ); ?></th>
 				<td>
 					<img src="<?php echo esc_url( $qr_url ); ?>"
-						alt="<?php esc_attr_e( 'QR code for authenticator app', 'turbo-guard-security-malware-scanner' ); ?>"
+						alt="<?php esc_attr_e( 'QR code for authenticator app', 'turbo-guard' ); ?>"
 						width="200" height="200"
 						style="border:6px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.15);border-radius:6px;"
 					/>
 					<p class="description">
-						<?php esc_html_e( 'Scan with Google Authenticator, Authy, or any TOTP app.', 'turbo-guard-security-malware-scanner' ); ?>
+						<?php esc_html_e( 'Scan with Google Authenticator, Authy, or any TOTP app.', 'turbo-guard' ); ?>
 					</p>
 					<p>
-						<?php esc_html_e( 'Or enter this key manually:', 'turbo-guard-security-malware-scanner' ); ?>
+						<?php esc_html_e( 'Or enter this key manually:', 'turbo-guard' ); ?>
 						<code style="background:#f3f4f6;padding:4px 8px;border-radius:4px;user-select:all;">
 							<?php echo esc_html( $new_secret ); ?>
 						</code>
@@ -498,7 +498,7 @@ class Turbo_Guard_2FA {
 					<input type="hidden" name="turbo_guard_2fa_secret" value="<?php echo esc_attr( $new_secret ); ?>" />
 					<p style="margin-top:12px;">
 						<label>
-							<strong><?php esc_html_e( 'Verify code to activate:', 'turbo-guard-security-malware-scanner' ); ?></strong><br>
+							<strong><?php esc_html_e( 'Verify code to activate:', 'turbo-guard' ); ?></strong><br>
 							<input type="text"
 								name="turbo_guard_2fa_verify"
 								maxlength="6"
@@ -512,32 +512,32 @@ class Turbo_Guard_2FA {
 					<p>
 						<label>
 							<input type="checkbox" name="turbo_guard_2fa_enable" value="1" />
-							<?php esc_html_e( 'Enable Two-Factor Authentication for my account', 'turbo-guard-security-malware-scanner' ); ?>
+							<?php esc_html_e( 'Enable Two-Factor Authentication for my account', 'turbo-guard' ); ?>
 						</label>
 					</p>
 				</td>
 			</tr>
 			<?php else : ?>
 			<tr>
-				<th><?php esc_html_e( 'Recovery Codes', 'turbo-guard-security-malware-scanner' ); ?></th>
+				<th><?php esc_html_e( 'Recovery Codes', 'turbo-guard' ); ?></th>
 				<td>
 					<?php if ( ! empty( $recovery_codes ) ) : ?>
 						<p class="description">
 							<?php
 							printf(
 								/* translators: %d: remaining code count */
-								esc_html__( '%d recovery codes remaining. Store them safely — each can only be used once.', 'turbo-guard-security-malware-scanner' ),
+								esc_html__( '%d recovery codes remaining. Store them safely — each can only be used once.', 'turbo-guard' ),
 								count( $recovery_codes )
 							);
 							?>
 						</p>
 					<?php else : ?>
-						<p style="color:#dc2626;"><?php esc_html_e( 'No recovery codes remaining. Disable and re-enable 2FA to generate new codes.', 'turbo-guard-security-malware-scanner' ); ?></p>
+						<p style="color:#dc2626;"><?php esc_html_e( 'No recovery codes remaining. Disable and re-enable 2FA to generate new codes.', 'turbo-guard' ); ?></p>
 					<?php endif; ?>
 					<p>
 						<label>
 							<input type="checkbox" name="turbo_guard_2fa_disable" value="1" />
-							<span style="color:#dc2626;"><?php esc_html_e( 'Disable Two-Factor Authentication', 'turbo-guard-security-malware-scanner' ); ?></span>
+							<span style="color:#dc2626;"><?php esc_html_e( 'Disable Two-Factor Authentication', 'turbo-guard' ); ?></span>
 						</label>
 					</p>
 				</td>
@@ -582,11 +582,11 @@ class Turbo_Guard_2FA {
 				// Show recovery codes in a transient — displayed on next page load.
 				set_transient( 'turbo_guard_2fa_new_codes_' . $user_id, $recovery, 60 );
 				add_action( 'user_profile_update_errors', function( $errors ) {
-					$errors->add( 'turbo_guard_2fa_enabled', __( 'Turbo Guard: Two-Factor Authentication enabled! Save your recovery codes now.', 'turbo-guard-security-malware-scanner' ), 'info' );
+					$errors->add( 'turbo_guard_2fa_enabled', __( 'Turbo Guard: Two-Factor Authentication enabled! Save your recovery codes now.', 'turbo-guard' ), 'info' );
 				} );
 			} else {
 				add_action( 'user_profile_update_errors', function( $errors ) {
-					$errors->add( 'turbo_guard_2fa_invalid', __( 'Turbo Guard: Invalid verification code — 2FA was NOT enabled. Please try again.', 'turbo-guard-security-malware-scanner' ) );
+					$errors->add( 'turbo_guard_2fa_invalid', __( 'Turbo Guard: Invalid verification code — 2FA was NOT enabled. Please try again.', 'turbo-guard' ) );
 				} );
 			}
 		}

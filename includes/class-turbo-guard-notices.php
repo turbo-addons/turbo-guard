@@ -486,7 +486,7 @@ class Turbo_Guard_Notices {
 				<button class="tg-notice-dismiss"
 				        data-notice-id="<?php echo esc_attr( $id ); ?>"
 				        data-nonce="<?php echo esc_attr( wp_create_nonce( 'tg_dismiss_notice_' . $id ) ); ?>"
-				        aria-label="<?php esc_attr_e( 'Dismiss this notice', 'turbo-guard-security-malware-scanner' ); ?>">
+				        aria-label="<?php esc_attr_e( 'Dismiss this notice', 'turbo-guard' ); ?>">
 					&times;
 				</button>
 			<?php endif; ?>

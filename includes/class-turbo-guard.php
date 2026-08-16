@@ -188,7 +188,7 @@ class Turbo_Guard {
 		$settings_link = sprintf(
 			'<a href="%s">%s</a>',
 			esc_url( admin_url( 'admin.php?page=turbo-guard' ) ),
-			esc_html__( 'Dashboard', 'turbo-guard-security-malware-scanner' )
+			esc_html__( 'Dashboard', 'turbo-guard' )
 		);
 
 		array_unshift( $links, $settings_link );

@@ -66,38 +66,38 @@ class Turbo_Guard_Firewall {
 
 		// Check if IP is blocked.
 		if ( $this->is_ip_blocked() ) {
-			$this->block_request( __( 'IP address is blocked', 'turbo-guard-security-malware-scanner' ) );
+			$this->block_request( __( 'IP address is blocked', 'turbo-guard' ) );
 			return;
 		}
 
 		// Rate limiting check.
 		if ( ! $is_admin && $this->is_rate_limited() ) {
-			$this->block_request( __( 'Too many requests - rate limit exceeded', 'turbo-guard-security-malware-scanner' ) );
+			$this->block_request( __( 'Too many requests - rate limit exceeded', 'turbo-guard' ) );
 			return;
 		}
 
 		// SQL injection detection.
 		if ( ! $is_admin && $this->detect_sql_injection() ) {
-			$this->block_request( __( 'SQL injection attempt detected', 'turbo-guard-security-malware-scanner' ) );
+			$this->block_request( __( 'SQL injection attempt detected', 'turbo-guard' ) );
 			return;
 		}
 
 		// XSS detection.
 		if ( ! $is_admin && $this->detect_xss() ) {
-			$this->block_request( __( 'Cross-site scripting (XSS) attempt detected', 'turbo-guard-security-malware-scanner' ) );
+			$this->block_request( __( 'Cross-site scripting (XSS) attempt detected', 'turbo-guard' ) );
 			return;
 		}
 
 		// Directory traversal.
 		if ( ! $is_admin && $this->detect_directory_traversal() ) {
-			$this->block_request( __( 'Directory traversal attempt detected', 'turbo-guard-security-malware-scanner' ) );
+			$this->block_request( __( 'Directory traversal attempt detected', 'turbo-guard' ) );
 			return;
 		}
 
 		// File upload attacks.
 		// phpcs:ignore WordPress.Security.NonceVerification -- WAF inspects raw request data for attack patterns; not a state-changing form action.
 		if ( ! empty( $_FILES ) && ! $is_admin && $this->detect_malicious_upload() ) {
-			$this->block_request( __( 'Malicious file upload attempt detected', 'turbo-guard-security-malware-scanner' ) );
+			$this->block_request( __( 'Malicious file upload attempt detected', 'turbo-guard' ) );
 			return;
 		}
 	}
@@ -436,8 +436,8 @@ class Turbo_Guard_Firewall {
 
 		// Send 403 response and exit.
 		wp_die(
-			esc_html__( 'Access Denied', 'turbo-guard-security-malware-scanner' ),
-			esc_html__( 'Turbo Guard Firewall', 'turbo-guard-security-malware-scanner' ),
+			esc_html__( 'Access Denied', 'turbo-guard' ),
+			esc_html__( 'Turbo Guard Firewall', 'turbo-guard' ),
 			array( 'response' => 403 )
 		);
 	}
@@ -489,7 +489,7 @@ class Turbo_Guard_Firewall {
 				'warning',
 				sprintf(
 					/* translators: %s: IP/rule */
-					__( 'IP/rule blocked: %s', 'turbo-guard-security-malware-scanner' ),
+					__( 'IP/rule blocked: %s', 'turbo-guard' ),
 					$ip_address
 				)
 			);

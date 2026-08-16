@@ -116,13 +116,13 @@ class Turbo_Guard_GSC {
 		}
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'Unauthorized', 'turbo-guard-security-malware-scanner' ) );
+			wp_die( esc_html__( 'Unauthorized', 'turbo-guard' ) );
 		}
 
 		// Verify the OAuth state to prevent CSRF (an attacker linking their own Google account to this site).
 		$state = isset( $_GET['state'] ) ? sanitize_text_field( wp_unslash( $_GET['state'] ) ) : '';
 		if ( ! wp_verify_nonce( $state, 'turbo_guard_gsc_oauth' ) ) {
-			wp_die( esc_html__( 'Invalid or expired OAuth request. Please try connecting again.', 'turbo-guard-security-malware-scanner' ) );
+			wp_die( esc_html__( 'Invalid or expired OAuth request. Please try connecting again.', 'turbo-guard' ) );
 		}
 
 		$code = sanitize_text_field( wp_unslash( $_GET['code'] ) );
@@ -146,7 +146,7 @@ class Turbo_Guard_GSC {
 				esc_html(
 					sprintf(
 						/* translators: %s: error message */
-						__( 'OAuth error: %s', 'turbo-guard-security-malware-scanner' ),
+						__( 'OAuth error: %s', 'turbo-guard' ),
 						$response->get_error_message()
 					)
 				)
@@ -167,8 +167,8 @@ class Turbo_Guard_GSC {
 				esc_html(
 					sprintf(
 						/* translators: %s: error message */
-						__( 'OAuth error: %s', 'turbo-guard-security-malware-scanner' ),
-						$body['error_description'] ?? __( 'Unknown error', 'turbo-guard-security-malware-scanner' )
+						__( 'OAuth error: %s', 'turbo-guard' ),
+						$body['error_description'] ?? __( 'Unknown error', 'turbo-guard' )
 					)
 				)
 			);

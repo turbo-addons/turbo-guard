@@ -110,7 +110,7 @@ class Turbo_Guard_Vuln_Scanner {
 			$results['total'] > 0 ? 'warning' : 'info',
 			sprintf(
 				/* translators: %d: vulnerability count */
-				__( 'Vulnerability scan complete. %d vulnerabilities found.', 'turbo-guard-security-malware-scanner' ),
+				__( 'Vulnerability scan complete. %d vulnerabilities found.', 'turbo-guard' ),
 				$results['total']
 			)
 		);
@@ -281,7 +281,7 @@ class Turbo_Guard_Vuln_Scanner {
 	private static function normalise_vuln( $raw ) {
 		return array(
 			'id'         => $raw['id'] ?? '',
-			'title'      => $raw['title'] ?? __( 'Unknown vulnerability', 'turbo-guard-security-malware-scanner' ),
+			'title'      => $raw['title'] ?? __( 'Unknown vulnerability', 'turbo-guard' ),
 			'type'       => $raw['vuln_type'] ?? 'UNKNOWN',
 			'fixed_in'   => $raw['fixed_in'] ?? null,
 			'cvss'       => $raw['cvss'] ?? null,
@@ -340,14 +340,14 @@ class Turbo_Guard_Vuln_Scanner {
 
 		$subject = sprintf(
 			/* translators: 1: site name, 2: count */
-			__( '[%1$s] Turbo Guard: %2$d Vulnerabilities Found', 'turbo-guard-security-malware-scanner' ),
+			__( '[%1$s] Turbo Guard: %2$d Vulnerabilities Found', 'turbo-guard' ),
 			get_bloginfo( 'name' ),
 			$results['total']
 		);
 
 		$body  = sprintf(
 			/* translators: %d: number of vulnerability issues found */
-			__( "Turbo Guard vulnerability scan found %d issue(s):\n\n", 'turbo-guard-security-malware-scanner' ),
+			__( "Turbo Guard vulnerability scan found %d issue(s):\n\n", 'turbo-guard' ),
 			$results['total']
 		);
 
@@ -364,7 +364,7 @@ class Turbo_Guard_Vuln_Scanner {
 
 		$body .= "\n" . sprintf(
 			/* translators: %s: URL to view vulnerability details */
-			__( 'View details: %s', 'turbo-guard-security-malware-scanner' ),
+			__( 'View details: %s', 'turbo-guard' ),
 			admin_url( 'admin.php?page=turbo-guard-vulnerabilities' )
 		);
 

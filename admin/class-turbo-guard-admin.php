@@ -95,100 +95,100 @@ class Turbo_Guard_Admin {
 	 */
 	public function add_admin_menu() {
 		add_menu_page(
-			__( 'Turbo Guard', 'turbo-guard-security-malware-scanner' ),
-			__( 'Turbo Guard', 'turbo-guard-security-malware-scanner' ),
+			__( 'Turbo Guard', 'turbo-guard' ),
+			__( 'Turbo Guard', 'turbo-guard' ),
 			'manage_options',
-			'turbo-guard-security-malware-scanner',
+			'turbo-guard',
 			array( $this, 'render_dashboard_page' ),
 			'dashicons-shield',
 			80
 		);
 
 		add_submenu_page(
-			'turbo-guard-security-malware-scanner',
-			__( 'Dashboard', 'turbo-guard-security-malware-scanner' ),
-			__( 'Dashboard', 'turbo-guard-security-malware-scanner' ),
+			'turbo-guard',
+			__( 'Dashboard', 'turbo-guard' ),
+			__( 'Dashboard', 'turbo-guard' ),
 			'manage_options',
-			'turbo-guard-security-malware-scanner',
+			'turbo-guard',
 			array( $this, 'render_dashboard_page' )
 		);
 
 		add_submenu_page(
-			'turbo-guard-security-malware-scanner',
-			__( 'Scanner', 'turbo-guard-security-malware-scanner' ),
-			__( 'Scanner', 'turbo-guard-security-malware-scanner' ),
+			'turbo-guard',
+			__( 'Scanner', 'turbo-guard' ),
+			__( 'Scanner', 'turbo-guard' ),
 			'manage_options',
 			'turbo-guard-scanner',
 			array( $this, 'render_scanner_page' )
 		);
 
 		add_submenu_page(
-			'turbo-guard-security-malware-scanner',
-			__( 'Firewall', 'turbo-guard-security-malware-scanner' ),
-			__( 'Firewall', 'turbo-guard-security-malware-scanner' ),
+			'turbo-guard',
+			__( 'Firewall', 'turbo-guard' ),
+			__( 'Firewall', 'turbo-guard' ),
 			'manage_options',
 			'turbo-guard-firewall',
 			array( $this, 'render_firewall_page' )
 		);
 
 		add_submenu_page(
-			'turbo-guard-security-malware-scanner',
-			__( 'Settings', 'turbo-guard-security-malware-scanner' ),
-			__( 'Settings', 'turbo-guard-security-malware-scanner' ),
+			'turbo-guard',
+			__( 'Settings', 'turbo-guard' ),
+			__( 'Settings', 'turbo-guard' ),
 			'manage_options',
 			'turbo-guard-settings',
 			array( $this, 'render_settings_page' )
 		);
 
 		add_submenu_page(
-			'turbo-guard-security-malware-scanner',
-			__( 'GSC Cleanup', 'turbo-guard-security-malware-scanner' ),
-			__( 'GSC Cleanup', 'turbo-guard-security-malware-scanner' ),
+			'turbo-guard',
+			__( 'GSC Cleanup', 'turbo-guard' ),
+			__( 'GSC Cleanup', 'turbo-guard' ),
 			'manage_options',
 			'turbo-guard-gsc',
 			array( $this, 'render_gsc_page' )
 		);
 
 		add_submenu_page(
-			'turbo-guard-security-malware-scanner',
-			__( 'Vulnerabilities', 'turbo-guard-security-malware-scanner' ),
-			__( 'Vulnerabilities', 'turbo-guard-security-malware-scanner' ),
+			'turbo-guard',
+			__( 'Vulnerabilities', 'turbo-guard' ),
+			__( 'Vulnerabilities', 'turbo-guard' ),
 			'manage_options',
 			'turbo-guard-vulnerabilities',
 			array( $this, 'render_vulnerabilities_page' )
 		);
 
 		add_submenu_page(
-			'turbo-guard-security-malware-scanner',
-			__( 'Live Traffic', 'turbo-guard-security-malware-scanner' ),
-			__( 'Live Traffic', 'turbo-guard-security-malware-scanner' ),
+			'turbo-guard',
+			__( 'Live Traffic', 'turbo-guard' ),
+			__( 'Live Traffic', 'turbo-guard' ),
 			'manage_options',
 			'turbo-guard-traffic',
 			array( $this, 'render_live_traffic_page' )
 		);
 
 		add_submenu_page(
-			'turbo-guard-security-malware-scanner',
-			__( 'AI Advisor', 'turbo-guard-security-malware-scanner' ),
-			'🤖 ' . __( 'AI Advisor', 'turbo-guard-security-malware-scanner' ),
+			'turbo-guard',
+			__( 'AI Advisor', 'turbo-guard' ),
+			'🤖 ' . __( 'AI Advisor', 'turbo-guard' ),
 			'manage_options',
 			'turbo-guard-ai-report',
 			array( $this, 'render_ai_report_page' )
 		);
 
 		add_submenu_page(
-			'turbo-guard-security-malware-scanner',
-			__( 'File Integrity', 'turbo-guard-security-malware-scanner' ),
-			'🔒 ' . __( 'File Integrity', 'turbo-guard-security-malware-scanner' ),
+			'turbo-guard',
+			__( 'File Integrity', 'turbo-guard' ),
+			'🔒 ' . __( 'File Integrity', 'turbo-guard' ),
 			'manage_options',
 			'turbo-guard-integrity',
 			array( $this, 'render_integrity_page' )
 		);
 
 		add_submenu_page(
-			'turbo-guard-security-malware-scanner',
-			__( 'SEO Spam Detector', 'turbo-guard-security-malware-scanner' ),
-			'🔎 ' . __( 'SEO Spam', 'turbo-guard-security-malware-scanner' ),
+			'turbo-guard',
+			__( 'SEO Spam Detector', 'turbo-guard' ),
+			'🔎 ' . __( 'SEO Spam', 'turbo-guard' ),
 			'manage_options',
 			'turbo-guard-seo-spam',
 			array( $this, 'render_seo_spam_page' )
@@ -203,7 +203,7 @@ class Turbo_Guard_Admin {
 	 */
 	public function enqueue_admin_assets( $hook ) {
 		// Only load on Turbo Guard pages.
-		if ( strpos( $hook, 'turbo-guard-security-malware-scanner' ) === false ) {
+		if ( strpos( $hook, 'turbo-guard' ) === false ) {
 			return;
 		}
 
@@ -233,14 +233,14 @@ class Turbo_Guard_Admin {
 				'nonce'      => wp_create_nonce( 'turbo_guard_admin' ),
 				'flushNonce' => wp_create_nonce( 'turbo_guard_flush_notices' ),
 				'strings' => array(
-					'scanning'       => __( 'Scanning...', 'turbo-guard-security-malware-scanner' ),
-					'scanComplete'   => __( 'Scan Complete!', 'turbo-guard-security-malware-scanner' ),
-					'confirmDelete'  => __( 'Are you sure you want to delete these files? A backup will be created automatically.', 'turbo-guard-security-malware-scanner' ),
-					'deleteSuccess'  => __( 'Files deleted successfully!', 'turbo-guard-security-malware-scanner' ),
-					'deleteFailed'   => __( 'Failed to delete some files.', 'turbo-guard-security-malware-scanner' ),
-					'selectFiles'    => __( 'Please select at least one file.', 'turbo-guard-security-malware-scanner' ),
-					'savingSettings' => __( 'Saving...', 'turbo-guard-security-malware-scanner' ),
-					'settingsSaved'  => __( 'Settings saved successfully!', 'turbo-guard-security-malware-scanner' ),
+					'scanning'       => __( 'Scanning...', 'turbo-guard' ),
+					'scanComplete'   => __( 'Scan Complete!', 'turbo-guard' ),
+					'confirmDelete'  => __( 'Are you sure you want to delete these files? A backup will be created automatically.', 'turbo-guard' ),
+					'deleteSuccess'  => __( 'Files deleted successfully!', 'turbo-guard' ),
+					'deleteFailed'   => __( 'Failed to delete some files.', 'turbo-guard' ),
+					'selectFiles'    => __( 'Please select at least one file.', 'turbo-guard' ),
+					'savingSettings' => __( 'Saving...', 'turbo-guard' ),
+					'settingsSaved'  => __( 'Settings saved successfully!', 'turbo-guard' ),
 				),
 			)
 		);
@@ -446,7 +446,7 @@ class Turbo_Guard_Admin {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		$scanner = new Turbo_Guard_Scanner();
@@ -455,7 +455,7 @@ class Turbo_Guard_Admin {
 		wp_send_json_success(
 			array(
 				'scan_id' => $scan_id,
-				'message' => __( 'Scan started successfully.', 'turbo-guard-security-malware-scanner' ),
+				'message' => __( 'Scan started successfully.', 'turbo-guard' ),
 			)
 		);
 	}
@@ -469,14 +469,14 @@ class Turbo_Guard_Admin {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		$scan_id = isset( $_POST['scan_id'] ) ? absint( $_POST['scan_id'] ) : 0;
 		$offset  = isset( $_POST['offset'] ) ? absint( $_POST['offset'] ) : 0;
 
 		if ( ! $scan_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid scan ID.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid scan ID.', 'turbo-guard' ) ) );
 		}
 
 		$scanner = new Turbo_Guard_Scanner();
@@ -503,14 +503,14 @@ class Turbo_Guard_Admin {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		$scan_id  = isset( $_POST['scan_id'] ) ? absint( $_POST['scan_id'] ) : 0;
 		$severity = isset( $_POST['severity'] ) ? sanitize_key( $_POST['severity'] ) : '';
 
 		if ( ! $scan_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid scan ID.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid scan ID.', 'turbo-guard' ) ) );
 		}
 
 		$results = Turbo_Guard_Scanner::get_scan_results( $scan_id, $severity );
@@ -527,13 +527,13 @@ class Turbo_Guard_Admin {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		$result_ids = isset( $_POST['result_ids'] ) ? array_map( 'absint', (array) $_POST['result_ids'] ) : array();
 
 		if ( empty( $result_ids ) ) {
-			wp_send_json_error( array( 'message' => __( 'No files selected.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'No files selected.', 'turbo-guard' ) ) );
 		}
 
 		$result = Turbo_Guard_Cleaner::delete_files( $result_ids );
@@ -555,13 +555,13 @@ class Turbo_Guard_Admin {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		$result_ids = isset( $_POST['result_ids'] ) ? array_map( 'absint', (array) $_POST['result_ids'] ) : array();
 
 		if ( empty( $result_ids ) ) {
-			wp_send_json_error( array( 'message' => __( 'No files selected.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'No files selected.', 'turbo-guard' ) ) );
 		}
 
 		$results = Turbo_Guard_Cleaner::quarantine_files( $result_ids );
@@ -578,7 +578,7 @@ class Turbo_Guard_Admin {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each value is sanitized per-key against an allowlist in Turbo_Guard_Settings::update().
@@ -645,7 +645,7 @@ class Turbo_Guard_Admin {
 
 		Turbo_Guard_Settings::update( $settings );
 
-		wp_send_json_success( array( 'message' => __( 'Settings saved successfully.', 'turbo-guard-security-malware-scanner' ) ) );
+		wp_send_json_success( array( 'message' => __( 'Settings saved successfully.', 'turbo-guard' ) ) );
 	}
 
 	/**
@@ -657,7 +657,7 @@ class Turbo_Guard_Admin {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		$stats = Turbo_Guard_Settings::get_dashboard_stats();
@@ -678,13 +678,13 @@ class Turbo_Guard_Admin {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		$gsc = new Turbo_Guard_GSC();
 
 		if ( ! $gsc->is_connected() ) {
-			wp_send_json_error( array( 'message' => __( 'Google Search Console is not connected.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Google Search Console is not connected.', 'turbo-guard' ) ) );
 		}
 
 		$site_url = home_url( '/' );
@@ -711,13 +711,13 @@ class Turbo_Guard_Admin {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		$urls = isset( $_POST['urls'] ) ? array_map( 'esc_url_raw', wp_unslash( (array) $_POST['urls'] ) ) : array();
 
 		if ( empty( $urls ) ) {
-			wp_send_json_error( array( 'message' => __( 'No URLs provided.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'No URLs provided.', 'turbo-guard' ) ) );
 		}
 
 		$gsc       = new Turbo_Guard_GSC();
@@ -750,7 +750,7 @@ class Turbo_Guard_Admin {
 			'info',
 			sprintf(
 				/* translators: 1: submitted count, 2: failed count */
-				__( 'GSC removal requested: %1$d submitted, %2$d failed.', 'turbo-guard-security-malware-scanner' ),
+				__( 'GSC removal requested: %1$d submitted, %2$d failed.', 'turbo-guard' ),
 				$submitted,
 				$failed
 			)
@@ -762,7 +762,7 @@ class Turbo_Guard_Admin {
 				'failed'    => $failed,
 				'message'   => sprintf(
 				/* translators: 1: submitted count */
-					__( 'Removal requested for %d URLs. Google will process within 24-72 hours.', 'turbo-guard-security-malware-scanner' ),
+					__( 'Removal requested for %d URLs. Google will process within 24-72 hours.', 'turbo-guard' ),
 					$submitted
 				),
 			)
@@ -778,7 +778,7 @@ class Turbo_Guard_Admin {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		$gsc         = new Turbo_Guard_GSC();
@@ -810,14 +810,14 @@ class Turbo_Guard_Admin {
 				array(
 					'message' => sprintf(
 					/* translators: %s: sitemap URL */
-						__( 'Sitemap submitted: %s', 'turbo-guard-security-malware-scanner' ),
+						__( 'Sitemap submitted: %s', 'turbo-guard' ),
 						$sitemap_url
 					),
 					'sitemap' => $sitemap_url,
 				)
 			);
 		} else {
-			wp_send_json_error( array( 'message' => __( 'Could not find or submit sitemap. Please submit manually from Google Search Console.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Could not find or submit sitemap. Please submit manually from Google Search Console.', 'turbo-guard' ) ) );
 		}
 	}
 
@@ -830,12 +830,12 @@ class Turbo_Guard_Admin {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		Turbo_Guard_GSC::disconnect();
 
-		wp_send_json_success( array( 'message' => __( 'Disconnected from Google Search Console.', 'turbo-guard-security-malware-scanner' ) ) );
+		wp_send_json_success( array( 'message' => __( 'Disconnected from Google Search Console.', 'turbo-guard' ) ) );
 	}
 
 	// =========================================================
@@ -851,26 +851,26 @@ class Turbo_Guard_Admin {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		$ip = isset( $_POST['ip_address'] ) ? sanitize_text_field( wp_unslash( $_POST['ip_address'] ) ) : '';
 
 		if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid IP address.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid IP address.', 'turbo-guard' ) ) );
 		}
 
-		$result = Turbo_Guard_Firewall::block_ip( $ip, __( 'Manually blocked by admin', 'turbo-guard-security-malware-scanner' ) );
+		$result = Turbo_Guard_Firewall::block_ip( $ip, __( 'Manually blocked by admin', 'turbo-guard' ) );
 
 		if ( $result ) {
 			wp_send_json_success(
 				array(
 					/* translators: %s: IP address */
-					'message' => sprintf( __( 'IP %s blocked.', 'turbo-guard-security-malware-scanner' ), $ip ),
+					'message' => sprintf( __( 'IP %s blocked.', 'turbo-guard' ), $ip ),
 				)
 			);
 		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to block IP.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Failed to block IP.', 'turbo-guard' ) ) );
 		}
 	}
 
@@ -883,13 +883,13 @@ class Turbo_Guard_Admin {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		$ip = isset( $_POST['ip_address'] ) ? sanitize_text_field( wp_unslash( $_POST['ip_address'] ) ) : '';
 
 		if ( ! filter_var( $ip, FILTER_VALIDATE_IP ) ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid IP address.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid IP address.', 'turbo-guard' ) ) );
 		}
 
 		$result = Turbo_Guard_Firewall::unblock_ip( $ip );
@@ -898,11 +898,11 @@ class Turbo_Guard_Admin {
 			wp_send_json_success(
 				array(
 					/* translators: %s: IP address */
-					'message' => sprintf( __( 'IP %s unblocked.', 'turbo-guard-security-malware-scanner' ), $ip ),
+					'message' => sprintf( __( 'IP %s unblocked.', 'turbo-guard' ), $ip ),
 				)
 			);
 		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to unblock IP.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Failed to unblock IP.', 'turbo-guard' ) ) );
 		}
 	}
 
@@ -914,7 +914,7 @@ class Turbo_Guard_Admin {
 	public function ajax_run_seo_spam_scan() {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		$results = Turbo_Guard_SEO_Spam_Detector::run_scan();
@@ -922,7 +922,7 @@ class Turbo_Guard_Admin {
 		wp_send_json_success( array(
 			'total'   => $results['total'],
 			// translators: %d: number of spam indicators found
-			'message' => sprintf( __( 'Scan complete. %d spam indicator(s) found.', 'turbo-guard-security-malware-scanner' ), $results['total'] ),
+			'message' => sprintf( __( 'Scan complete. %d spam indicator(s) found.', 'turbo-guard' ), $results['total'] ),
 		) );
 	}
 
@@ -934,22 +934,22 @@ class Turbo_Guard_Admin {
 	public function ajax_delete_spam_post() {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		$post_id = isset( $_POST['post_id'] ) ? absint( $_POST['post_id'] ) : 0;
 		if ( ! $post_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid post ID.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid post ID.', 'turbo-guard' ) ) );
 		}
 
 		$result = Turbo_Guard_SEO_Spam_Detector::delete_spam_post( $post_id );
 		if ( $result ) {
 			wp_send_json_success( array(
 				// translators: %d: post ID that was deleted
-				'message' => sprintf( __( 'Post %d deleted.', 'turbo-guard-security-malware-scanner' ), $post_id ),
+				'message' => sprintf( __( 'Post %d deleted.', 'turbo-guard' ), $post_id ),
 			) );
 		} else {
-			wp_send_json_error( array( 'message' => __( 'Failed to delete post.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Failed to delete post.', 'turbo-guard' ) ) );
 		}
 	}
 
@@ -966,12 +966,12 @@ class Turbo_Guard_Admin {
 	public function ajax_ignore_file() {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		$result_id = isset( $_POST['result_id'] ) ? absint( $_POST['result_id'] ) : 0;
 		if ( ! $result_id ) {
-			wp_send_json_error( array( 'message' => __( 'Invalid result ID.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Invalid result ID.', 'turbo-guard' ) ) );
 		}
 
 		global $wpdb;
@@ -983,7 +983,7 @@ class Turbo_Guard_Admin {
 		) );
 
 		if ( ! $row ) {
-			wp_send_json_error( array( 'message' => __( 'Scan result not found.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Scan result not found.', 'turbo-guard' ) ) );
 		}
 
 		// Add to ignore list and mark result as ignored in DB.
@@ -998,7 +998,7 @@ class Turbo_Guard_Admin {
 		);
 
 		wp_send_json_success( array(
-			'message'   => __( 'File marked as safe and will be excluded from future scans.', 'turbo-guard-security-malware-scanner' ),
+			'message'   => __( 'File marked as safe and will be excluded from future scans.', 'turbo-guard' ),
 			'result_id' => $result_id,
 		) );
 	}
@@ -1011,17 +1011,17 @@ class Turbo_Guard_Admin {
 	public function ajax_unignore_file() {
 		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
 		$file_path = isset( $_POST['file_path'] ) ? sanitize_text_field( wp_unslash( $_POST['file_path'] ) ) : '';
 		if ( ! $file_path ) {
-			wp_send_json_error( array( 'message' => __( 'No file path provided.', 'turbo-guard-security-malware-scanner' ) ) );
+			wp_send_json_error( array( 'message' => __( 'No file path provided.', 'turbo-guard' ) ) );
 		}
 
 		Turbo_Guard_Scanner::unignore_file( $file_path );
 
-		wp_send_json_success( array( 'message' => __( 'File removed from ignore list.', 'turbo-guard-security-malware-scanner' ) ) );
+		wp_send_json_success( array( 'message' => __( 'File removed from ignore list.', 'turbo-guard' ) ) );
 	}
 
 	/**
@@ -1033,7 +1033,7 @@ class Turbo_Guard_Admin {
 	 */
 	public function print_notices_nonce_data() {
 		$screen = get_current_screen();
-		if ( ! $screen || strpos( $screen->id, 'turbo-guard-security-malware-scanner' ) === false ) {
+		if ( ! $screen || strpos( $screen->id, 'turbo-guard' ) === false ) {
 			return;
 		}
 		// turboGuardAdmin is already localised in enqueue_admin_assets().
@@ -1066,7 +1066,7 @@ function turbo_guard_ajax_run_vuln_scan() {
 	check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 	}
 
 	@set_time_limit( 120 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.PHP.DiscouragedFunctions.Discouraged
@@ -1079,7 +1079,7 @@ function turbo_guard_ajax_run_vuln_scan() {
 		'themes'  => count( $results['themes'] ),
 		'message' => sprintf(
 			/* translators: %d: vulnerability count */
-			__( 'Scan complete. %d vulnerabilities found.', 'turbo-guard-security-malware-scanner' ),
+			__( 'Scan complete. %d vulnerabilities found.', 'turbo-guard' ),
 			$results['total']
 		),
 	) );
@@ -1094,7 +1094,7 @@ function turbo_guard_ajax_get_traffic() {
 	check_ajax_referer( 'turbo_guard_admin', 'nonce' );
 
 	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard-security-malware-scanner' ) ) );
+		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 	}
 
 	$filter = isset( $_POST['filter'] ) ? sanitize_key( $_POST['filter'] ) : 'all';

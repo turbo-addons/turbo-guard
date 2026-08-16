@@ -33,7 +33,7 @@ try {
 	require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard.php';
 } catch ( Throwable $e ) {
 	$upload_dir = wp_upload_dir();
-	$log_dir    = $upload_dir['basedir'] . '/turbo-guard-security-malware-scanner';
+	$log_dir    = $upload_dir['basedir'] . '/turbo-guard';
 	if ( ! is_dir( $log_dir ) ) {
 		wp_mkdir_p( $log_dir );
 	}
@@ -56,7 +56,7 @@ function turbo_guard_init() {
 		Turbo_Guard::get_instance();
 	} catch ( Throwable $e ) {
 		$upload_dir = wp_upload_dir();
-		$log_dir    = $upload_dir['basedir'] . '/turbo-guard-security-malware-scanner';
+		$log_dir    = $upload_dir['basedir'] . '/turbo-guard';
 		if ( ! is_dir( $log_dir ) ) {
 			wp_mkdir_p( $log_dir );
 		}

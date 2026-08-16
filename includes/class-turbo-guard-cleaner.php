@@ -54,7 +54,7 @@ class Turbo_Guard_Cleaner {
 				$results[] = array(
 					'id'      => $result_id,
 					'success' => false,
-					'message' => __( 'File not found.', 'turbo-guard-security-malware-scanner' ),
+					'message' => __( 'File not found.', 'turbo-guard' ),
 				);
 				continue;
 			}
@@ -74,7 +74,7 @@ class Turbo_Guard_Cleaner {
 						'status'         => 'quarantined',
 						'threat_details' => sprintf(
 							/* translators: %s: quarantine file path */
-							__( 'Quarantined to: %s', 'turbo-guard-security-malware-scanner' ),
+							__( 'Quarantined to: %s', 'turbo-guard' ),
 							$quarantine_path
 						),
 					),
@@ -88,7 +88,7 @@ class Turbo_Guard_Cleaner {
 					'warning',
 					sprintf(
 						/* translators: %s: file path */
-						__( 'File quarantined: %s', 'turbo-guard-security-malware-scanner' ),
+						__( 'File quarantined: %s', 'turbo-guard' ),
 						$row->file_path
 					)
 				);
@@ -96,13 +96,13 @@ class Turbo_Guard_Cleaner {
 				$results[] = array(
 					'id'      => $result_id,
 					'success' => true,
-					'message' => __( 'File quarantined successfully.', 'turbo-guard-security-malware-scanner' ),
+					'message' => __( 'File quarantined successfully.', 'turbo-guard' ),
 				);
 			} else {
 				$results[] = array(
 					'id'      => $result_id,
 					'success' => false,
-					'message' => __( 'Failed to quarantine file.', 'turbo-guard-security-malware-scanner' ),
+					'message' => __( 'Failed to quarantine file.', 'turbo-guard' ),
 				);
 			}
 		}
@@ -159,7 +159,7 @@ class Turbo_Guard_Cleaner {
 				$results[] = array(
 					'id'      => $result_id,
 					'success' => false,
-					'message' => __( 'Record not found.', 'turbo-guard-security-malware-scanner' ),
+					'message' => __( 'Record not found.', 'turbo-guard' ),
 				);
 				++$failed;
 				continue;
@@ -177,7 +177,7 @@ class Turbo_Guard_Cleaner {
 				$results[] = array(
 					'id'      => $result_id,
 					'success' => true,
-					'message' => __( 'File already removed.', 'turbo-guard-security-malware-scanner' ),
+					'message' => __( 'File already removed.', 'turbo-guard' ),
 				);
 				++$deleted;
 				continue;
@@ -200,7 +200,7 @@ class Turbo_Guard_Cleaner {
 					'warning',
 					sprintf(
 						/* translators: %s: file path */
-						__( 'Malware file deleted: %s', 'turbo-guard-security-malware-scanner' ),
+						__( 'Malware file deleted: %s', 'turbo-guard' ),
 						$row->file_path
 					)
 				);
@@ -208,7 +208,7 @@ class Turbo_Guard_Cleaner {
 				$results[] = array(
 					'id'      => $result_id,
 					'success' => true,
-					'message' => __( 'File deleted.', 'turbo-guard-security-malware-scanner' ),
+					'message' => __( 'File deleted.', 'turbo-guard' ),
 					'file'    => basename( $row->file_path ),
 				);
 				++$deleted;
@@ -216,7 +216,7 @@ class Turbo_Guard_Cleaner {
 				$results[] = array(
 					'id'      => $result_id,
 					'success' => false,
-					'message' => __( 'Permission denied. Cannot delete file.', 'turbo-guard-security-malware-scanner' ),
+					'message' => __( 'Permission denied. Cannot delete file.', 'turbo-guard' ),
 					'file'    => basename( $row->file_path ),
 				);
 				++$failed;

@@ -368,7 +368,7 @@ class Turbo_Guard_Scanner {
 		set_transient( 'turbo_guard_running_scan_id', $this->scan_id, HOUR_IN_SECONDS );
 
 		// Log event.
-		self::log_event( 'scan_started', 'info', __( 'Malware scan started.', 'turbo-guard-security-malware-scanner' ) );
+		self::log_event( 'scan_started', 'info', __( 'Malware scan started.', 'turbo-guard' ) );
 
 		return $this->scan_id;
 	}
@@ -458,7 +458,7 @@ class Turbo_Guard_Scanner {
 			);
 
 			delete_transient( 'turbo_guard_running_scan_id' );
-			self::log_event( 'scan_completed', 'info', __( 'Malware scan completed (files + database).', 'turbo-guard-security-malware-scanner' ) );
+			self::log_event( 'scan_completed', 'info', __( 'Malware scan completed (files + database).', 'turbo-guard' ) );
 		}
 
 		return array(
@@ -830,7 +830,7 @@ class Turbo_Guard_Scanner {
 						'threat_name'    => $threat_class['name'],
 						'threat_details' => sprintf(
 							/* translators: 1: directory path, 2: threat description */
-							__( 'PHP files must never exist in %1$s. %2$s DELETE IMMEDIATELY.', 'turbo-guard-security-malware-scanner' ),
+							__( 'PHP files must never exist in %1$s. %2$s DELETE IMMEDIATELY.', 'turbo-guard' ),
 							str_replace( ABSPATH, '', dirname( $file_path ) ) . '/',
 							$threat_class['description']
 						),
@@ -860,7 +860,7 @@ class Turbo_Guard_Scanner {
 							'threat_name'    => $threat_class['name'],
 							'threat_details' => sprintf(
 								/* translators: 1: directory path, 2: threat description */
-								__( 'PHP files must never exist in %1$s. %2$s DELETE IMMEDIATELY.', 'turbo-guard-security-malware-scanner' ),
+								__( 'PHP files must never exist in %1$s. %2$s DELETE IMMEDIATELY.', 'turbo-guard' ),
 								str_replace( ABSPATH, '', dirname( $file_path ) ) . '/',
 								$threat_class['description']
 							),
@@ -935,7 +935,7 @@ class Turbo_Guard_Scanner {
 									'threat_name'    => $threat_class['name'],
 									'threat_details' => sprintf(
 										/* translators: 1: relative path, 2: threat description */
-										__( 'PHP file found in asset directory %1$s — this should never contain PHP. %2$s', 'turbo-guard-security-malware-scanner' ),
+										__( 'PHP file found in asset directory %1$s — this should never contain PHP. %2$s', 'turbo-guard' ),
 										str_replace( WP_CONTENT_DIR, 'wp-content', dirname( $file_path ) ) . '/',
 										$threat_class['description']
 									),
@@ -990,10 +990,10 @@ class Turbo_Guard_Scanner {
 						'file_path'      => $file_path,
 						'threat_type'    => 'unknown_core_file',
 						'severity'       => 'high',
-						'threat_name'    => __( 'Unknown File in WordPress Core Directory', 'turbo-guard-security-malware-scanner' ),
+						'threat_name'    => __( 'Unknown File in WordPress Core Directory', 'turbo-guard' ),
 						'threat_details' => sprintf(
 							/* translators: %s: file path relative to ABSPATH */
-							__( 'This file (%s) is not distributed with WordPress and should not exist in a core directory. It may have been planted by an attacker or left by a failed update. Verify and delete if not legitimate.', 'turbo-guard-security-malware-scanner' ),
+							__( 'This file (%s) is not distributed with WordPress and should not exist in a core directory. It may have been planted by an attacker or left by a failed update. Verify and delete if not legitimate.', 'turbo-guard' ),
 							str_replace( ABSPATH, '', $file_path )
 						),
 						'status'         => 'pending',
@@ -1060,10 +1060,10 @@ class Turbo_Guard_Scanner {
 							'file_path'      => $file_path,
 							'threat_type'    => 'unknown_core_file',
 							'severity'       => 'high',
-							'threat_name'    => __( 'Unknown File in WordPress Core', 'turbo-guard-security-malware-scanner' ),
+							'threat_name'    => __( 'Unknown File in WordPress Core', 'turbo-guard' ),
 							'threat_details' => sprintf(
 								/* translators: 1: file path relative to ABSPATH, 2: threat classification description */
-								__( 'File "%1$s" is in a WordPress core location but is not distributed with this version of WordPress. This scan often includes files left over from a previous WordPress version, but it may also find files added by another plugin, files added by your host, or malicious files added by an attacker. %2$s', 'turbo-guard-security-malware-scanner' ),
+								__( 'File "%1$s" is in a WordPress core location but is not distributed with this version of WordPress. This scan often includes files left over from a previous WordPress version, but it may also find files added by another plugin, files added by your host, or malicious files added by an attacker. %2$s', 'turbo-guard' ),
 								$rel_path,
 								$threat_class['description']
 							),
@@ -1140,10 +1140,10 @@ class Turbo_Guard_Scanner {
 								'file_path'      => $file_path,
 								'threat_type'    => 'unknown_core_file',
 								'severity'       => 'high',
-								'threat_name'    => __( 'Unknown File in WordPress Root', 'turbo-guard-security-malware-scanner' ),
+								'threat_name'    => __( 'Unknown File in WordPress Root', 'turbo-guard' ),
 								'threat_details' => sprintf(
 									/* translators: 1: file name, 2: threat classification */
-									__( 'File "%1$s" is in the WordPress root directory but is not part of the official WordPress distribution. It may have been planted by an attacker. %2$s', 'turbo-guard-security-malware-scanner' ),
+									__( 'File "%1$s" is in the WordPress root directory but is not part of the official WordPress distribution. It may have been planted by an attacker. %2$s', 'turbo-guard' ),
 									$rel_path,
 									$threat_class['description']
 								),
@@ -1171,8 +1171,8 @@ class Turbo_Guard_Scanner {
 						'file_path'      => $file_path,
 						'threat_type'    => 'php_in_uploads',
 						'severity'       => 'critical',
-						'threat_name'    => __( 'PHP File in Uploads Directory', 'turbo-guard-security-malware-scanner' ),
-						'threat_details' => __( 'PHP files should never exist in the uploads directory. This is a strong indicator of a backdoor or malware.', 'turbo-guard-security-malware-scanner' ),
+						'threat_name'    => __( 'PHP File in Uploads Directory', 'turbo-guard' ),
+						'threat_details' => __( 'PHP files should never exist in the uploads directory. This is a strong indicator of a backdoor or malware.', 'turbo-guard' ),
 						'status'         => 'pending',
 						'file_size'      => $file_size,
 						'file_hash'      => md5( $content ),
@@ -1195,10 +1195,10 @@ class Turbo_Guard_Scanner {
 					'file_path'      => $file_path,
 					'threat_type'    => 'suspected_file',
 					'severity'       => 'high',
-					'threat_name'    => __( 'Previously Infected File (.suspected)', 'turbo-guard-security-malware-scanner' ),
+					'threat_name'    => __( 'Previously Infected File (.suspected)', 'turbo-guard' ),
 					'threat_details' => sprintf(
 						/* translators: %s: file path */
-						__( 'File "%s" was renamed to .suspected by your hosting provider after detecting malware. This file should be reviewed and deleted — it is evidence of a prior compromise. The original file may still be active under its original name.', 'turbo-guard-security-malware-scanner' ),
+						__( 'File "%s" was renamed to .suspected by your hosting provider after detecting malware. This file should be reviewed and deleted — it is evidence of a prior compromise. The original file may still be active under its original name.', 'turbo-guard' ),
 						str_replace( ABSPATH, '', $file_path )
 					),
 					'status'         => 'pending',
@@ -1263,7 +1263,7 @@ class Turbo_Guard_Scanner {
 						'threat_name'    => $threat_class['name'],
 						'threat_details' => sprintf(
 							/* translators: 1: file extension, 2: threat description */
-							__( 'Image file (.%1$s) contains embedded PHP code. Real images never contain PHP. %2$s', 'turbo-guard-security-malware-scanner' ),
+							__( 'Image file (.%1$s) contains embedded PHP code. Real images never contain PHP. %2$s', 'turbo-guard' ),
 							$ext,
 							$threat_class['description']
 						),
@@ -1293,10 +1293,10 @@ class Turbo_Guard_Scanner {
 							'file_path'      => $file_path,
 							'threat_type'    => 'image_script_injection',
 							'severity'       => 'high',
-							'threat_name'    => __( 'Script Injection in Image File', 'turbo-guard-security-malware-scanner' ),
+							'threat_name'    => __( 'Script Injection in Image File', 'turbo-guard' ),
 							'threat_details' => sprintf(
 								/* translators: %s: file path */
-								__( 'Image file "%s" contains <script> tags with JavaScript code. Real images never contain JavaScript. This file may be used for XSS attacks via SVG/image polyglots.', 'turbo-guard-security-malware-scanner' ),
+								__( 'Image file "%s" contains <script> tags with JavaScript code. Real images never contain JavaScript. This file may be used for XSS attacks via SVG/image polyglots.', 'turbo-guard' ),
 								str_replace( ABSPATH, '', $file_path )
 							),
 							'status'         => 'pending',
@@ -1359,7 +1359,7 @@ class Turbo_Guard_Scanner {
 							'threat_name'    => $pattern_data['name'],
 							'threat_details' => sprintf(
 								/* translators: %s is the file path */
-								__( 'Suspicious pattern detected in file: %s', 'turbo-guard-security-malware-scanner' ),
+								__( 'Suspicious pattern detected in file: %s', 'turbo-guard' ),
 								$file_path
 							),
 							'status'         => 'pending',
@@ -1814,7 +1814,7 @@ class Turbo_Guard_Scanner {
 						'threat_name'    => $pattern_data['name'],
 						'threat_details' => sprintf(
 							/* translators: 1: pattern text, 2: post ID */
-							__( 'Pattern "%1$s" found in post ID %2$d. This post may contain injected spam content. Review and delete if not legitimate.', 'turbo-guard-security-malware-scanner' ),
+							__( 'Pattern "%1$s" found in post ID %2$d. This post may contain injected spam content. Review and delete if not legitimate.', 'turbo-guard' ),
 							$pattern_data['pattern'],
 							$post->ID
 						),

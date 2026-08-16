@@ -27,8 +27,8 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 				<span class="dashicons dashicons-shield"></span>
 			</div>
 			<div>
-				<h1><?php esc_html_e( 'Turbo Guard', 'turbo-guard-security-malware-scanner' ); ?></h1>
-				<p><?php esc_html_e( 'Security Dashboard — All systems overview', 'turbo-guard-security-malware-scanner' ); ?></p>
+				<h1><?php esc_html_e( 'Turbo Guard', 'turbo-guard' ); ?></h1>
+				<p><?php esc_html_e( 'Security Dashboard — All systems overview', 'turbo-guard' ); ?></p>
 			</div>
 		</div>
 		<span class="turbo-guard-header-badge">v<?php echo esc_html( TURBO_GUARD_VERSION ); ?> Free</span>
@@ -111,7 +111,7 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 
 		<!-- Security Score -->
 		<div class="turbo-guard-card turbo-guard-score-card">
-			<h2><?php esc_html_e( 'Security Score', 'turbo-guard-security-malware-scanner' ); ?></h2>
+			<h2><?php esc_html_e( 'Security Score', 'turbo-guard' ); ?></h2>
 			<div class="turbo-guard-score-circle">
 				<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
 					<circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" stroke-width="10"/>
@@ -131,11 +131,11 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 			<p class="turbo-guard-score-label">
 				<?php
 				if ( $score >= 90 ) {
-					esc_html_e( 'Excellent protection', 'turbo-guard-security-malware-scanner' );
+					esc_html_e( 'Excellent protection', 'turbo-guard' );
 				} elseif ( $score >= 70 ) {
-					esc_html_e( 'Good — can improve', 'turbo-guard-security-malware-scanner' );
+					esc_html_e( 'Good — can improve', 'turbo-guard' );
 				} else {
-					esc_html_e( 'Action required', 'turbo-guard-security-malware-scanner' );
+					esc_html_e( 'Action required', 'turbo-guard' );
 				}
 				?>
 			</p>
@@ -143,7 +143,7 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 
 		<!-- Active Threats -->
 		<div class="turbo-guard-card turbo-guard-stat-card tg-threat">
-			<h3><?php esc_html_e( 'Active Threats', 'turbo-guard-security-malware-scanner' ); ?></h3>
+			<h3><?php esc_html_e( 'Active Threats', 'turbo-guard' ); ?></h3>
 			<div class="turbo-guard-stat-value <?php echo $stats['threats_count'] > 0 ? 'tg-red' : 'tg-green'; ?>">
 				<?php echo esc_html( $stats['threats_count'] ); ?>
 			</div>
@@ -153,22 +153,22 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 					echo esc_html(
 						sprintf(
 							/* translators: %d: threat count */
-							_n( '%d malware file found', '%d malware files found', $stats['threats_count'], 'turbo-guard-security-malware-scanner' ),
+							_n( '%d malware file found', '%d malware files found', $stats['threats_count'], 'turbo-guard' ),
 							$stats['threats_count']
 						)
 					);
 				} else {
-					esc_html_e( 'No threats detected', 'turbo-guard-security-malware-scanner' );
+					esc_html_e( 'No threats detected', 'turbo-guard' );
 				}
 				?>
 			</p>
 			<?php if ( $stats['threats_count'] > 0 ) : ?>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=turbo-guard-scanner' ) ); ?>" class="button button-primary button-small">
-					<?php esc_html_e( 'Clean Now →', 'turbo-guard-security-malware-scanner' ); ?>
+					<?php esc_html_e( 'Clean Now →', 'turbo-guard' ); ?>
 				</a>
 			<?php else : ?>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=turbo-guard-scanner' ) ); ?>" class="button button-small">
-					<?php esc_html_e( 'Run Scan', 'turbo-guard-security-malware-scanner' ); ?>
+					<?php esc_html_e( 'Run Scan', 'turbo-guard' ); ?>
 				</a>
 			<?php endif; ?>
 			<span class="dashicons dashicons-warning turbo-guard-stat-icon"></span>
@@ -176,29 +176,29 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 
 		<!-- Firewall Blocks -->
 		<div class="turbo-guard-card turbo-guard-stat-card tg-fire">
-			<h3><?php esc_html_e( 'Blocked Today', 'turbo-guard-security-malware-scanner' ); ?></h3>
+			<h3><?php esc_html_e( 'Blocked Today', 'turbo-guard' ); ?></h3>
 			<div class="turbo-guard-stat-value <?php echo $stats['blocks_today'] > 0 ? 'tg-orange' : ''; ?>">
 				<?php echo esc_html( $stats['blocks_today'] ); ?>
 			</div>
 			<p class="turbo-guard-stat-label">
-				<?php esc_html_e( 'Firewall blocks today', 'turbo-guard-security-malware-scanner' ); ?>
+				<?php esc_html_e( 'Firewall blocks today', 'turbo-guard' ); ?>
 			</p>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=turbo-guard-firewall' ) ); ?>" class="button button-small">
-				<?php esc_html_e( 'View Logs', 'turbo-guard-security-malware-scanner' ); ?>
+				<?php esc_html_e( 'View Logs', 'turbo-guard' ); ?>
 			</a>
 			<span class="dashicons dashicons-shield-alt turbo-guard-stat-icon"></span>
 		</div>
 
 		<!-- Last Scan -->
 		<div class="turbo-guard-card turbo-guard-stat-card tg-scan">
-			<h3><?php esc_html_e( 'Last Scan', 'turbo-guard-security-malware-scanner' ); ?></h3>
+			<h3><?php esc_html_e( 'Last Scan', 'turbo-guard' ); ?></h3>
 			<div class="turbo-guard-stat-value" style="font-size:28px; line-height:1.2;">
 				<?php
 				if ( $stats['latest_scan'] ) {
 					echo esc_html( human_time_diff( strtotime( $stats['latest_scan']->completed_at ), current_time( 'timestamp' ) ) );
-					echo '<br><span style="font-size:13px;font-weight:400;color:#9ca3af;">' . esc_html__( 'ago', 'turbo-guard-security-malware-scanner' ) . '</span>';
+					echo '<br><span style="font-size:13px;font-weight:400;color:#9ca3af;">' . esc_html__( 'ago', 'turbo-guard' ) . '</span>';
 				} else {
-					echo '<span style="font-size:20px;">' . esc_html__( 'Never', 'turbo-guard-security-malware-scanner' ) . '</span>';
+					echo '<span style="font-size:20px;">' . esc_html__( 'Never', 'turbo-guard' ) . '</span>';
 				}
 				?>
 			</div>
@@ -208,17 +208,17 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 					echo esc_html(
 						sprintf(
 							/* translators: %d: files scanned */
-							__( '%d files scanned', 'turbo-guard-security-malware-scanner' ),
+							__( '%d files scanned', 'turbo-guard' ),
 							$stats['latest_scan']->scanned_files
 						)
 					);
 				} else {
-					esc_html_e( 'No scans yet', 'turbo-guard-security-malware-scanner' );
+					esc_html_e( 'No scans yet', 'turbo-guard' );
 				}
 				?>
 			</p>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=turbo-guard-scanner' ) ); ?>" class="button button-primary button-small">
-				<?php esc_html_e( 'Scan Now', 'turbo-guard-security-malware-scanner' ); ?>
+				<?php esc_html_e( 'Scan Now', 'turbo-guard' ); ?>
 			</a>
 			<span class="dashicons dashicons-search turbo-guard-stat-icon"></span>
 		</div>
@@ -228,25 +228,25 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 	<!-- Recent Security Events -->
 	<div class="turbo-guard-card">
 		<div class="turbo-guard-card-header">
-			<h2 style="margin:0;border:none;padding:0;"><?php esc_html_e( 'Recent Security Events', 'turbo-guard-security-malware-scanner' ); ?></h2>
-			<a href="<?php echo esc_url( admin_url( 'admin.php?page=turbo-guard-firewall' ) ); ?>" style="font-size:12px;color:#6b7280;"><?php esc_html_e( 'View all →', 'turbo-guard-security-malware-scanner' ); ?></a>
+			<h2 style="margin:0;border:none;padding:0;"><?php esc_html_e( 'Recent Security Events', 'turbo-guard' ); ?></h2>
+			<a href="<?php echo esc_url( admin_url( 'admin.php?page=turbo-guard-firewall' ) ); ?>" style="font-size:12px;color:#6b7280;"><?php esc_html_e( 'View all →', 'turbo-guard' ); ?></a>
 		</div>
 
 		<?php if ( ! empty( $stats['recent_events'] ) ) : ?>
 			<table class="turbo-guard-events-table">
 				<thead>
 					<tr>
-						<th style="width:120px;"><?php esc_html_e( 'Time', 'turbo-guard-security-malware-scanner' ); ?></th>
-						<th><?php esc_html_e( 'Event', 'turbo-guard-security-malware-scanner' ); ?></th>
-						<th style="width:100px;"><?php esc_html_e( 'Severity', 'turbo-guard-security-malware-scanner' ); ?></th>
-						<th style="width:110px;"><?php esc_html_e( 'IP Address', 'turbo-guard-security-malware-scanner' ); ?></th>
+						<th style="width:120px;"><?php esc_html_e( 'Time', 'turbo-guard' ); ?></th>
+						<th><?php esc_html_e( 'Event', 'turbo-guard' ); ?></th>
+						<th style="width:100px;"><?php esc_html_e( 'Severity', 'turbo-guard' ); ?></th>
+						<th style="width:110px;"><?php esc_html_e( 'IP Address', 'turbo-guard' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
 					<?php foreach ( $stats['recent_events'] as $event ) : ?>
 						<tr>
 							<td style="color:#9ca3af;font-size:12px;">
-								<?php echo esc_html( human_time_diff( strtotime( $event->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard-security-malware-scanner' ) ); ?>
+								<?php echo esc_html( human_time_diff( strtotime( $event->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?>
 							</td>
 							<td class="turbo-guard-event-message"><?php echo esc_html( $event->message ); ?></td>
 							<td>
@@ -264,34 +264,34 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 		<?php else : ?>
 			<div style="text-align:center;padding:30px 20px;color:#9ca3af;">
 				<span class="dashicons dashicons-yes-alt" style="font-size:32px;width:32px;height:32px;color:#d1d5db;display:block;margin:0 auto 8px;"></span>
-				<p style="margin:0;font-size:13px;"><?php esc_html_e( 'No security events recorded yet. Your site is quiet!', 'turbo-guard-security-malware-scanner' ); ?></p>
+				<p style="margin:0;font-size:13px;"><?php esc_html_e( 'No security events recorded yet. Your site is quiet!', 'turbo-guard' ); ?></p>
 			</div>
 		<?php endif; ?>
 	</div>
 
 	<!-- Quick Actions -->
 	<div class="turbo-guard-quick-actions">
-		<h2><?php esc_html_e( 'Quick Actions', 'turbo-guard-security-malware-scanner' ); ?></h2>
+		<h2><?php esc_html_e( 'Quick Actions', 'turbo-guard' ); ?></h2>
 		<div class="turbo-guard-actions-grid">
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=turbo-guard-scanner' ) ); ?>" class="turbo-guard-action-button">
 				<span class="dashicons dashicons-search"></span>
 				<div>
-					<strong style="display:block;font-size:13px;"><?php esc_html_e( 'Run Full Scan', 'turbo-guard-security-malware-scanner' ); ?></strong>
-					<span style="font-size:11px;font-weight:400;color:#9ca3af;"><?php esc_html_e( 'Scan for malware &amp; backdoors', 'turbo-guard-security-malware-scanner' ); ?></span>
+					<strong style="display:block;font-size:13px;"><?php esc_html_e( 'Run Full Scan', 'turbo-guard' ); ?></strong>
+					<span style="font-size:11px;font-weight:400;color:#9ca3af;"><?php esc_html_e( 'Scan for malware &amp; backdoors', 'turbo-guard' ); ?></span>
 				</div>
 			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=turbo-guard-firewall' ) ); ?>" class="turbo-guard-action-button">
 				<span class="dashicons dashicons-shield-alt"></span>
 				<div>
-					<strong style="display:block;font-size:13px;"><?php esc_html_e( 'Firewall &amp; IP Blocks', 'turbo-guard-security-malware-scanner' ); ?></strong>
-					<span style="font-size:11px;font-weight:400;color:#9ca3af;"><?php esc_html_e( 'View logs, block IPs', 'turbo-guard-security-malware-scanner' ); ?></span>
+					<strong style="display:block;font-size:13px;"><?php esc_html_e( 'Firewall &amp; IP Blocks', 'turbo-guard' ); ?></strong>
+					<span style="font-size:11px;font-weight:400;color:#9ca3af;"><?php esc_html_e( 'View logs, block IPs', 'turbo-guard' ); ?></span>
 				</div>
 			</a>
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=turbo-guard-gsc' ) ); ?>" class="turbo-guard-action-button">
 				<span class="dashicons dashicons-search"></span>
 				<div>
-					<strong style="display:block;font-size:13px;"><?php esc_html_e( 'GSC Spam Cleanup', 'turbo-guard-security-malware-scanner' ); ?></strong>
-					<span style="font-size:11px;font-weight:400;color:#9ca3af;"><?php esc_html_e( 'Remove indexed SEO spam', 'turbo-guard-security-malware-scanner' ); ?></span>
+					<strong style="display:block;font-size:13px;"><?php esc_html_e( 'GSC Spam Cleanup', 'turbo-guard' ); ?></strong>
+					<span style="font-size:11px;font-weight:400;color:#9ca3af;"><?php esc_html_e( 'Remove indexed SEO spam', 'turbo-guard' ); ?></span>
 				</div>
 			</a>
 		</div>

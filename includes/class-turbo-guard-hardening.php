@@ -171,7 +171,7 @@ class Turbo_Guard_Hardening {
 		if ( ! is_user_logged_in() ) {
 			return new WP_Error(
 				'turbo_guard_rest_forbidden',
-				__( 'REST API access requires authentication.', 'turbo-guard-security-malware-scanner' ),
+				__( 'REST API access requires authentication.', 'turbo-guard' ),
 				array( 'status' => 401 )
 			);
 		}
@@ -192,7 +192,7 @@ class Turbo_Guard_Hardening {
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 		if ( ! is_admin() && isset( $_GET['author'] ) && ! is_user_logged_in() ) {
 			wp_die(
-				esc_html__( 'User enumeration is not allowed.', 'turbo-guard-security-malware-scanner' ),
+				esc_html__( 'User enumeration is not allowed.', 'turbo-guard' ),
 				'403 Forbidden',
 				array( 'response' => 403 )
 			);

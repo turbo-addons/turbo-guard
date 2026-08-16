@@ -21,11 +21,11 @@ $tg_total_count = Turbo_Guard_Live_Traffic::get_traffic_count( $tg_filter );
 $tg_total_pages = max( 1, (int) ceil( $tg_total_count / $tg_per_page ) );
 $tg_stats       = Turbo_Guard_Live_Traffic::get_stats();
 $tg_filters     = array(
-	'all'     => __( 'All Requests', 'turbo-guard-security-malware-scanner' ),
-	'humans'  => __( 'Humans Only', 'turbo-guard-security-malware-scanner' ),
-	'bots'    => __( 'Bots Only', 'turbo-guard-security-malware-scanner' ),
-	'blocked' => __( '403 Blocked', 'turbo-guard-security-malware-scanner' ),
-	'404'     => __( '404 Errors', 'turbo-guard-security-malware-scanner' ),
+	'all'     => __( 'All Requests', 'turbo-guard' ),
+	'humans'  => __( 'Humans Only', 'turbo-guard' ),
+	'bots'    => __( 'Bots Only', 'turbo-guard' ),
+	'blocked' => __( '403 Blocked', 'turbo-guard' ),
+	'404'     => __( '404 Errors', 'turbo-guard' ),
 );
 ?>
 
@@ -38,22 +38,22 @@ $tg_filters     = array(
 				<span class="dashicons dashicons-chart-area"></span>
 			</div>
 			<div>
-				<h1><?php esc_html_e( 'Live Traffic', 'turbo-guard-security-malware-scanner' ); ?></h1>
-				<p><?php esc_html_e( 'Real-time requests — humans, bots, blocked &amp; errors (last 24 hours)', 'turbo-guard-security-malware-scanner' ); ?></p>
+				<h1><?php esc_html_e( 'Live Traffic', 'turbo-guard' ); ?></h1>
+				<p><?php esc_html_e( 'Real-time requests — humans, bots, blocked &amp; errors (last 24 hours)', 'turbo-guard' ); ?></p>
 			</div>
 		</div>
-		<span class="turbo-guard-header-badge"><?php esc_html_e( '50 requests per page', 'turbo-guard-security-malware-scanner' ); ?></span>
+		<span class="turbo-guard-header-badge"><?php esc_html_e( '50 requests per page', 'turbo-guard' ); ?></span>
 	</div>
 
 	<!-- 24h Stats -->
 	<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;">
 		<?php
 		$tg_stat_cards = array(
-			array( 'label' => __( 'Total', 'turbo-guard-security-malware-scanner' ),    'value' => $tg_stats['total'],   'color' => '' ),
-			array( 'label' => __( 'Humans', 'turbo-guard-security-malware-scanner' ),   'value' => $tg_stats['humans'],  'color' => '#16a34a' ),
-			array( 'label' => __( 'Bots', 'turbo-guard-security-malware-scanner' ),     'value' => $tg_stats['bots'],    'color' => '#6b7280' ),
-			array( 'label' => __( 'Blocked', 'turbo-guard-security-malware-scanner' ),  'value' => $tg_stats['blocked'], 'color' => '#dc2626' ),
-			array( 'label' => __( 'Errors', 'turbo-guard-security-malware-scanner' ),   'value' => $tg_stats['errors'],  'color' => '#d97706' ),
+			array( 'label' => __( 'Total', 'turbo-guard' ),    'value' => $tg_stats['total'],   'color' => '' ),
+			array( 'label' => __( 'Humans', 'turbo-guard' ),   'value' => $tg_stats['humans'],  'color' => '#16a34a' ),
+			array( 'label' => __( 'Bots', 'turbo-guard' ),     'value' => $tg_stats['bots'],    'color' => '#6b7280' ),
+			array( 'label' => __( 'Blocked', 'turbo-guard' ),  'value' => $tg_stats['blocked'], 'color' => '#dc2626' ),
+			array( 'label' => __( 'Errors', 'turbo-guard' ),   'value' => $tg_stats['errors'],  'color' => '#d97706' ),
 		);
 		foreach ( $tg_stat_cards as $tg_card ) :
 		?>
@@ -82,7 +82,7 @@ $tg_filters     = array(
 			</div>
 			<button id="turbo-guard-refresh-traffic" class="button" style="font-size:12px;height:28px;line-height:26px;">
 				<span class="dashicons dashicons-update" style="font-size:14px;width:14px;height:14px;vertical-align:middle;margin-right:3px;"></span>
-				<?php esc_html_e( 'Refresh', 'turbo-guard-security-malware-scanner' ); ?>
+				<?php esc_html_e( 'Refresh', 'turbo-guard' ); ?>
 			</button>
 		</div>
 
@@ -92,7 +92,7 @@ $tg_filters     = array(
 				<?php
 				printf(
 					/* translators: 1: current page number, 2: total page count, 3: total traffic row count */
-					esc_html__( 'Page %1$d of %2$d (%3$d total)', 'turbo-guard-security-malware-scanner' ),
+					esc_html__( 'Page %1$d of %2$d (%3$d total)', 'turbo-guard' ),
 					absint( $tg_paged ),
 					absint( $tg_total_pages ),
 					absint( $tg_total_count )
@@ -101,7 +101,7 @@ $tg_filters     = array(
 			</span>
 			<?php if ( $tg_paged > 1 ) : ?>
 				<a href="<?php echo esc_url( add_query_arg( array( 'filter' => $tg_filter, 'paged' => $tg_paged - 1 ) ) ); ?>" class="button button-small">
-					&laquo; <?php esc_html_e( 'Prev', 'turbo-guard-security-malware-scanner' ); ?>
+					&laquo; <?php esc_html_e( 'Prev', 'turbo-guard' ); ?>
 				</a>
 			<?php endif; ?>
 			<?php
@@ -116,7 +116,7 @@ $tg_filters     = array(
 			<?php endfor; ?>
 			<?php if ( $tg_paged < $tg_total_pages ) : ?>
 				<a href="<?php echo esc_url( add_query_arg( array( 'filter' => $tg_filter, 'paged' => $tg_paged + 1 ) ) ); ?>" class="button button-small">
-					<?php esc_html_e( 'Next', 'turbo-guard-security-malware-scanner' ); ?> &raquo;
+					<?php esc_html_e( 'Next', 'turbo-guard' ); ?> &raquo;
 				</a>
 			<?php endif; ?>
 		</div>
@@ -126,14 +126,14 @@ $tg_filters     = array(
 			<table class="turbo-guard-results-table">
 				<thead>
 					<tr>
-						<th style="width:130px;"><?php esc_html_e( 'Time', 'turbo-guard-security-malware-scanner' ); ?></th>
-						<th style="width:120px;"><?php esc_html_e( 'IP', 'turbo-guard-security-malware-scanner' ); ?></th>
-						<th style="width:60px;"><?php esc_html_e( 'Type', 'turbo-guard-security-malware-scanner' ); ?></th>
-						<th style="width:55px;"><?php esc_html_e( 'Method', 'turbo-guard-security-malware-scanner' ); ?></th>
-						<th><?php esc_html_e( 'URL', 'turbo-guard-security-malware-scanner' ); ?></th>
-						<th style="width:55px;"><?php esc_html_e( 'Status', 'turbo-guard-security-malware-scanner' ); ?></th>
-						<th style="width:140px;"><?php esc_html_e( 'User Agent', 'turbo-guard-security-malware-scanner' ); ?></th>
-						<th style="width:80px;"><?php esc_html_e( 'Actions', 'turbo-guard-security-malware-scanner' ); ?></th>
+						<th style="width:130px;"><?php esc_html_e( 'Time', 'turbo-guard' ); ?></th>
+						<th style="width:120px;"><?php esc_html_e( 'IP', 'turbo-guard' ); ?></th>
+						<th style="width:60px;"><?php esc_html_e( 'Type', 'turbo-guard' ); ?></th>
+						<th style="width:55px;"><?php esc_html_e( 'Method', 'turbo-guard' ); ?></th>
+						<th><?php esc_html_e( 'URL', 'turbo-guard' ); ?></th>
+						<th style="width:55px;"><?php esc_html_e( 'Status', 'turbo-guard' ); ?></th>
+						<th style="width:140px;"><?php esc_html_e( 'User Agent', 'turbo-guard' ); ?></th>
+						<th style="width:80px;"><?php esc_html_e( 'Actions', 'turbo-guard' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -149,7 +149,7 @@ $tg_filters     = array(
 								echo esc_html(
 									human_time_diff( strtotime( $tg_row->created_at ), current_time( 'timestamp' ) )
 									/* translators: suffix after human time diff, e.g. "5 minutes ago" */
-									. ' ' . __( 'ago', 'turbo-guard-security-malware-scanner' )
+									. ' ' . __( 'ago', 'turbo-guard' )
 								);
 								?>
 							</td>
@@ -167,11 +167,11 @@ $tg_filters     = array(
 							<td>
 								<?php if ( $tg_row->is_bot ) : ?>
 									<span class="turbo-guard-badge" style="background:#f3f4f6;color:#6b7280;border-color:#e5e7eb;font-size:9px;">
-										<?php echo esc_html( $tg_row->bot_name ? $tg_row->bot_name : __( 'Bot', 'turbo-guard-security-malware-scanner' ) ); ?>
+										<?php echo esc_html( $tg_row->bot_name ? $tg_row->bot_name : __( 'Bot', 'turbo-guard' ) ); ?>
 									</span>
 								<?php else : ?>
 									<span class="turbo-guard-badge" style="background:#f0fdf4;color:#16a34a;border-color:#bbf7d0;font-size:9px;">
-										<?php esc_html_e( 'Human', 'turbo-guard-security-malware-scanner' ); ?>
+										<?php esc_html_e( 'Human', 'turbo-guard' ); ?>
 									</span>
 								<?php endif; ?>
 							</td>
@@ -196,7 +196,7 @@ $tg_filters     = array(
 									data-ip="<?php echo esc_attr( $tg_row->ip_address ); ?>"
 									data-nonce="<?php echo esc_attr( wp_create_nonce( 'turbo_guard_admin' ) ); ?>"
 									style="font-size:10px;height:22px;line-height:20px;padding:0 8px;color:#dc2626;border-color:#fca5a5;">
-									<?php esc_html_e( 'Block', 'turbo-guard-security-malware-scanner' ); ?>
+									<?php esc_html_e( 'Block', 'turbo-guard' ); ?>
 								</button>
 							</td>
 						</tr>
@@ -209,7 +209,7 @@ $tg_filters     = array(
 				<div style="margin-top:12px;display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap;">
 					<?php if ( $tg_paged > 1 ) : ?>
 						<a href="<?php echo esc_url( add_query_arg( array( 'filter' => $tg_filter, 'paged' => $tg_paged - 1 ) ) ); ?>" class="button button-small">
-							&laquo; <?php esc_html_e( 'Prev', 'turbo-guard-security-malware-scanner' ); ?>
+							&laquo; <?php esc_html_e( 'Prev', 'turbo-guard' ); ?>
 						</a>
 					<?php endif; ?>
 					<?php
@@ -224,7 +224,7 @@ $tg_filters     = array(
 					<?php endfor; ?>
 					<?php if ( $tg_paged < $tg_total_pages ) : ?>
 						<a href="<?php echo esc_url( add_query_arg( array( 'filter' => $tg_filter, 'paged' => $tg_paged + 1 ) ) ); ?>" class="button button-small">
-							<?php esc_html_e( 'Next', 'turbo-guard-security-malware-scanner' ); ?> &raquo;
+							<?php esc_html_e( 'Next', 'turbo-guard' ); ?> &raquo;
 						</a>
 					<?php endif; ?>
 				</div>
@@ -236,9 +236,9 @@ $tg_filters     = array(
 				<p>
 					<?php
 					if ( 'all' === $tg_filter ) {
-						esc_html_e( 'No traffic logged yet. Traffic logging is active and will populate as visitors arrive.', 'turbo-guard-security-malware-scanner' );
+						esc_html_e( 'No traffic logged yet. Traffic logging is active and will populate as visitors arrive.', 'turbo-guard' );
 					} else {
-						esc_html_e( 'No matching traffic requests found for this filter.', 'turbo-guard-security-malware-scanner' );
+						esc_html_e( 'No matching traffic requests found for this filter.', 'turbo-guard' );
 					}
 					?>
 				</p>
