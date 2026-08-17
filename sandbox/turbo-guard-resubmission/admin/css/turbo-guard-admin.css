@@ -1,0 +1,1002 @@
+/**
+ * Turbo Guard Admin Styles — v1.1.0
+ *
+ * @package TurboGuard
+ * @since 1.0.0
+ */
+
+/* =========================================================
+   CSS Variables
+   ========================================================= */
+
+:root {
+	--tg-blue:        #2563eb;
+	--tg-blue-dark:   #1d4ed8;
+	--tg-blue-light:  #eff6ff;
+	--tg-green:       #16a34a;
+	--tg-green-light: #f0fdf4;
+	--tg-red:         #dc2626;
+	--tg-red-light:   #fef2f2;
+	--tg-orange:      #d97706;
+	--tg-orange-light:#fffbeb;
+	--tg-gray-50:     #f9fafb;
+	--tg-gray-100:    #f3f4f6;
+	--tg-gray-200:    #e5e7eb;
+	--tg-gray-400:    #9ca3af;
+	--tg-gray-600:    #4b5563;
+	--tg-gray-800:    #1f2937;
+	--tg-radius:      8px;
+	--tg-shadow:      0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.04);
+	--tg-shadow-md:   0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -1px rgba(0,0,0,.06);
+}
+
+/* =========================================================
+   Page Layout & Header
+   ========================================================= */
+
+.wrap.turbo-guard-dashboard,
+.wrap.turbo-guard-scanner,
+.wrap.turbo-guard-firewall,
+.wrap.turbo-guard-settings,
+.wrap.turbo-guard-gsc {
+	margin-top: 0;
+	padding-top: 0;
+}
+
+/* Plugin page header banner */
+.turbo-guard-page-header {
+	background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #3b82f6 100%);
+	margin: 0 -20px 24px -2px;
+	padding: 24px 28px 20px;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 12px;
+}
+
+.turbo-guard-page-header-left {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+}
+
+.turbo-guard-page-header-icon {
+	width: 44px;
+	height: 44px;
+	background: rgba(255,255,255,.15);
+	border-radius: 10px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+}
+
+.turbo-guard-page-header-icon .dashicons {
+	color: #fff;
+	font-size: 26px;
+	width: 26px;
+	height: 26px;
+}
+
+.turbo-guard-page-header h1 {
+	color: #fff !important;
+	font-size: 20px !important;
+	font-weight: 700 !important;
+	margin: 0 0 2px !important;
+	padding: 0 !important;
+	line-height: 1.3 !important;
+}
+
+.turbo-guard-page-header p {
+	color: rgba(255,255,255,.75);
+	font-size: 13px;
+	margin: 0;
+}
+
+.turbo-guard-header-badge {
+	background: rgba(255,255,255,.15);
+	border: 1px solid rgba(255,255,255,.25);
+	color: #fff;
+	font-size: 11px;
+	font-weight: 600;
+	padding: 3px 10px;
+	border-radius: 20px;
+	letter-spacing: .3px;
+}
+
+/* =========================================================
+   Cards
+   ========================================================= */
+
+.turbo-guard-card {
+	background: #fff;
+	border: 1px solid var(--tg-gray-200);
+	border-radius: var(--tg-radius);
+	padding: 20px 22px;
+	margin-bottom: 16px;
+	box-shadow: var(--tg-shadow);
+}
+
+.turbo-guard-card h2 {
+	margin: 0 0 14px;
+	font-size: 14px;
+	font-weight: 700;
+	color: var(--tg-gray-800);
+	border-bottom: 1px solid var(--tg-gray-100);
+	padding-bottom: 10px;
+	letter-spacing: -.1px;
+}
+
+.turbo-guard-card h3 {
+	margin: 0 0 6px;
+	font-size: 11px;
+	text-transform: uppercase;
+	letter-spacing: .7px;
+	color: var(--tg-gray-400);
+	font-weight: 600;
+}
+
+.turbo-guard-card-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-bottom: 14px;
+}
+
+.turbo-guard-card-header h2 {
+	margin-bottom: 0;
+	border-bottom: none;
+	padding-bottom: 0;
+}
+
+/* =========================================================
+   Dashboard — Stats Grid
+   ========================================================= */
+
+.turbo-guard-stats-grid {
+	display: grid;
+	grid-template-columns: 220px repeat(3, 1fr);
+	gap: 14px;
+	margin-bottom: 16px;
+}
+
+/* Score card */
+.turbo-guard-score-card {
+	text-align: center;
+	padding: 22px 16px 18px !important;
+}
+
+.turbo-guard-score-card h2 {
+	font-size: 12px;
+	text-transform: uppercase;
+	letter-spacing: .7px;
+	color: var(--tg-gray-400);
+	border-bottom: none;
+	margin-bottom: 6px;
+	padding-bottom: 0;
+}
+
+.turbo-guard-score-circle {
+	position: relative;
+	display: inline-block;
+	width: 110px;
+	height: 110px;
+	margin: 6px auto 8px;
+}
+
+.turbo-guard-score-circle svg {
+	width: 110px;
+	height: 110px;
+	filter: drop-shadow(0 2px 4px rgba(0,0,0,.1));
+}
+
+.turbo-guard-score-value {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	font-size: 32px;
+	font-weight: 800;
+	color: var(--tg-gray-800);
+	line-height: 1;
+}
+
+.turbo-guard-score-label {
+	font-size: 12px;
+	color: var(--tg-gray-600);
+	margin: 0 0 12px;
+	line-height: 1.4;
+}
+
+/* Stat cards */
+.turbo-guard-stat-card {
+	padding: 20px 20px 16px !important;
+	position: relative;
+	overflow: hidden;
+}
+
+.turbo-guard-stat-card::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 3px;
+	background: var(--tg-blue);
+	border-radius: var(--tg-radius) var(--tg-radius) 0 0;
+}
+
+.turbo-guard-stat-card.tg-threat::before  { background: var(--tg-red); }
+.turbo-guard-stat-card.tg-fire::before    { background: var(--tg-orange); }
+.turbo-guard-stat-card.tg-scan::before    { background: var(--tg-green); }
+
+.turbo-guard-stat-value {
+	font-size: 42px;
+	font-weight: 800;
+	line-height: 1;
+	margin: 8px 0 5px;
+	color: var(--tg-gray-800);
+}
+
+.turbo-guard-stat-value.tg-red    { color: var(--tg-red); }
+.turbo-guard-stat-value.tg-green  { color: var(--tg-green); }
+.turbo-guard-stat-value.tg-orange { color: var(--tg-orange); }
+.turbo-guard-stat-value.tg-blue   { color: var(--tg-blue); }
+
+/* Keep legacy classes working */
+.turbo-guard-danger  { color: var(--tg-red); }
+.turbo-guard-success { color: var(--tg-green); }
+.turbo-guard-info    { color: var(--tg-blue); }
+.turbo-guard-neutral { color: var(--tg-gray-800); }
+.turbo-guard-warning { color: var(--tg-orange); }
+
+.turbo-guard-stat-label {
+	color: var(--tg-gray-400);
+	font-size: 12px;
+	margin-bottom: 14px;
+	line-height: 1.4;
+}
+
+.turbo-guard-stat-icon {
+	position: absolute;
+	bottom: 14px;
+	right: 14px;
+	opacity: .07;
+	font-size: 52px !important;
+	width: 52px !important;
+	height: 52px !important;
+	color: var(--tg-gray-800);
+}
+
+/* =========================================================
+   Events Table
+   ========================================================= */
+
+.turbo-guard-events-table {
+	border-collapse: collapse;
+	width: 100%;
+	font-size: 13px;
+}
+
+.turbo-guard-events-table th {
+	background: var(--tg-gray-50);
+	color: var(--tg-gray-400);
+	text-transform: uppercase;
+	font-size: 10px;
+	letter-spacing: .6px;
+	font-weight: 600;
+	padding: 8px 12px;
+	text-align: left;
+	border-bottom: 1px solid var(--tg-gray-200);
+}
+
+.turbo-guard-events-table td {
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--tg-gray-100);
+	vertical-align: middle;
+	color: var(--tg-gray-600);
+}
+
+.turbo-guard-events-table tr:last-child td {
+	border-bottom: none;
+}
+
+.turbo-guard-events-table tr:hover td {
+	background: var(--tg-gray-50);
+}
+
+.turbo-guard-event-message {
+	color: var(--tg-gray-800);
+	font-weight: 500;
+}
+
+/* =========================================================
+   Quick Actions
+   ========================================================= */
+
+.turbo-guard-quick-actions {
+	margin-bottom: 20px;
+}
+
+.turbo-guard-quick-actions > h2 {
+	font-size: 13px;
+	color: var(--tg-gray-600);
+	margin-bottom: 10px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: .5px;
+}
+
+.turbo-guard-actions-grid {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	gap: 12px;
+}
+
+.turbo-guard-action-button {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	padding: 16px 18px;
+	background: #fff;
+	border: 1px solid var(--tg-gray-200);
+	border-radius: var(--tg-radius);
+	text-decoration: none;
+	color: var(--tg-gray-800);
+	font-weight: 600;
+	font-size: 13px;
+	transition: all .15s ease;
+	box-shadow: var(--tg-shadow);
+}
+
+.turbo-guard-action-button:hover {
+	background: var(--tg-blue-light);
+	border-color: var(--tg-blue);
+	color: var(--tg-blue-dark);
+	box-shadow: var(--tg-shadow-md);
+	transform: translateY(-1px);
+}
+
+.turbo-guard-action-button .dashicons {
+	font-size: 20px;
+	width: 20px;
+	height: 20px;
+	color: var(--tg-blue);
+	flex-shrink: 0;
+}
+
+/* =========================================================
+   Scanner
+   ========================================================= */
+
+.turbo-guard-scan-hero {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 20px;
+	flex-wrap: wrap;
+	padding: 6px 0;
+}
+
+.turbo-guard-scan-intro h2 {
+	margin: 0 0 4px;
+	font-size: 15px;
+	font-weight: 700;
+	color: var(--tg-gray-800);
+	border-bottom: none;
+	padding-bottom: 0;
+}
+
+.turbo-guard-scan-intro p {
+	margin: 0;
+	color: var(--tg-gray-400);
+	font-size: 13px;
+}
+
+#turbo-guard-start-scan {
+	background: var(--tg-blue) !important;
+	border-color: var(--tg-blue-dark) !important;
+	color: #fff !important;
+	height: 40px;
+	padding: 0 20px !important;
+	font-size: 14px !important;
+	font-weight: 600 !important;
+	display: flex !important;
+	align-items: center;
+	gap: 8px;
+	border-radius: 6px !important;
+	box-shadow: 0 2px 4px rgba(37,99,235,.3) !important;
+	transition: all .15s !important;
+	flex-shrink: 0;
+}
+
+#turbo-guard-start-scan:hover {
+	background: var(--tg-blue-dark) !important;
+	box-shadow: 0 4px 8px rgba(37,99,235,.4) !important;
+	transform: translateY(-1px);
+}
+
+/* Progress Bar */
+
+.turbo-guard-progress-wrap {
+	margin-top: 18px;
+	border-top: 1px solid var(--tg-gray-100);
+	padding-top: 14px;
+}
+
+.turbo-guard-progress-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 8px;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--tg-gray-600);
+}
+
+.turbo-guard-progress-bar {
+	background: var(--tg-gray-100);
+	border-radius: 99px;
+	height: 8px;
+	overflow: hidden;
+}
+
+#turbo-guard-progress-fill {
+	height: 100%;
+	background: linear-gradient(90deg, var(--tg-blue) 0%, #60a5fa 100%);
+	border-radius: 99px;
+	transition: width .4s ease;
+}
+
+.turbo-guard-threats-live {
+	margin: 8px 0 0;
+	color: var(--tg-red);
+	font-size: 12px;
+	font-weight: 500;
+	min-height: 16px;
+}
+
+/* Results header */
+
+.turbo-guard-results-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	flex-wrap: wrap;
+	gap: 10px;
+	margin-bottom: 14px;
+}
+
+.turbo-guard-results-header h2 {
+	margin: 0;
+	border-bottom: none;
+	padding-bottom: 0;
+}
+
+.turbo-guard-scan-time {
+	font-size: 12px;
+	font-weight: 400;
+	color: var(--tg-gray-400);
+}
+
+/* Bulk action toolbar */
+
+.turbo-guard-bulk-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+	padding: 10px 14px;
+	background: var(--tg-gray-50);
+	border: 1px solid var(--tg-gray-200);
+	border-radius: 6px;
+	margin-bottom: 12px;
+}
+
+.turbo-guard-bulk-toolbar label {
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--tg-gray-600);
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	cursor: pointer;
+	margin-right: 4px;
+}
+
+.turbo-guard-bulk-toolbar .button {
+	font-size: 12px;
+	height: 30px;
+	line-height: 28px;
+	padding: 0 12px;
+}
+
+/* Keep old class name working */
+.turbo-guard-bulk-actions {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	flex-wrap: wrap;
+}
+
+.turbo-guard-count-badge {
+	background: var(--tg-blue);
+	color: #fff;
+	font-size: 11px;
+	font-weight: 600;
+	padding: 2px 10px;
+	border-radius: 20px;
+}
+
+/* Results table */
+
+.turbo-guard-results-table {
+	border-collapse: collapse;
+	width: 100%;
+	font-size: 13px;
+}
+
+.turbo-guard-results-table thead th {
+	background: var(--tg-gray-50);
+	color: var(--tg-gray-400);
+	font-size: 10px;
+	text-transform: uppercase;
+	letter-spacing: .6px;
+	font-weight: 600;
+	padding: 8px 12px;
+	border-bottom: 2px solid var(--tg-gray-200);
+	text-align: left;
+}
+
+.turbo-guard-results-table td {
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--tg-gray-100);
+	vertical-align: middle;
+}
+
+.turbo-guard-results-table tr:last-child td {
+	border-bottom: none;
+}
+
+.turbo-guard-col-check { width: 36px; }
+
+.turbo-guard-file-path code {
+	background: var(--tg-gray-100);
+	padding: 2px 6px;
+	border-radius: 4px;
+	font-size: 11.5px;
+	color: var(--tg-gray-800);
+	word-break: break-all;
+	font-family: 'SFMono-Regular', Consolas, monospace;
+}
+
+.turbo-guard-row-actions { white-space: nowrap; }
+
+.turbo-guard-row-actions .button {
+	padding: 2px 10px;
+	font-size: 11px;
+	height: 26px;
+	line-height: 24px;
+	margin-right: 4px;
+}
+
+/* Severity row left borders */
+
+.turbo-guard-severity-critical > td:first-child { border-left: 3px solid var(--tg-red) !important; }
+.turbo-guard-severity-critical { background: #fffafa !important; }
+
+.turbo-guard-severity-high > td:first-child { border-left: 3px solid var(--tg-orange) !important; }
+
+.turbo-guard-severity-medium > td:first-child { border-left: 3px solid var(--tg-blue) !important; }
+
+.turbo-guard-severity-info > td:first-child { border-left: 3px solid var(--tg-gray-400) !important; }
+
+/* Empty states */
+
+.turbo-guard-no-threats,
+.turbo-guard-no-scan {
+	text-align: center;
+	padding: 50px 20px;
+	color: var(--tg-gray-400);
+}
+
+.turbo-guard-no-threats .dashicons,
+.turbo-guard-no-scan .dashicons {
+	font-size: 52px;
+	width: 52px;
+	height: 52px;
+	color: var(--tg-green);
+	display: block;
+	margin: 0 auto 12px;
+}
+
+.turbo-guard-no-threats p,
+.turbo-guard-no-scan p {
+	font-size: 15px;
+	font-weight: 500;
+	color: var(--tg-gray-600);
+	margin: 0;
+}
+
+.turbo-guard-no-scan .dashicons { color: var(--tg-gray-400); }
+
+.turbo-guard-results-summary {
+	margin-top: 10px;
+	color: var(--tg-gray-400);
+	font-size: 12px;
+}
+
+/* =========================================================
+   Badges
+   ========================================================= */
+
+.turbo-guard-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 2px 9px;
+	border-radius: 20px;
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .4px;
+	line-height: 1.6;
+}
+
+.turbo-guard-badge-critical {
+	background: var(--tg-red-light);
+	color: var(--tg-red);
+	border: 1px solid #fca5a5;
+}
+
+.turbo-guard-badge-high {
+	background: var(--tg-orange-light);
+	color: var(--tg-orange);
+	border: 1px solid #fcd34d;
+}
+
+.turbo-guard-badge-medium {
+	background: var(--tg-blue-light);
+	color: var(--tg-blue);
+	border: 1px solid #93c5fd;
+}
+
+.turbo-guard-badge-info,
+.turbo-guard-badge-warning {
+	background: var(--tg-gray-100);
+	color: var(--tg-gray-600);
+	border: 1px solid var(--tg-gray-200);
+}
+
+/* =========================================================
+   Firewall
+   ========================================================= */
+
+.turbo-guard-status-row {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.turbo-guard-status-dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	display: inline-block;
+	flex-shrink: 0;
+}
+
+.turbo-guard-status-on  {
+	background: var(--tg-green);
+	box-shadow: 0 0 0 3px rgba(22,163,74,.15);
+}
+
+.turbo-guard-status-off {
+	background: var(--tg-red);
+	box-shadow: 0 0 0 3px rgba(220,38,38,.15);
+}
+
+.turbo-guard-inline-form {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+/* =========================================================
+   Notices
+   ========================================================= */
+
+.turbo-guard-notice { margin: 14px 0; }
+
+/* =========================================================
+   Settings
+   ========================================================= */
+
+.turbo-guard-settings .form-table th {
+	width: 220px;
+	padding: 14px 0;
+	font-weight: 600;
+	color: var(--tg-gray-800);
+}
+
+.turbo-guard-settings .form-table td { padding: 12px 0; }
+
+/* =========================================================
+   GSC Module
+   ========================================================= */
+
+.turbo-guard-gsc .turbo-guard-gsc-setup ol {
+	margin: 10px 0 18px 20px;
+}
+
+.turbo-guard-gsc .turbo-guard-gsc-setup li {
+	margin-bottom: 8px;
+	font-size: 13px;
+	color: var(--tg-gray-600);
+}
+
+.turbo-guard-gsc .turbo-guard-gsc-controls {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	flex-wrap: wrap;
+	margin-bottom: 14px;
+}
+
+.turbo-guard-gsc-stats {
+	font-size: 13px;
+	padding: 6px 0;
+}
+
+.turbo-guard-gsc-table .turbo-guard-url-cell {
+	max-width: 500px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	font-size: 12px;
+}
+
+.turbo-guard-gsc-table .turbo-guard-spam-row td {
+	background-color: #fffafa;
+	border-left: 3px solid var(--tg-red);
+}
+
+.turbo-guard-gsc-table a {
+	color: var(--tg-blue);
+	text-decoration: none;
+	font-size: 12px;
+}
+
+.turbo-guard-gsc-table a:hover { text-decoration: underline; }
+
+#turbo-guard-htaccess-code {
+	background: #1e1e1e;
+	color: #d4d4d4;
+	border: 1px solid #3e3e42;
+	border-radius: 6px;
+	padding: 14px;
+	font-size: 12px;
+	line-height: 1.7;
+	resize: vertical;
+	font-family: 'SFMono-Regular', Consolas, monospace;
+}
+
+#turbo-guard-copy-htaccess { margin-top: 10px; }
+
+.turbo-guard-gsc .spinner.is-active {
+	visibility: visible;
+	float: none;
+	display: inline-block;
+	vertical-align: middle;
+	margin: 0 6px 0 0;
+}
+
+/* =========================================================
+   Spinner animation
+   ========================================================= */
+
+@keyframes rotation {
+	from { transform: rotate(0deg); }
+	to   { transform: rotate(360deg); }
+}
+
+.dashicons-update-alt.spinning {
+	animation: rotation 1s infinite linear;
+	display: inline-block;
+	vertical-align: middle;
+}
+
+/* =========================================================
+   Responsive
+   ========================================================= */
+
+@media screen and (max-width: 1200px) {
+	.turbo-guard-stats-grid {
+		grid-template-columns: repeat(2, 1fr);
+	}
+	.turbo-guard-score-card {
+		grid-column: span 2;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+	}
+}
+
+@media screen and (max-width: 782px) {
+	.turbo-guard-stats-grid {
+		grid-template-columns: 1fr 1fr;
+	}
+	.turbo-guard-score-card { grid-column: span 2; }
+	.turbo-guard-actions-grid { grid-template-columns: 1fr; }
+	.turbo-guard-page-header { margin-right: -10px; padding: 16px 14px; }
+	.turbo-guard-scan-hero { flex-direction: column; align-items: flex-start; }
+	.turbo-guard-results-header { flex-direction: column; align-items: flex-start; }
+}
+
+@media screen and (max-width: 480px) {
+	.turbo-guard-stats-grid { grid-template-columns: 1fr; }
+	.turbo-guard-score-card { grid-column: span 1; }
+}
+
+/* =========================================================
+   GSC Setup Steps
+   ========================================================= */
+
+.turbo-guard-setup-step {
+	display: flex;
+	gap: 14px;
+	padding: 14px 0;
+	border-bottom: 1px solid var(--tg-gray-100);
+}
+
+.turbo-guard-setup-step:last-of-type {
+	border-bottom: none;
+}
+
+.turbo-guard-step-number {
+	width: 28px;
+	height: 28px;
+	background: var(--tg-blue);
+	color: #fff;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 13px;
+	font-weight: 700;
+	flex-shrink: 0;
+	margin-top: 1px;
+}
+
+.turbo-guard-step-content {
+	flex: 1;
+}
+
+.turbo-guard-step-content strong {
+	font-size: 13px;
+	color: var(--tg-gray-800);
+	display: block;
+	margin-bottom: 4px;
+}
+
+.turbo-guard-step-content p {
+	margin: 0 0 8px;
+	font-size: 13px;
+	color: var(--tg-gray-600);
+	line-height: 1.5;
+}
+
+/* Settings page header too */
+.turbo-guard-settings .turbo-guard-page-header {
+	margin-bottom: 20px;
+}
+
+
+/* =========================================================
+   Remote Notification Banners — v1.3.0
+   Rendered by Turbo_Guard_Notices::render_single_notice()
+   between the page header and the stats grid on the dashboard.
+   ========================================================= */
+
+.turbo-guard-remote-notice {
+	display: flex;
+	align-items: flex-start;
+	gap: 12px;
+	margin: 0 0 18px 0;
+	padding: 14px 16px 14px 18px;
+	border-radius: var(--tg-radius);
+	border-left: 4px solid var(--tg-blue);
+	background: var(--tg-blue-light);
+	box-shadow: var(--tg-shadow);
+	position: relative;
+	animation: tg-notice-in .22s ease;
+}
+
+@keyframes tg-notice-in {
+	from { opacity: 0; transform: translateY(-6px); }
+	to   { opacity: 1; transform: translateY(0);    }
+}
+
+/* ---- type variants ---- */
+.turbo-guard-remote-notice--promotion {
+	border-left-color: var(--tg-blue);
+	background: var(--tg-blue-light);
+}
+.turbo-guard-remote-notice--info {
+	border-left-color: #6366f1;
+	background: #eef2ff;
+}
+.turbo-guard-remote-notice--warning {
+	border-left-color: var(--tg-orange);
+	background: var(--tg-orange-light);
+}
+.turbo-guard-remote-notice--success {
+	border-left-color: var(--tg-green);
+	background: var(--tg-green-light);
+}
+
+/* ---- icon ---- */
+.tg-notice-icon {
+	font-size: 22px;
+	line-height: 1;
+	flex-shrink: 0;
+	margin-top: 1px;
+}
+
+/* ---- body ---- */
+.tg-notice-body {
+	flex: 1;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 6px 12px;
+	min-width: 0;
+}
+
+.tg-notice-title {
+	font-size: 13px;
+	font-weight: 600;
+	color: var(--tg-gray-800);
+	flex-basis: 100%;
+	line-height: 1.3;
+}
+
+.tg-notice-message {
+	font-size: 13px;
+	color: var(--tg-gray-600);
+	line-height: 1.5;
+}
+
+/* CTA button sits inline with the message */
+.tg-notice-cta.button {
+	flex-shrink: 0;
+	font-size: 12px;
+	padding: 3px 12px;
+	height: auto;
+	line-height: 1.8;
+}
+
+/* ---- dismiss × button ---- */
+.tg-notice-dismiss {
+	flex-shrink: 0;
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: 18px;
+	line-height: 1;
+	color: var(--tg-gray-400);
+	padding: 0 2px;
+	margin-left: 4px;
+	transition: color .15s;
+	align-self: center;
+}
+.tg-notice-dismiss:hover {
+	color: var(--tg-gray-800);
+}
+.tg-notice-dismiss:focus {
+	outline: 2px solid var(--tg-blue);
+	outline-offset: 2px;
+	border-radius: 3px;
+}

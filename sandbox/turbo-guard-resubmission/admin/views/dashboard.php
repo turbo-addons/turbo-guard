@@ -12,10 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Determine score color for SVG circle.
-$score       = $stats['security_score'];
-$circumference = 314; // 2 * pi * 50.
-$dash_offset   = $circumference - ( ( $score / 100 ) * $circumference );
-$circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc2626' );
+$turbo_guard_score       = $stats['security_score'];
+$turbo_guard_circumference = 314; // 2 * pi * 50.
+$turbo_guard_dash_offset   = $turbo_guard_circumference - ( ( $turbo_guard_score / 100 ) * $turbo_guard_circumference );
+$turbo_guard_circle_color  = $turbo_guard_score >= 90 ? '#16a34a' : ( $turbo_guard_score >= 70 ? '#d97706' : '#dc2626' );
 ?>
 
 <div class="wrap turbo-guard-dashboard">
@@ -36,74 +36,12 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 
 	<?php
 	/**
-	 * Remote notification banners are rendered here.
+	 * Admin notice banners are rendered here.
 	 * Turbo_Guard_Notices::render_notices() is hooked to this action.
 	 *
 	 * @since 1.3.0
 	 */
 	do_action( 'turbo_guard_after_header' );
-	?>
-
-	<?php
-	// TEMPORARY DEBUG — remove after testing.
-	if ( current_user_can( 'manage_options' ) && isset( $_GET['tg_debug'] ) ) {
-		echo '<div style="background:#fff3cd;border:1px solid #ffc107;padding:10px;margin:10px 0;font-size:12px;">';
-		echo '<strong>🔧 NOTICE SYSTEM DEBUG:</strong><br>';
-
-		// Check if class exists.
-		echo '✓ Notices class exists: ' . ( class_exists( 'Turbo_Guard_Notices' ) ? 'YES' : 'NO' ) . '<br>';
-		echo '✓ Activity class exists: ' . ( class_exists( 'Turbo_Guard_Activity' ) ? 'YES' : 'NO' ) . '<br>';
-
-		// Check transient.
-		$cached = get_transient( 'turbo_guard_remote_notices' );
-		if ( $cached === false ) {
-			echo '✓ Transient: EXPIRED (will fetch fresh on next load)<br>';
-		} elseif ( isset( $cached['__empty'] ) ) {
-			echo '✓ Transient: Server had no notices (will retry after TTL)<br>';
-		} else {
-			echo '✓ Transient: HAS ' . count( $cached ) . ' notices cached<br>';
-		}
-
-		// Check error transient.
-		$error_state = get_transient( 'turbo_guard_notices_fetch_error' );
-		echo '✓ Error cooldown: ' . ( $error_state ? 'ACTIVE (' . esc_html( $error_state ) . ') — retrying in ≤60s' : 'NONE' ) . '<br>';
-
-		// Version tracking.
-		$stored_ver = get_option( 'turbo_guard_notices_version', '' );
-		echo '✓ Stored version: ' . esc_html( $stored_ver ) . ' | Current: ' . esc_html( TURBO_GUARD_VERSION ) . '<br>';
-
-		// Try fetching the actual URL directly.
-		$test_url = Turbo_Guard_Notices::REMOTE_URL;
-		echo '✓ Fetching: ' . esc_html( $test_url ) . '<br>';
-		$response = wp_remote_get( $test_url, array( 'timeout' => 8 ) );
-		if ( is_wp_error( $response ) ) {
-			echo '❌ Fetch error: ' . esc_html( $response->get_error_message() ) . '<br>';
-		} else {
-			$body = wp_remote_retrieve_body( $response );
-			$data = json_decode( $body, true );
-			echo '✓ HTTP status: ' . esc_html( wp_remote_retrieve_response_code( $response ) ) . '<br>';
-			echo '✓ Notices in remote JSON: ' . ( isset( $data['notices'] ) ? count( $data['notices'] ) : '0 or invalid' ) . '<br>';
-		}
-
-		// Activity data.
-		$snap = Turbo_Guard_Activity::get_instance()->get_snapshot();
-		echo esc_html( '✓ Activity: first_seen=' . gmdate( 'Y-m-d', $snap['first_seen'] ?: time() )
-			. ' | last_seen=' . gmdate( 'Y-m-d', $snap['last_seen'] ?: time() )
-			. ' | scans=' . $snap['scan_count']
-			. ' | score=' . $snap['last_score']
-			. ' | days_since_install=' . $snap['days_since_install'] ) . '<br>';
-
-		// Check dismissed.
-		$dismissed = get_user_meta( get_current_user_id(), 'turbo_guard_dismissed_notices', true );
-		echo '✓ Dismissed: ' . ( is_array( $dismissed ) && ! empty( $dismissed ) ? esc_html( implode( ', ', $dismissed ) ) : 'NONE' ) . '<br>';
-
-		// activated_at.
-		$activated = get_option( 'turbo_guard_activated_at', 0 );
-		echo '✓ activated_at: ' . ( $activated ? esc_html( gmdate( 'Y-m-d H:i', $activated ) ) : 'NOT SET' ) . '<br>';
-
-		echo '<br><a href="' . esc_url( admin_url( 'admin-ajax.php?action=turbo_guard_flush_notices&nonce=' . wp_create_nonce( 'turbo_guard_flush_notices' ) ) ) . '" style="color:#d63384;">⟳ Flush Cache Now</a>';
-		echo '</div>';
-	}
 	?>
 
 	<!-- Stats Grid -->
@@ -116,23 +54,23 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 				<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
 					<circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" stroke-width="10"/>
 					<circle cx="60" cy="60" r="50" fill="none"
-						stroke="<?php echo esc_attr( $circle_color ); ?>"
+						stroke="<?php echo esc_attr( $turbo_guard_circle_color ); ?>"
 						stroke-width="10"
 						stroke-linecap="round"
-						stroke-dasharray="<?php echo esc_attr( ( $score / 100 ) * $circumference ); ?> <?php echo esc_attr( $circumference ); ?>"
+						stroke-dasharray="<?php echo esc_attr( ( $turbo_guard_score / 100 ) * $turbo_guard_circumference ); ?> <?php echo esc_attr( $turbo_guard_circumference ); ?>"
 						transform="rotate(-90 60 60)"
 						style="transition: stroke-dasharray .6s ease;"
 					/>
 				</svg>
-				<span class="turbo-guard-score-value" style="color:<?php echo esc_attr( $circle_color ); ?>">
-					<?php echo esc_html( $score ); ?>
+				<span class="turbo-guard-score-value" style="color:<?php echo esc_attr( $turbo_guard_circle_color ); ?>">
+					<?php echo esc_html( $turbo_guard_score ); ?>
 				</span>
 			</div>
 			<p class="turbo-guard-score-label">
 				<?php
-				if ( $score >= 90 ) {
+				if ( $turbo_guard_score >= 90 ) {
 					esc_html_e( 'Excellent protection', 'turbo-guard' );
-				} elseif ( $score >= 70 ) {
+				} elseif ( $turbo_guard_score >= 70 ) {
 					esc_html_e( 'Good — can improve', 'turbo-guard' );
 				} else {
 					esc_html_e( 'Action required', 'turbo-guard' );
@@ -243,19 +181,19 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $stats['recent_events'] as $event ) : ?>
+					<?php foreach ( $stats['recent_events'] as $turbo_guard_event ) : ?>
 						<tr>
 							<td style="color:#9ca3af;font-size:12px;">
-								<?php echo esc_html( human_time_diff( strtotime( $event->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?>
+								<?php echo esc_html( human_time_diff( strtotime( $turbo_guard_event->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?>
 							</td>
-							<td class="turbo-guard-event-message"><?php echo esc_html( $event->message ); ?></td>
+							<td class="turbo-guard-event-message"><?php echo esc_html( $turbo_guard_event->message ); ?></td>
 							<td>
-								<span class="turbo-guard-badge turbo-guard-badge-<?php echo esc_attr( $event->severity ); ?>">
-									<?php echo esc_html( ucfirst( $event->severity ) ); ?>
+								<span class="turbo-guard-badge turbo-guard-badge-<?php echo esc_attr( $turbo_guard_event->severity ); ?>">
+									<?php echo esc_html( ucfirst( $turbo_guard_event->severity ) ); ?>
 								</span>
 							</td>
 							<td style="font-family:monospace;font-size:12px;color:#6b7280;">
-								<?php echo $event->ip_address ? esc_html( $event->ip_address ) : '<span style="color:#d1d5db;">—</span>'; ?>
+								<?php echo $turbo_guard_event->ip_address ? esc_html( $turbo_guard_event->ip_address ) : '<span style="color:#d1d5db;">—</span>'; ?>
 							</td>
 						</tr>
 					<?php endforeach; ?>
