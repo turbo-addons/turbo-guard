@@ -224,6 +224,12 @@ class Turbo_Guard_Admin {
 			true
 		);
 
+		// Page-specific data: security score trend for the AI Advisor chart.
+		$trend = array();
+		if ( strpos( $hook, 'turbo-guard-ai-report' ) !== false ) {
+			$trend = Turbo_Guard_AI_Advisor::get_security_trend();
+		}
+
 		// Pass data to JS.
 		wp_localize_script(
 			'turbo-guard-admin',
@@ -231,7 +237,7 @@ class Turbo_Guard_Admin {
 			array(
 				'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
 				'nonce'      => wp_create_nonce( 'turbo_guard_admin' ),
-				'flushNonce' => wp_create_nonce( 'turbo_guard_flush_notices' ),
+				'trend'      => $trend,
 				'strings' => array(
 					'scanning'       => __( 'Scanning...', 'turbo-guard' ),
 					'scanComplete'   => __( 'Scan Complete!', 'turbo-guard' ),
@@ -241,6 +247,30 @@ class Turbo_Guard_Admin {
 					'selectFiles'    => __( 'Please select at least one file.', 'turbo-guard' ),
 					'savingSettings' => __( 'Saving...', 'turbo-guard' ),
 					'settingsSaved'  => __( 'Settings saved successfully!', 'turbo-guard' ),
+
+					// Live Traffic.
+					/* translators: %s: IP address to block. */
+					'blockIpConfirm' => __( 'Block IP %s?', 'turbo-guard' ),
+					'blocking'       => __( 'Blocking...', 'turbo-guard' ),
+					'blocked'        => __( 'Blocked', 'turbo-guard' ),
+					'block'          => __( 'Block', 'turbo-guard' ),
+
+					// SEO Spam Detector.
+					'seoSpamFound'              => __( 'spam indicator(s) found.', 'turbo-guard' ),
+					'noSeoSpamFound'            => __( 'No SEO spam found.', 'turbo-guard' ),
+					'seoScanFailed'             => __( 'Scan failed.', 'turbo-guard' ),
+					'confirmDeleteSpamPost'     => __( 'Permanently delete this spam post?', 'turbo-guard' ),
+					'deleting'                  => __( 'Deleting...', 'turbo-guard' ),
+					'deleteFree'                => __( 'Delete (Free)', 'turbo-guard' ),
+					'confirmDeleteAllSpamPosts' => __( 'Delete all spam posts? This cannot be undone.', 'turbo-guard' ),
+
+					// File Integrity.
+					'checking'               => __( 'Checking...', 'turbo-guard' ),
+					'runCheckNow'            => __( 'Run Check Now', 'turbo-guard' ),
+					'runNow'                 => __( 'Run Now', 'turbo-guard' ),
+					'building'               => __( 'Building...', 'turbo-guard' ),
+					'rebuildBaseline'        => __( 'Rebuild Baseline', 'turbo-guard' ),
+					'confirmRebuildBaseline' => __( 'Rebuild baseline? This marks all current files as trusted. Only do this on a clean site.', 'turbo-guard' ),
 				),
 			)
 		);
@@ -252,12 +282,7 @@ class Turbo_Guard_Admin {
 	 * @since 1.0.0
 	 */
 	public function render_dashboard_page() {
-		Turbo_Guard_Activity::get_instance()->record_visit( 'dashboard' );
 		$stats = Turbo_Guard_Settings::get_dashboard_stats();
-		// Update stored score from live stats.
-		if ( isset( $stats['security_score'] ) ) {
-			Turbo_Guard_Activity::get_instance()->record_score( $stats['security_score'] );
-		}
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/dashboard.php';
 	}
 
@@ -267,7 +292,6 @@ class Turbo_Guard_Admin {
 	 * @since 1.0.0
 	 */
 	public function render_scanner_page() {
-		Turbo_Guard_Activity::get_instance()->record_visit( 'scanner' );
 		$latest_scan = Turbo_Guard_Scanner::get_latest_scan();
 		$results     = array();
 
@@ -284,7 +308,6 @@ class Turbo_Guard_Admin {
 	 * @since 1.0.0
 	 */
 	public function render_firewall_page() {
-		Turbo_Guard_Activity::get_instance()->record_visit( 'firewall' );
 		global $wpdb;
 
 		// Cache for 60 seconds — firewall logs are time-sensitive but OK to be slightly stale.
@@ -314,7 +337,6 @@ class Turbo_Guard_Admin {
 	 * @since 1.0.0
 	 */
 	public function render_settings_page() {
-		Turbo_Guard_Activity::get_instance()->record_visit( 'settings' );
 		$settings = Turbo_Guard_Settings::get_all();
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/settings.php';
 	}
@@ -324,7 +346,6 @@ class Turbo_Guard_Admin {
 	 * @since 1.1.0
 	 */
 	public function render_gsc_page() {
-		Turbo_Guard_Activity::get_instance()->record_visit( 'gsc' );
 		$gsc = new Turbo_Guard_GSC();
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/gsc-cleanup.php';
 	}
@@ -335,7 +356,6 @@ class Turbo_Guard_Admin {
 	 * @since 1.1.0
 	 */
 	public function render_vulnerabilities_page() {
-		Turbo_Guard_Activity::get_instance()->record_visit( 'vulnerabilities' );
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/vulnerabilities.php';
 	}
 
@@ -345,7 +365,6 @@ class Turbo_Guard_Admin {
 	 * @since 1.1.0
 	 */
 	public function render_live_traffic_page() {
-		Turbo_Guard_Activity::get_instance()->record_visit( 'traffic' );
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/live-traffic.php';
 	}
 
@@ -355,7 +374,6 @@ class Turbo_Guard_Admin {
 	 * @since 1.2.0
 	 */
 	public function render_ai_report_page() {
-		Turbo_Guard_Activity::get_instance()->record_visit( 'ai-report' );
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/ai-report.php';
 	}
 
@@ -365,7 +383,6 @@ class Turbo_Guard_Admin {
 	 * @since 1.2.0
 	 */
 	public function render_seo_spam_page() {
-		Turbo_Guard_Activity::get_instance()->record_visit( 'seo-spam' );
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/seo-spam.php';
 	}
 
@@ -375,7 +392,6 @@ class Turbo_Guard_Admin {
 	 * @since 1.2.0
 	 */
 	public function render_integrity_page() {
-		Turbo_Guard_Activity::get_instance()->record_visit( 'integrity' );
 		$integrity_results = Turbo_Guard_Integrity::get_last_results();
 		$baseline_built_at = get_option( 'turbo_guard_baseline_built_at', '' );
 		$watcher_last_run  = get_option( 'turbo_guard_watcher_last_run', '' );
@@ -485,10 +501,6 @@ class Turbo_Guard_Admin {
 		// If scan is done, trigger AI analysis in background.
 		if ( ! empty( $result['done'] ) ) {
 			wp_schedule_single_event( time() + 2, 'turbo_guard_ai_analyse', array( $scan_id ) );
-			// Record scan completion in activity tracker.
-			$scan_row = Turbo_Guard_Scanner::get_latest_scan();
-			$threats  = $scan_row ? (int) $scan_row->threats_found : 0;
-			Turbo_Guard_Activity::get_instance()->record_scan( $threats );
 		}
 
 		wp_send_json_success( $result );
@@ -537,11 +549,6 @@ class Turbo_Guard_Admin {
 		}
 
 		$result = Turbo_Guard_Cleaner::delete_files( $result_ids );
-
-		// If files were cleaned, mark threats as resolved in activity tracker.
-		if ( ! empty( $result['deleted'] ) && (int) $result['deleted'] > 0 ) {
-			Turbo_Guard_Activity::get_instance()->record_threats_resolved();
-		}
 
 		wp_send_json_success( $result );
 	}

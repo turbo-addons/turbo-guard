@@ -350,12 +350,7 @@ $tg_site_is_hacked = $tg_critical_count > 0;
 
 </div>
 
-<script>
-jQuery(document).ready(function($) {
-	$('#turbo-guard-quick-delete-critical').on('click', function() {
-		$('#turbo-guard-select-critical').trigger('click');
-		$('html,body').animate({ scrollTop: $('#turbo-guard-delete-selected').offset().top - 100 }, 400);
-		$('#turbo-guard-delete-selected').trigger('click');
-	});
-});
-</script>
+<?php
+// "Delete All Critical Files Now" shortcut handling lives in
+// admin/js/turbo-guard-admin-v3.js (enqueued via admin_enqueue_scripts).
+?>

@@ -453,15 +453,6 @@ class Turbo_Guard_2FA {
 		$secret         = $this->get_secret( $user->ID );
 		$new_secret     = $enabled ? $secret : self::generate_secret();
 		$recovery_codes = $this->get_recovery_codes( $user->ID );
-		$site_name      = get_bloginfo( 'name' );
-		$otpauth_url    = sprintf(
-			'otpauth://totp/%s:%s?secret=%s&issuer=%s',
-			rawurlencode( $site_name ),
-			rawurlencode( $user->user_email ),
-			rawurlencode( $new_secret ),
-			rawurlencode( $site_name )
-		);
-		$qr_url = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' . rawurlencode( $otpauth_url );
 
 		wp_nonce_field( 'turbo_guard_2fa_profile_' . $user->ID, 'turbo_guard_2fa_nonce' );
 		?>
@@ -479,18 +470,12 @@ class Turbo_Guard_2FA {
 			</tr>
 			<?php if ( ! $enabled ) : ?>
 			<tr>
-				<th><?php esc_html_e( 'Scan QR Code', 'turbo-guard' ); ?></th>
+				<th><?php esc_html_e( 'Manual Setup', 'turbo-guard' ); ?></th>
 				<td>
-					<img src="<?php echo esc_url( $qr_url ); ?>"
-						alt="<?php esc_attr_e( 'QR code for authenticator app', 'turbo-guard' ); ?>"
-						width="200" height="200"
-						style="border:6px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.15);border-radius:6px;"
-					/>
 					<p class="description">
-						<?php esc_html_e( 'Scan with Google Authenticator, Authy, or any TOTP app.', 'turbo-guard' ); ?>
+						<?php esc_html_e( 'Enter this key manually in Google Authenticator, Authy, or any TOTP app.', 'turbo-guard' ); ?>
 					</p>
 					<p>
-						<?php esc_html_e( 'Or enter this key manually:', 'turbo-guard' ); ?>
 						<code style="background:#f3f4f6;padding:4px 8px;border-radius:4px;user-select:all;">
 							<?php echo esc_html( $new_secret ); ?>
 						</code>

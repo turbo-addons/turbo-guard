@@ -161,60 +161,11 @@ if ( ! $report && $latest_scan ) {
 				<div class="turbo-guard-card">
 					<h2><?php esc_html_e( 'Security Score Trend (30 Days)', 'turbo-guard' ); ?></h2>
 					<canvas id="turbo-guard-trend-chart" height="80"></canvas>
-					<script>
-					(function() {
-						var data = <?php echo wp_json_encode( $trend ); ?>;
-						var canvas = document.getElementById('turbo-guard-trend-chart');
-						if (!canvas) return;
-						var ctx = canvas.getContext('2d');
-						var W = canvas.offsetWidth;
-						canvas.width = W;
-						var H = 80;
-						var scores = data.map(function(d) { return d.score; });
-						var minS = Math.min.apply(null, scores);
-						var maxS = Math.max.apply(null, scores) || 100;
-						var step = W / Math.max(data.length - 1, 1);
-
-						ctx.fillStyle = '#f9fafb';
-						ctx.fillRect(0, 0, W, H);
-
-						// Draw grid lines.
-						ctx.strokeStyle = '#e5e7eb';
-						ctx.lineWidth = 1;
-						[0, 25, 50, 75, 100].forEach(function(pct) {
-							var y = H - (pct / 100) * H;
-							ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
-						});
-
-						// Draw gradient fill.
-						var gradient = ctx.createLinearGradient(0, 0, 0, H);
-						gradient.addColorStop(0, 'rgba(37,99,235,.3)');
-						gradient.addColorStop(1, 'rgba(37,99,235,.02)');
-
-						ctx.beginPath();
-						data.forEach(function(d, i) {
-							var x = i * step;
-							var y = H - ((d.score - minS) / (maxS - minS + 1)) * (H - 10) - 5;
-							i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-						});
-						ctx.lineTo((data.length - 1) * step, H);
-						ctx.lineTo(0, H);
-						ctx.closePath();
-						ctx.fillStyle = gradient;
-						ctx.fill();
-
-						// Draw line.
-						ctx.beginPath();
-						ctx.strokeStyle = '#2563eb';
-						ctx.lineWidth = 2;
-						data.forEach(function(d, i) {
-							var x = i * step;
-							var y = H - ((d.score - minS) / (maxS - minS + 1)) * (H - 10) - 5;
-							i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-						});
-						ctx.stroke();
-					}());
-					</script>
+					<?php
+					// The trend chart is drawn by admin/js/turbo-guard-admin-v3.js
+					// (enqueued via admin_enqueue_scripts); the trend data is passed
+					// through wp_localize_script as turboGuardAdmin.trend.
+					?>
 					<p style="font-size:11px;color:#9ca3af;margin-top:8px;">
 						<?php esc_html_e( 'Higher is better. Score drops when threats are found.', 'turbo-guard' ); ?>
 					</p>

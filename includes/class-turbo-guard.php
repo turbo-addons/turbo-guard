@@ -70,8 +70,6 @@ class Turbo_Guard {
 		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-bot-protection.php';
 		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-seo-spam-detector.php';
 		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-notices.php';
-		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-activity.php';
-
 		// Admin classes.
 		if ( is_admin() ) {
 			require_once TURBO_GUARD_PLUGIN_DIR . 'admin/class-turbo-guard-admin.php';
@@ -139,10 +137,8 @@ class Turbo_Guard {
 		// Initialize admin interface.
 		if ( is_admin() ) {
 			Turbo_Guard_Admin::get_instance();
-			// Remote notification system (fetch + render dismissible banners).
+			// Local admin notice banners (no remote requests).
 			Turbo_Guard_Notices::get_instance();
-			// Activity tracker singleton — hooks into admin page renders.
-			Turbo_Guard_Activity::get_instance();
 		}
 
 		// Hook scheduled vulnerability scan.
@@ -166,6 +162,11 @@ class Turbo_Guard {
 	/**
 	 * Run the scheduled malware + vulnerability scan.
 	 *
+	 * The malware scan is local and always runs. The vulnerability scan
+	 * contacts the WPScan API with installed plugin/theme versions, so it
+	 * only runs when the site owner explicitly opted in via the
+	 * `enable_scheduled_vuln_scan` setting (default OFF).
+	 *
 	 * @since 1.1.0
 	 */
 	public function run_scheduled_scan() {
@@ -173,8 +174,10 @@ class Turbo_Guard {
 		$scan_id = $scanner->start_scan();
 		$scanner->scan_chunk( $scan_id, 0, 500 ); // Large chunk for background cron.
 
-		// Also run vulnerability scan on schedule.
-		Turbo_Guard_Vuln_Scanner::run_scan();
+		// Vulnerability scan is opt-in: only contact WPScan API when enabled.
+		if ( 'yes' === get_option( 'turbo_guard_enable_scheduled_vuln_scan', 'no' ) ) {
+			Turbo_Guard_Vuln_Scanner::run_scan();
+		}
 	}
 
 	/**

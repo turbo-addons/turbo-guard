@@ -331,49 +331,9 @@ $tg_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 
 </div>
 
-<script>
-jQuery(document).ready(function($) {
-	$('#turbo-guard-run-seo-scan').on('click', function() {
-		var $btn     = $(this).prop('disabled', true);
-		var $loading = $('#turbo-guard-seo-scanning');
-		var $notice  = $('#turbo-guard-seo-notice');
-		$loading.show();
-		$notice.hide().removeClass('notice-success notice-error notice');
-		$.ajax({
-			url: turboGuardAdmin.ajaxUrl, type: 'POST', timeout: 60000,
-			data: { action: 'turbo_guard_run_seo_spam_scan', nonce: turboGuardAdmin.nonce },
-			success: function(r) {
-				if (r.success) {
-					$notice.addClass('notice notice-' + (r.data.total > 0 ? 'error' : 'success'))
-						.html('<p>' + (r.data.total > 0 ? '&#9888; ' + r.data.total + ' spam indicator(s) found.' : '&#10003; No SEO spam found.') + '</p>').show();
-					setTimeout(function() { location.reload(); }, 1500);
-				} else {
-					$notice.addClass('notice notice-error').html('<p>&#10007; ' + (r.data ? r.data.message : 'Scan failed.') + '</p>').show();
-				}
-			},
-			error: function(xhr) { $notice.addClass('notice notice-error').html('<p>&#10007; Server error: ' + xhr.status + '</p>').show(); },
-			complete: function() { $btn.prop('disabled', false); $loading.hide(); }
-		});
-	});
-	$(document).on('click', '.turbo-guard-delete-spam-post', function() {
-		if (!confirm('<?php esc_html_e( 'Permanently delete this spam post?', 'turbo-guard' ); ?>')) return;
-		var $btn = $(this).prop('disabled', true).text('<?php esc_html_e( 'Deleting...', 'turbo-guard' ); ?>');
-		var id = $(this).data('id'), nonce = $(this).data('nonce');
-		$.post(turboGuardAdmin.ajaxUrl, { action: 'turbo_guard_delete_spam_post', nonce: nonce, post_id: id }, function(r) {
-			if (r.success) { $btn.closest('tr').fadeOut(300, function() { $(this).remove(); }); }
-			else { $btn.prop('disabled', false).text('<?php esc_html_e( 'Delete (Free)', 'turbo-guard' ); ?>'); }
-		});
-	});
-	$('#turbo-guard-delete-all-spam-posts').on('click', function() {
-		var ids = $(this).data('ids').toString().split(',');
-		if (!confirm('<?php esc_html_e( 'Delete all spam posts? This cannot be undone.', 'turbo-guard' ); ?>')) return;
-		var $btn = $(this).prop('disabled', true);
-		var done = 0;
-		ids.forEach(function(id) {
-			$.post(turboGuardAdmin.ajaxUrl, { action: 'turbo_guard_delete_spam_post', nonce: turboGuardAdmin.nonce, post_id: parseInt(id, 10) }, function() {
-				done++; if (done === ids.length) { location.reload(); }
-			});
-		});
-	});
-});
-</script>
+<?php
+// SEO spam scan + delete handling is in admin/js/turbo-guard-admin-v3.js
+// (enqueued via admin_enqueue_scripts). Scan/delete buttons carry data-*
+// attributes consumed by that script; user-facing strings are localised via
+// wp_localize_script (turboGuardAdmin.strings).
+?>

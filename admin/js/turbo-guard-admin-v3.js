@@ -1258,39 +1258,6 @@ jQuery( document ).ready( function( $ ) {
 		bindEvents: function () {
 			// Dismiss button click — works for any notice rendered now or later.
 			$( document ).on( 'click', '.tg-notice-dismiss', $.proxy( this.dismiss, this ) );
-
-			// Flush notices cache button (on Settings page).
-			$( document ).on( 'click', '#turbo-guard-flush-notices', $.proxy( this.flushCache, this ) );
-		},
-
-		/**
-		 * Flush notification cache via AJAX.
-		 */
-		flushCache: function( e ) {
-			e.preventDefault();
-
-			var $btn    = $( '#turbo-guard-flush-notices' );
-			var $result = $( '#turbo-guard-flush-result' );
-
-			$btn.prop( 'disabled', true ).text( '🔄 Refreshing...' );
-			$result.text( '' ).css( 'color', '' );
-
-			$.post( turboGuardAdmin.ajaxUrl, {
-				action: 'turbo_guard_flush_notices',
-				nonce:  turboGuardAdmin.flushNonce,
-			}, function( response ) {
-				if ( response.success ) {
-					$result.text( '✅ ' + response.data.message ).css( 'color', '#16a34a' );
-					// Reload page after 1.5s so new notices appear.
-					setTimeout( function() { location.reload(); }, 1500 );
-				} else {
-					$result.text( '❌ Failed.' ).css( 'color', '#dc2626' );
-					$btn.prop( 'disabled', false ).text( '🔄 Refresh Notifications Now' );
-				}
-			} ).fail( function() {
-				$result.text( '❌ Server error.' ).css( 'color', '#dc2626' );
-				$btn.prop( 'disabled', false ).text( '🔄 Refresh Notifications Now' );
-			} );
 		},
 
 		/**
@@ -1333,3 +1300,280 @@ jQuery( document ).ready( function( $ ) {
 	} );
 
 } )( jQuery );
+
+
+/**
+ * =========================================================
+ * AI Security Advisor — Security Score Trend Chart
+ * =========================================================
+ */
+
+jQuery( function( $ ) {
+	var canvas = document.getElementById( 'turbo-guard-trend-chart' );
+	if ( ! canvas ) {
+		return; // Not on the AI report page, or no trend canvas rendered.
+	}
+
+	var data = ( typeof turboGuardAdmin !== 'undefined' && turboGuardAdmin.trend ) ? turboGuardAdmin.trend : [];
+	if ( data.length < 2 ) {
+		return;
+	}
+
+	var ctx = canvas.getContext( '2d' );
+	var W = canvas.offsetWidth;
+	canvas.width = W;
+	var H = 80;
+	var scores = data.map( function( d ) { return d.score; } );
+	var minS = Math.min.apply( null, scores );
+	var maxS = Math.max.apply( null, scores ) || 100;
+	var step = W / Math.max( data.length - 1, 1 );
+
+	ctx.fillStyle = '#f9fafb';
+	ctx.fillRect( 0, 0, W, H );
+
+	// Draw grid lines.
+	ctx.strokeStyle = '#e5e7eb';
+	ctx.lineWidth = 1;
+	[ 0, 25, 50, 75, 100 ].forEach( function( pct ) {
+		var y = H - ( pct / 100 ) * H;
+		ctx.beginPath(); ctx.moveTo( 0, y ); ctx.lineTo( W, y ); ctx.stroke();
+	} );
+
+	// Draw gradient fill.
+	var gradient = ctx.createLinearGradient( 0, 0, 0, H );
+	gradient.addColorStop( 0, 'rgba(37,99,235,.3)' );
+	gradient.addColorStop( 1, 'rgba(37,99,235,.02)' );
+
+	ctx.beginPath();
+	data.forEach( function( d, i ) {
+		var x = i * step;
+		var y = H - ( ( d.score - minS ) / ( maxS - minS + 1 ) ) * ( H - 10 ) - 5;
+		i === 0 ? ctx.moveTo( x, y ) : ctx.lineTo( x, y );
+	} );
+	ctx.lineTo( ( data.length - 1 ) * step, H );
+	ctx.lineTo( 0, H );
+	ctx.closePath();
+	ctx.fillStyle = gradient;
+	ctx.fill();
+
+	// Draw line.
+	ctx.beginPath();
+	ctx.strokeStyle = '#2563eb';
+	ctx.lineWidth = 2;
+	data.forEach( function( d, i ) {
+		var x = i * step;
+		var y = H - ( ( d.score - minS ) / ( maxS - minS + 1 ) ) * ( H - 10 ) - 5;
+		i === 0 ? ctx.moveTo( x, y ) : ctx.lineTo( x, y );
+	} );
+	ctx.stroke();
+} );
+
+
+/**
+ * =========================================================
+ * Live Traffic — Refresh + Block IP
+ * =========================================================
+ */
+
+jQuery( document ).ready( function( $ ) {
+	$( '#turbo-guard-refresh-traffic' ).on( 'click', function() {
+		location.reload();
+	} );
+
+	$( document ).on( 'click', '.turbo-guard-block-traffic-ip', function() {
+		var ip      = $( this ).data( 'ip' );
+		var nonce   = $( this ).data( 'nonce' );
+		var strings = turboGuardAdmin.strings || {};
+
+		if ( ! ip || ! window.confirm( ( strings.blockIpConfirm || 'Block IP %s?' ).replace( '%s', ip ) ) ) {
+			return;
+		}
+
+		var $btn = $( this ).prop( 'disabled', true ).text( strings.blocking || 'Blocking...' );
+		$.post(
+			turboGuardAdmin.ajaxUrl,
+			{ action: 'turbo_guard_block_ip', nonce: nonce, ip_address: ip },
+			function( r ) {
+				if ( r.success ) {
+					$btn.text( strings.blocked || 'Blocked' ).css( 'color', '#16a34a' );
+				} else {
+					$btn.prop( 'disabled', false ).text( strings.block || 'Block' );
+					alert( r.data ? r.data.message : 'Error' );
+				}
+			}
+		);
+	} );
+} );
+
+
+/**
+ * =========================================================
+ * SEO Spam Detector — Scan + Delete
+ * =========================================================
+ */
+
+jQuery( document ).ready( function( $ ) {
+	var strings = turboGuardAdmin.strings || {};
+
+	$( '#turbo-guard-run-seo-scan' ).on( 'click', function() {
+		var $btn     = $( this ).prop( 'disabled', true );
+		var $loading = $( '#turbo-guard-seo-scanning' );
+		var $notice  = $( '#turbo-guard-seo-notice' );
+		$loading.show();
+		$notice.hide().removeClass( 'notice-success notice-error notice' );
+		$.ajax( {
+			url: turboGuardAdmin.ajaxUrl, type: 'POST', timeout: 60000,
+			data: { action: 'turbo_guard_run_seo_spam_scan', nonce: turboGuardAdmin.nonce },
+			success: function( r ) {
+				if ( r.success ) {
+					var msg = r.data.total > 0
+						? '&#9888; ' + r.data.total + ' ' + ( strings.seoSpamFound || 'spam indicator(s) found.' )
+						: '&#10003; ' + ( strings.noSeoSpamFound || 'No SEO spam found.' );
+					$notice
+						.addClass( 'notice notice-' + ( r.data.total > 0 ? 'error' : 'success' ) )
+						.html( '<p>' + msg + '</p>' )
+						.show();
+					setTimeout( function() { location.reload(); }, 1500 );
+				} else {
+					$notice
+						.addClass( 'notice notice-error' )
+						.html( '<p>&#10007; ' + ( r.data ? r.data.message : ( strings.seoScanFailed || 'Scan failed.' ) ) + '</p>' )
+						.show();
+				}
+			},
+			error: function( xhr ) {
+				$notice
+					.addClass( 'notice notice-error' )
+					.html( '<p>&#10007; Server error: ' + xhr.status + '</p>' )
+					.show();
+			},
+			complete: function() { $btn.prop( 'disabled', false ); $loading.hide(); }
+		} );
+	} );
+
+	$( document ).on( 'click', '.turbo-guard-delete-spam-post', function() {
+		if ( ! window.confirm( strings.confirmDeleteSpamPost || 'Permanently delete this spam post?' ) ) {
+			return;
+		}
+		var $btn  = $( this ).prop( 'disabled', true ).text( strings.deleting || 'Deleting...' );
+		var id    = $( this ).data( 'id' );
+		var nonce = $( this ).data( 'nonce' );
+		$.post(
+			turboGuardAdmin.ajaxUrl,
+			{ action: 'turbo_guard_delete_spam_post', nonce: nonce, post_id: id },
+			function( r ) {
+				if ( r.success ) {
+					$btn.closest( 'tr' ).fadeOut( 300, function() { $( this ).remove(); } );
+				} else {
+					$btn.prop( 'disabled', false ).text( strings.deleteFree || 'Delete (Free)' );
+				}
+			}
+		);
+	} );
+
+	$( '#turbo-guard-delete-all-spam-posts' ).on( 'click', function() {
+		var ids = $( this ).data( 'ids' ).toString().split( ',' );
+		if ( ! window.confirm( strings.confirmDeleteAllSpamPosts || 'Delete all spam posts? This cannot be undone.' ) ) {
+			return;
+		}
+		var $btn = $( this ).prop( 'disabled', true );
+		var done = 0;
+		ids.forEach( function( id ) {
+			$.post(
+				turboGuardAdmin.ajaxUrl,
+				{ action: 'turbo_guard_delete_spam_post', nonce: turboGuardAdmin.nonce, post_id: parseInt( id, 10 ) },
+				function() {
+					done++;
+					if ( done === ids.length ) {
+						location.reload();
+					}
+				}
+			);
+		} );
+	} );
+} );
+
+
+/**
+ * =========================================================
+ * Malware Scanner — Quick Delete Critical Files
+ * =========================================================
+ */
+
+jQuery( document ).ready( function( $ ) {
+	$( '#turbo-guard-quick-delete-critical' ).on( 'click', function() {
+		$( '#turbo-guard-select-critical' ).trigger( 'click' );
+		$( 'html,body' ).animate( { scrollTop: $( '#turbo-guard-delete-selected' ).offset().top - 100 }, 400 );
+		$( '#turbo-guard-delete-selected' ).trigger( 'click' );
+	} );
+} );
+
+
+/**
+ * =========================================================
+ * File Integrity — Checks, Watcher, Baseline
+ * =========================================================
+ */
+
+jQuery( function( $ ) {
+	var strings = turboGuardAdmin.strings || {};
+
+	function showNotice( msg, type ) {
+		$( '#turbo-guard-integrity-notice' )
+			.removeClass( 'notice-success notice-error notice-warning notice' )
+			.addClass( 'notice notice-' + type )
+			.html( '<p>' + msg + '</p>' )
+			.show();
+	}
+
+	$( '#tg-run-integrity' ).on( 'click', function() {
+		var $btn = $( this ).prop( 'disabled', true ).text( strings.checking || 'Checking...' );
+		$.post(
+			turboGuardAdmin.ajaxUrl,
+			{ action: 'turbo_guard_run_integrity_check', nonce: turboGuardAdmin.nonce },
+			function( r ) {
+				if ( r.success ) {
+					showNotice( '\u2713 ' + r.data.message, r.data.modified + r.data.missing > 0 ? 'error' : 'success' );
+					setTimeout( function() { location.reload(); }, 1500 );
+				} else {
+					showNotice( '\u2717 ' + ( r.data ? r.data.message : 'Failed.' ), 'error' );
+				}
+			}
+		).always( function() { $btn.prop( 'disabled', false ).text( strings.runCheckNow || 'Run Check Now' ); } );
+	} );
+
+	$( '#tg-run-watcher' ).on( 'click', function() {
+		var $btn = $( this ).prop( 'disabled', true ).text( strings.scanning || 'Scanning...' );
+		$.post(
+			turboGuardAdmin.ajaxUrl,
+			{ action: 'turbo_guard_run_file_watcher', nonce: turboGuardAdmin.nonce },
+			function( r ) {
+				if ( r.success ) {
+					showNotice( '\u2713 ' + r.data.message, r.data.new > 0 ? 'error' : 'success' );
+					setTimeout( function() { location.reload(); }, 1500 );
+				} else {
+					showNotice( '\u2717 ' + ( r.data ? r.data.message : 'Failed.' ), 'error' );
+				}
+			}
+		).always( function() { $btn.prop( 'disabled', false ).text( strings.runNow || 'Run Now' ); } );
+	} );
+
+	$( '#tg-rebuild-baseline' ).on( 'click', function() {
+		if ( ! window.confirm( strings.confirmRebuildBaseline || 'Rebuild baseline? This marks all current files as trusted. Only do this on a clean site.' ) ) {
+			return;
+		}
+		var $btn = $( this ).prop( 'disabled', true ).text( strings.building || 'Building...' );
+		$.post(
+			turboGuardAdmin.ajaxUrl,
+			{ action: 'turbo_guard_rebuild_baseline', nonce: turboGuardAdmin.nonce },
+			function( r ) {
+				if ( r.success ) {
+					showNotice( '\u2713 ' + r.data.message, 'success' );
+					setTimeout( function() { location.reload(); }, 1500 );
+				} else {
+					showNotice( '\u2717 ' + ( r.data ? r.data.message : 'Failed.' ), 'error' );
+				}
+			}
+		).always( function() { $btn.prop( 'disabled', false ).text( strings.rebuildBaseline || 'Rebuild Baseline' ); } );
+	} );
+} );

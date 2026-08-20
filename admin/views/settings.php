@@ -74,6 +74,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<p class="description"><?php esc_html_e( 'Recommended for safety - allows file recovery if needed.', 'turbo-guard' ); ?></p>
 					</td>
 				</tr>
+				<tr>
+					<th scope="row">
+						<label for="enable_scheduled_vuln_scan"><?php esc_html_e( 'Scheduled Vulnerability Scan', 'turbo-guard' ); ?></label>
+					</th>
+					<td>
+						<label>
+							<input type="checkbox" id="enable_scheduled_vuln_scan" name="enable_scheduled_vuln_scan" value="yes"
+								<?php checked( $settings['enable_scheduled_vuln_scan'], 'yes' ); ?> />
+							<?php esc_html_e( 'Enable scheduled vulnerability scans', 'turbo-guard' ); ?>
+						</label>
+						<p class="description"><?php esc_html_e( 'Sends plugin/theme versions to the WPScan API on the scheduled scan. Off by default.', 'turbo-guard' ); ?></p>
+					</td>
+				</tr>
 			</table>
 		</div>
 
@@ -503,17 +516,5 @@ if ( ! defined( 'ABSPATH' ) ) {
 	</form>
 
 	<div id="turbo-guard-settings-result" class="turbo-guard-notice" style="display:none;"></div>
-
-	<!-- Notification Cache Flush -->
-	<div class="turbo-guard-card" style="margin-top:20px;">
-		<h2>📢 <?php esc_html_e( 'Notification Cache', 'turbo-guard' ); ?></h2>
-		<p class="description" style="margin-bottom:12px;">
-			<?php esc_html_e( 'Force-refresh the notification feed from turbo-addons.com. Use this to see new campaigns immediately without waiting for the cache to expire.', 'turbo-guard' ); ?>
-		</p>
-		<button type="button" id="turbo-guard-flush-notices" class="button button-secondary">
-			🔄 <?php esc_html_e( 'Refresh Notifications Now', 'turbo-guard' ); ?>
-		</button>
-		<span id="turbo-guard-flush-result" style="margin-left:10px;font-size:13px;"></span>
-	</div>
 
 </div><!-- /.wrap -->
