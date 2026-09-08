@@ -14,6 +14,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+// phpcs:disable WordPress.DB.DirectDatabaseQuery -- Security scanner requires direct database access.
+
 /**
  * Bot detection and protection.
  *
@@ -52,41 +54,26 @@ class Turbo_Guard_Bot_Protection {
 	/**
 	 * Bad bots — blocked when bot protection is enabled.
 	 *
+	 * Free tier blocks the core vulnerability scanners and common attack tools
+	 * (~40% of the full list). Turbo Guard Pro blocks the complete list.
+	 *
 	 * @var array
 	 */
 	private static $bad_bots = array(
-		// Vulnerability scanners.
+		// Core vulnerability scanners (free).
 		'sqlmap'             => 'SQLMap (SQL injection scanner)',
 		'nikto'              => 'Nikto (vulnerability scanner)',
 		'nessus'             => 'Nessus (vulnerability scanner)',
 		'masscan'            => 'Masscan (port scanner)',
-		'zgrab'              => 'ZGrab (web scanner)',
 		'nuclei'             => 'Nuclei (vulnerability scanner)',
 		'acunetix'           => 'Acunetix (web scanner)',
 		'nmap'               => 'Nmap scripting engine',
-		// Scrapers / spam bots.
-		'BLEXBot'            => 'BLEXBot (scraper)',
-		'MegaIndex'          => 'MegaIndex (scraper)',
-		'SputnikBot'         => 'SputnikBot (scraper)',
-		'CCBot'              => 'CCBot (scraper)',
-		'Barkrowler'         => 'Barkrowler (scraper)',
-		'serpstatbot'        => 'SerpstatBot (scraper)',
-		'DataForSeoBot'      => 'DataForSeoBot (scraper)',
-		'PetalBot'           => 'PetalBot (scraper)',
-		'proximic'           => 'Proximic (scraper)',
-		'spbot'              => 'SPBot (spam bot)',
-		'EmailCollector'     => 'Email harvester',
-		'EmailSiphon'        => 'Email harvester',
-		'WebBandit'          => 'WebBandit (scraper)',
-		'WebEMailExtrac'     => 'Email harvester',
-		// Exploit kits / attack tools.
 		'WPScan'             => 'WPScan (WordPress scanner)',
-		'Jorgee'             => 'Jorgee (vulnerability scanner)',
-		'ZmEu'               => 'ZmEu (exploit scanner)',
+		// Common automated attack tools (free).
 		'libwww-perl'        => 'libwww-perl (automated attack tool)',
 		'python-requests'    => 'Python requests (automated scanner)',
-		'Go-http-client'     => 'Go HTTP client (automated scanner)',
 		'curl'               => 'cURL (automated scanner — non-browser)',
+		'BLEXBot'            => 'BLEXBot (scraper)',
 	);
 
 	/**
@@ -100,6 +87,16 @@ class Turbo_Guard_Bot_Protection {
 			self::$instance = new self();
 		}
 		return self::$instance;
+	}
+
+	/**
+	 * Get the bad-bot list (filterable by the Pro add-on).
+	 *
+	 * @since 2.0.0
+	 * @return array
+	 */
+	public static function get_bad_bots() {
+		return apply_filters( 'turbo_guard_bad_bots', self::$bad_bots );
 	}
 
 	/**
@@ -137,7 +134,7 @@ class Turbo_Guard_Bot_Protection {
 		}
 
 		// Check bad bots first.
-		foreach ( self::$bad_bots as $signature => $label ) {
+		foreach ( self::get_bad_bots() as $signature => $label ) {
 			if ( false !== stripos( $ua, $signature ) ) {
 				$this->block_bot( $label, $signature );
 				return;
@@ -197,7 +194,7 @@ class Turbo_Guard_Bot_Protection {
 		if ( empty( $ua ) ) {
 			return 'Empty user agent';
 		}
-		foreach ( self::$bad_bots as $signature => $label ) {
+		foreach ( self::get_bad_bots() as $signature => $label ) {
 			if ( false !== stripos( $ua, $signature ) ) {
 				return $label;
 			}
@@ -214,7 +211,7 @@ class Turbo_Guard_Bot_Protection {
 	public static function get_bot_lists() {
 		return array(
 			'good' => self::$good_bots,
-			'bad'  => self::$bad_bots,
+			'bad'  => self::get_bad_bots(),
 		);
 	}
 

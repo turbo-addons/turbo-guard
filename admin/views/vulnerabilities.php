@@ -11,7 +11,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$results = Turbo_Guard_Vuln_Scanner::get_cached_results();
+$turbo_guard_results    = Turbo_Guard_Vuln_Scanner::get_cached_results();
+$turbo_guard_is_pro  = turbo_guard_is_pro();
 ?>
 
 <div class="wrap turbo-guard-vulnerabilities">
@@ -27,13 +28,13 @@ $results = Turbo_Guard_Vuln_Scanner::get_cached_results();
 				<p><?php esc_html_e( 'Check plugins, themes &amp; WordPress core for known CVEs', 'turbo-guard' ); ?></p>
 			</div>
 		</div>
-		<?php if ( $results ) : ?>
+		<?php if ( $turbo_guard_results ) : ?>
 			<span class="turbo-guard-header-badge">
 				<?php
 				printf(
 					/* translators: %s: time ago */
 					esc_html__( 'Last scan: %s ago', 'turbo-guard' ),
-					esc_html( human_time_diff( strtotime( $results['scanned_at'] ), current_time( 'timestamp' ) ) )
+					esc_html( human_time_diff( strtotime( $turbo_guard_results['scanned_at'] ), current_time( 'timestamp' ) ) )
 				);
 				?>
 			</span>
@@ -61,34 +62,51 @@ $results = Turbo_Guard_Vuln_Scanner::get_cached_results();
 		<div id="turbo-guard-vuln-notice" class="turbo-guard-notice" style="display:none;"></div>
 	</div>
 
-	<?php if ( $results ) : ?>
+	<?php if ( $turbo_guard_results ) : ?>
+
+		<?php if ( ! $turbo_guard_is_pro ) : ?>
+			<div class="notice notice-info inline" style="margin:12px 0 0;">
+				<p>
+					<?php
+					printf(
+						wp_kses(
+							/* translators: %s: pro URL */
+							__( 'You\'re viewing basic vulnerability results. <a href="%s" target="_blank" rel="noopener noreferrer">Upgrade to Turbo Guard Pro</a> to unlock CVE IDs, fix versions, detailed advisories, auto-scheduled scans and email alerts.', 'turbo-guard' ),
+							array( 'a' => array( 'href' => array(), 'target' => array(), 'rel' => array() ) )
+						),
+						esc_url( turbo_guard_pro_url() )
+					);
+					?>
+				</p>
+			</div>
+		<?php endif; ?>
 
 		<!-- Summary cards -->
 		<div class="turbo-guard-stats-grid" style="grid-template-columns:repeat(3,1fr);">
-			<div class="turbo-guard-card turbo-guard-stat-card <?php echo $results['total'] > 0 ? 'tg-threat' : ''; ?>" style="padding:18px 20px;">
+			<div class="turbo-guard-card turbo-guard-stat-card <?php echo $turbo_guard_results['total'] > 0 ? 'tg-threat' : ''; ?>" style="padding:18px 20px;">
 				<h3><?php esc_html_e( 'Total Vulnerabilities', 'turbo-guard' ); ?></h3>
-				<div class="turbo-guard-stat-value <?php echo $results['total'] > 0 ? 'tg-red' : 'tg-green'; ?>">
-					<?php echo esc_html( $results['total'] ); ?>
+				<div class="turbo-guard-stat-value <?php echo $turbo_guard_results['total'] > 0 ? 'tg-red' : 'tg-green'; ?>">
+					<?php echo esc_html( $turbo_guard_results['total'] ); ?>
 				</div>
 				<p class="turbo-guard-stat-label"><?php esc_html_e( 'Across plugins, themes &amp; core', 'turbo-guard' ); ?></p>
 			</div>
 			<div class="turbo-guard-card" style="padding:18px 20px;">
 				<h3><?php esc_html_e( 'Vulnerable Plugins', 'turbo-guard' ); ?></h3>
-				<div class="turbo-guard-stat-value <?php echo count( $results['plugins'] ) > 0 ? 'tg-red' : ''; ?>">
-					<?php echo esc_html( count( $results['plugins'] ) ); ?>
+				<div class="turbo-guard-stat-value <?php echo count( $turbo_guard_results['plugins'] ) > 0 ? 'tg-red' : ''; ?>">
+					<?php echo esc_html( count( $turbo_guard_results['plugins'] ) ); ?>
 				</div>
 				<p class="turbo-guard-stat-label"><?php esc_html_e( 'Plugins with known CVEs', 'turbo-guard' ); ?></p>
 			</div>
 			<div class="turbo-guard-card" style="padding:18px 20px;">
 				<h3><?php esc_html_e( 'Vulnerable Themes', 'turbo-guard' ); ?></h3>
-				<div class="turbo-guard-stat-value <?php echo count( $results['themes'] ) > 0 ? 'tg-red' : ''; ?>">
-					<?php echo esc_html( count( $results['themes'] ) ); ?>
+				<div class="turbo-guard-stat-value <?php echo count( $turbo_guard_results['themes'] ) > 0 ? 'tg-red' : ''; ?>">
+					<?php echo esc_html( count( $turbo_guard_results['themes'] ) ); ?>
 				</div>
 				<p class="turbo-guard-stat-label"><?php esc_html_e( 'Themes with known CVEs', 'turbo-guard' ); ?></p>
 			</div>
 		</div>
 
-		<?php if ( ! empty( $results['wordpress'] ) ) : ?>
+		<?php if ( ! empty( $turbo_guard_results['wordpress'] ) ) : ?>
 			<!-- WordPress core vulnerabilities -->
 			<div class="turbo-guard-card" style="border-left:4px solid #dc2626;">
 				<h2 style="color:#dc2626;">
@@ -96,59 +114,59 @@ $results = Turbo_Guard_Vuln_Scanner::get_cached_results();
 					<?php esc_html_e( 'WordPress Core Vulnerabilities', 'turbo-guard' ); ?>
 				</h2>
 				<p class="description"><?php esc_html_e( 'Update WordPress immediately to resolve these issues.', 'turbo-guard' ); ?></p>
-				<?php turbo_guard_render_vuln_table( $results['wordpress'] ); ?>
+				<?php turbo_guard_render_vuln_table( $turbo_guard_results['wordpress'] ); ?>
 			</div>
 		<?php endif; ?>
 
-		<?php if ( ! empty( $results['plugins'] ) ) : ?>
+		<?php if ( ! empty( $turbo_guard_results['plugins'] ) ) : ?>
 			<div class="turbo-guard-card">
 				<h2><?php esc_html_e( 'Plugin Vulnerabilities', 'turbo-guard' ); ?></h2>
-				<?php foreach ( $results['plugins'] as $plugin ) : ?>
+				<?php foreach ( $turbo_guard_results['plugins'] as $turbo_guard_plugin ) : ?>
 					<div class="turbo-guard-vuln-item">
 						<div class="turbo-guard-vuln-plugin-header">
-							<strong><?php echo esc_html( $plugin['name'] ); ?></strong>
-							<span class="description">v<?php echo esc_html( $plugin['version'] ); ?></span>
+							<strong><?php echo esc_html( $turbo_guard_plugin['name'] ); ?></strong>
+							<span class="description">v<?php echo esc_html( $turbo_guard_plugin['version'] ); ?></span>
 							<span class="turbo-guard-badge turbo-guard-badge-critical" style="margin-left:8px;">
 								<?php
 								printf(
 									/* translators: %d: count */
-									esc_html( _n( '%d issue', '%d issues', $plugin['count'], 'turbo-guard' ) ),
-									esc_html( $plugin['count'] )
+									esc_html( _n( '%d issue', '%d issues', $turbo_guard_plugin['count'], 'turbo-guard' ) ),
+									esc_html( $turbo_guard_plugin['count'] )
 								);
 								?>
 							</span>
 						</div>
-						<?php turbo_guard_render_vuln_table( $plugin['vulnerabilities'] ); ?>
+						<?php turbo_guard_render_vuln_table( $turbo_guard_plugin['vulnerabilities'] ); ?>
 					</div>
 				<?php endforeach; ?>
 			</div>
 		<?php endif; ?>
 
-		<?php if ( ! empty( $results['themes'] ) ) : ?>
+		<?php if ( ! empty( $turbo_guard_results['themes'] ) ) : ?>
 			<div class="turbo-guard-card">
 				<h2><?php esc_html_e( 'Theme Vulnerabilities', 'turbo-guard' ); ?></h2>
-				<?php foreach ( $results['themes'] as $theme ) : ?>
+				<?php foreach ( $turbo_guard_results['themes'] as $turbo_guard_theme ) : ?>
 					<div class="turbo-guard-vuln-item">
 						<div class="turbo-guard-vuln-plugin-header">
-							<strong><?php echo esc_html( $theme['name'] ); ?></strong>
-							<span class="description">v<?php echo esc_html( $theme['version'] ); ?></span>
+							<strong><?php echo esc_html( $turbo_guard_theme['name'] ); ?></strong>
+							<span class="description">v<?php echo esc_html( $turbo_guard_theme['version'] ); ?></span>
 							<span class="turbo-guard-badge turbo-guard-badge-high" style="margin-left:8px;">
 								<?php
 								printf(
 									/* translators: %d: count */
-									esc_html( _n( '%d issue', '%d issues', $theme['count'], 'turbo-guard' ) ),
-									esc_html( $theme['count'] )
+									esc_html( _n( '%d issue', '%d issues', $turbo_guard_theme['count'], 'turbo-guard' ) ),
+									esc_html( $turbo_guard_theme['count'] )
 								);
 								?>
 							</span>
 						</div>
-						<?php turbo_guard_render_vuln_table( $theme['vulnerabilities'] ); ?>
+						<?php turbo_guard_render_vuln_table( $turbo_guard_theme['vulnerabilities'] ); ?>
 					</div>
 				<?php endforeach; ?>
 			</div>
 		<?php endif; ?>
 
-		<?php if ( 0 === $results['total'] ) : ?>
+		<?php if ( 0 === $turbo_guard_results['total'] ) : ?>
 			<div class="turbo-guard-card">
 				<div class="turbo-guard-no-threats">
 					<span class="dashicons dashicons-yes-alt"></span>
@@ -180,6 +198,8 @@ function turbo_guard_render_vuln_table( $vulns ) {
 	if ( empty( $vulns ) ) {
 		return;
 	}
+
+	$is_pro = turbo_guard_is_pro();
 	?>
 	<table class="widefat turbo-guard-results-table" style="margin-top:10px;">
 		<thead>
@@ -196,7 +216,7 @@ function turbo_guard_render_vuln_table( $vulns ) {
 				<tr>
 					<td>
 						<strong style="font-size:12px;"><?php echo esc_html( $v['title'] ); ?></strong>
-						<?php if ( $v['url'] ) : ?>
+						<?php if ( $is_pro && $v['url'] ) : ?>
 							<br><a href="<?php echo esc_url( $v['url'] ); ?>" target="_blank" rel="noopener noreferrer" style="font-size:11px;">
 								<?php esc_html_e( 'Details →', 'turbo-guard' ); ?>
 							</a>
@@ -209,22 +229,30 @@ function turbo_guard_render_vuln_table( $vulns ) {
 						</span>
 					</td>
 					<td style="font-size:12px;">
-						<?php echo $v['fixed_in'] ? esc_html( $v['fixed_in'] ) : '<span style="color:#dc2626;">No fix</span>'; ?>
+						<?php if ( $is_pro ) : ?>
+							<?php echo $v['fixed_in'] ? esc_html( $v['fixed_in'] ) : '<span style="color:#dc2626;">No fix</span>'; ?>
+						<?php else : ?>
+							<a href="<?php echo esc_url( turbo_guard_pro_url() ); ?>" target="_blank" rel="noopener noreferrer" class="button button-small" style="font-size:11px;"><?php esc_html_e( 'Pro', 'turbo-guard' ); ?></a>
+						<?php endif; ?>
 					</td>
 					<td style="font-size:11px;">
-						<?php
-						if ( ! empty( $v['cve'] ) ) {
-							foreach ( $v['cve'] as $cve ) {
-								printf(
-									'<a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-%s" target="_blank" rel="noopener noreferrer">CVE-%s</a> ',
-									esc_attr( $cve ),
-									esc_html( $cve )
-								);
-							}
-						} else {
-							echo '—';
-						}
-						?>
+						<?php if ( $is_pro ) : ?>
+							<?php if ( ! empty( $v['cve'] ) ) : ?>
+								<?php foreach ( $v['cve'] as $cve ) : ?>
+									<?php
+									printf(
+										'<a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-%s" target="_blank" rel="noopener noreferrer">CVE-%s</a> ',
+										esc_attr( $cve ),
+										esc_html( $cve )
+									);
+									?>
+								<?php endforeach; ?>
+							<?php else : ?>
+								&mdash;
+							<?php endif; ?>
+						<?php else : ?>
+							<a href="<?php echo esc_url( turbo_guard_pro_url() ); ?>" target="_blank" rel="noopener noreferrer" class="button button-small" style="font-size:11px;"><?php esc_html_e( 'Pro', 'turbo-guard' ); ?></a>
+						<?php endif; ?>
 					</td>
 				</tr>
 			<?php endforeach; ?>

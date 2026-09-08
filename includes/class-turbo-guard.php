@@ -63,9 +63,6 @@ class Turbo_Guard {
 		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-hardening.php';
 		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-2fa.php';
 		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-vuln-scanner.php';
-		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-live-traffic.php';
-		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-ai-advisor.php';
-		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-geo-fence.php';
 		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-integrity.php';
 		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-bot-protection.php';
 		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-seo-spam-detector.php';
@@ -122,12 +119,6 @@ class Turbo_Guard {
 		// Initialize site hardening.
 		Turbo_Guard_Hardening::get_instance();
 
-		// Initialize live traffic (registers shutdown hook).
-		Turbo_Guard_Live_Traffic::get_instance();
-
-		// Initialize geo-fence (runs before admin check so it protects wp-admin).
-		Turbo_Guard_Geo_Fence::get_instance();
-
 		// Initialize file integrity checker + file watcher.
 		Turbo_Guard_Integrity::get_instance();
 
@@ -144,19 +135,8 @@ class Turbo_Guard {
 		// Hook scheduled vulnerability scan.
 		add_action( 'turbo_guard_scheduled_scan', array( $this, 'run_scheduled_scan' ) );
 
-		// Hook AI analysis (triggered after each scan completes).
-		add_action( 'turbo_guard_ai_analyse', array( $this, 'run_ai_analysis' ) );
-	}
-
-	/**
-	 * Run AI analysis for a completed scan.
-	 *
-	 * @since 1.2.0
-	 * @param int $scan_id Completed scan ID.
-	 */
-	public function run_ai_analysis( $scan_id ) {
-		$use_openai = ! empty( get_option( 'turbo_guard_openai_api_key', '' ) );
-		Turbo_Guard_AI_Advisor::analyse_scan( absint( $scan_id ), $use_openai );
+		// Allow the Pro add-on to initialize its features (live traffic, geo-fence, AI).
+		do_action( 'turbo_guard_init_pro' );
 	}
 
 	/**
@@ -174,8 +154,8 @@ class Turbo_Guard {
 		$scan_id = $scanner->start_scan();
 		$scanner->scan_chunk( $scan_id, 0, 500 ); // Large chunk for background cron.
 
-		// Vulnerability scan is opt-in: only contact WPScan API when enabled.
-		if ( 'yes' === get_option( 'turbo_guard_enable_scheduled_vuln_scan', 'no' ) ) {
+		// Vulnerability scan is opt-in (Pro): only contact WPScan API when enabled.
+		if ( 'yes' === get_option( 'turbo_guard_enable_scheduled_vuln_scan', 'no' ) && turbo_guard_is_pro() ) {
 			Turbo_Guard_Vuln_Scanner::run_scan();
 		}
 	}

@@ -66,9 +66,8 @@ class Turbo_Guard_Admin {
 		add_action( 'wp_ajax_turbo_guard_block_ip', array( $this, 'ajax_block_ip' ) );
 		add_action( 'wp_ajax_turbo_guard_unblock_ip', array( $this, 'ajax_unblock_ip' ) );
 
-		// Vulnerability scanner + live traffic AJAX are registered via
-		// turbo_guard_register_v110_ajax() standalone function (see bottom of this file).
-		// They use standalone functions, not class methods.
+		// Vulnerability scanner AJAX (standalone function defined at bottom of this file).
+		add_action( 'wp_ajax_turbo_guard_run_vuln_scan', 'turbo_guard_ajax_run_vuln_scan' );
 
 		// Integrity + file watcher AJAX.
 		add_action( 'wp_ajax_turbo_guard_run_integrity_check', array( $this, 'ajax_run_integrity_check' ) );
@@ -160,26 +159,8 @@ class Turbo_Guard_Admin {
 
 		add_submenu_page(
 			'turbo-guard',
-			__( 'Live Traffic', 'turbo-guard' ),
-			__( 'Live Traffic', 'turbo-guard' ),
-			'manage_options',
-			'turbo-guard-traffic',
-			array( $this, 'render_live_traffic_page' )
-		);
-
-		add_submenu_page(
-			'turbo-guard',
-			__( 'AI Advisor', 'turbo-guard' ),
-			'🤖 ' . __( 'AI Advisor', 'turbo-guard' ),
-			'manage_options',
-			'turbo-guard-ai-report',
-			array( $this, 'render_ai_report_page' )
-		);
-
-		add_submenu_page(
-			'turbo-guard',
 			__( 'File Integrity', 'turbo-guard' ),
-			'🔒 ' . __( 'File Integrity', 'turbo-guard' ),
+			__( 'File Integrity', 'turbo-guard' ),
 			'manage_options',
 			'turbo-guard-integrity',
 			array( $this, 'render_integrity_page' )
@@ -188,11 +169,32 @@ class Turbo_Guard_Admin {
 		add_submenu_page(
 			'turbo-guard',
 			__( 'SEO Spam Detector', 'turbo-guard' ),
-			'🔎 ' . __( 'SEO Spam', 'turbo-guard' ),
+			__( 'SEO Spam', 'turbo-guard' ),
 			'manage_options',
 			'turbo-guard-seo-spam',
 			array( $this, 'render_seo_spam_page' )
 		);
+
+		// Locked Pro features (hidden when the Pro add-on is active — it adds the real ones).
+		if ( ! turbo_guard_is_pro() ) {
+			add_submenu_page(
+				'turbo-guard',
+				__( 'Live Traffic (Pro)', 'turbo-guard' ),
+				__( 'Live Traffic', 'turbo-guard' ),
+				'manage_options',
+				'turbo-guard-pro-live-traffic',
+				array( $this, 'render_pro_upsell_page' )
+			);
+
+			add_submenu_page(
+				'turbo-guard',
+				__( 'AI Advisor (Pro)', 'turbo-guard' ),
+				__( 'AI Advisor', 'turbo-guard' ),
+				'manage_options',
+				'turbo-guard-pro-ai-advisor',
+				array( $this, 'render_pro_upsell_page' )
+			);
+		}
 	}
 
 	/**
@@ -224,12 +226,6 @@ class Turbo_Guard_Admin {
 			true
 		);
 
-		// Page-specific data: security score trend for the AI Advisor chart.
-		$trend = array();
-		if ( strpos( $hook, 'turbo-guard-ai-report' ) !== false ) {
-			$trend = Turbo_Guard_AI_Advisor::get_security_trend();
-		}
-
 		// Pass data to JS.
 		wp_localize_script(
 			'turbo-guard-admin',
@@ -237,7 +233,7 @@ class Turbo_Guard_Admin {
 			array(
 				'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
 				'nonce'      => wp_create_nonce( 'turbo_guard_admin' ),
-				'trend'      => $trend,
+				'trend'      => apply_filters( 'turbo_guard_security_trend', array() ),
 				'strings' => array(
 					'scanning'       => __( 'Scanning...', 'turbo-guard' ),
 					'scanComplete'   => __( 'Scan Complete!', 'turbo-guard' ),
@@ -282,7 +278,7 @@ class Turbo_Guard_Admin {
 	 * @since 1.0.0
 	 */
 	public function render_dashboard_page() {
-		$stats = Turbo_Guard_Settings::get_dashboard_stats();
+		$turbo_guard_stats = Turbo_Guard_Settings::get_dashboard_stats();
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/dashboard.php';
 	}
 
@@ -292,11 +288,11 @@ class Turbo_Guard_Admin {
 	 * @since 1.0.0
 	 */
 	public function render_scanner_page() {
-		$latest_scan = Turbo_Guard_Scanner::get_latest_scan();
-		$results     = array();
+		$turbo_guard_latest_scan = Turbo_Guard_Scanner::get_latest_scan();
+		$turbo_guard_results     = array();
 
-		if ( $latest_scan ) {
-			$results = Turbo_Guard_Scanner::get_scan_results( $latest_scan->id );
+		if ( $turbo_guard_latest_scan ) {
+			$turbo_guard_results = Turbo_Guard_Scanner::get_scan_results( $turbo_guard_latest_scan->id );
 		}
 
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/scanner.php';
@@ -312,21 +308,21 @@ class Turbo_Guard_Admin {
 
 		// Cache for 60 seconds — firewall logs are time-sensitive but OK to be slightly stale.
 		$cache_key     = 'turbo_guard_firewall_page_data';
-		$tg_cache_data = wp_cache_get( $cache_key, 'turbo_guard' );
+		$turbo_guard_cache_data = wp_cache_get( $cache_key, 'turbo_guard' );
 
-		if ( false === $tg_cache_data ) {
+		if ( false === $turbo_guard_cache_data ) {
 			$recent_blocks = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				"SELECT * FROM {$wpdb->prefix}turbo_guard_firewall_log ORDER BY id DESC LIMIT 50"
 			);
 			$blocked_ips = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				"SELECT * FROM {$wpdb->prefix}turbo_guard_ip_blocklist ORDER BY id DESC"
 			);
-			$tg_cache_data = array( 'blocks' => $recent_blocks, 'ips' => $blocked_ips );
-			wp_cache_set( $cache_key, $tg_cache_data, 'turbo_guard', 60 );
+			$turbo_guard_cache_data = array( 'blocks' => $recent_blocks, 'ips' => $blocked_ips );
+			wp_cache_set( $cache_key, $turbo_guard_cache_data, 'turbo_guard', 60 );
 		}
 
-		$recent_blocks = $tg_cache_data['blocks'];
-		$blocked_ips   = $tg_cache_data['ips'];
+		$turbo_guard_recent_blocks = $turbo_guard_cache_data['blocks'];
+		$turbo_guard_blocked_ips   = $turbo_guard_cache_data['ips'];
 
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/firewall.php';
 	}
@@ -337,7 +333,7 @@ class Turbo_Guard_Admin {
 	 * @since 1.0.0
 	 */
 	public function render_settings_page() {
-		$settings = Turbo_Guard_Settings::get_all();
+		$turbo_guard_settings = Turbo_Guard_Settings::get_all();
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/settings.php';
 	}
 	/**
@@ -346,7 +342,7 @@ class Turbo_Guard_Admin {
 	 * @since 1.1.0
 	 */
 	public function render_gsc_page() {
-		$gsc = new Turbo_Guard_GSC();
+		$turbo_guard_gsc = new Turbo_Guard_GSC();
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/gsc-cleanup.php';
 	}
 
@@ -357,24 +353,6 @@ class Turbo_Guard_Admin {
 	 */
 	public function render_vulnerabilities_page() {
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/vulnerabilities.php';
-	}
-
-	/**
-	 * Render live traffic page.
-	 *
-	 * @since 1.1.0
-	 */
-	public function render_live_traffic_page() {
-		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/live-traffic.php';
-	}
-
-	/**
-	 * Render AI Advisor page.
-	 *
-	 * @since 1.2.0
-	 */
-	public function render_ai_report_page() {
-		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/ai-report.php';
 	}
 
 	/**
@@ -392,10 +370,21 @@ class Turbo_Guard_Admin {
 	 * @since 1.2.0
 	 */
 	public function render_integrity_page() {
-		$integrity_results = Turbo_Guard_Integrity::get_last_results();
-		$baseline_built_at = get_option( 'turbo_guard_baseline_built_at', '' );
-		$watcher_last_run  = get_option( 'turbo_guard_watcher_last_run', '' );
+		$turbo_guard_integrity_results = Turbo_Guard_Integrity::get_last_results();
+		$turbo_guard_baseline_built_at = get_option( 'turbo_guard_baseline_built_at', '' );
+		$turbo_guard_watcher_last_run  = get_option( 'turbo_guard_watcher_last_run', '' );
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/integrity.php';
+	}
+
+	/**
+	 * Render the Pro upsell page for locked features.
+	 *
+	 * @since 2.0.0
+	 */
+	public function render_pro_upsell_page() {
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only page slug for display.
+		$turbo_guard_pro_feature = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/pro-upsell.php';
 	}
 
 	/**
@@ -498,9 +487,9 @@ class Turbo_Guard_Admin {
 		$scanner = new Turbo_Guard_Scanner();
 		$result  = $scanner->scan_chunk( $scan_id, $offset, 100 );
 
-		// If scan is done, trigger AI analysis in background.
+		// Notify the Pro add-on when a scan completes (for AI analysis etc.).
 		if ( ! empty( $result['done'] ) ) {
-			wp_schedule_single_event( time() + 2, 'turbo_guard_ai_analyse', array( $scan_id ) );
+			do_action( 'turbo_guard_scan_completed', $scan_id );
 		}
 
 		wp_send_json_success( $result );
@@ -548,6 +537,19 @@ class Turbo_Guard_Admin {
 			wp_send_json_error( array( 'message' => __( 'No files selected.', 'turbo-guard' ) ) );
 		}
 
+		if ( ! turbo_guard_is_pro() && count( $result_ids ) > turbo_guard_free_cleanup_limit() ) {
+			wp_send_json_error(
+				array(
+					'message' => sprintf(
+						/* translators: %1$d: free limit, %2$s: pro URL */
+						__( 'The free version can delete up to %1$d files at a time. <a href="%2$s">Upgrade to Turbo Guard Pro</a> for unlimited cleanup.', 'turbo-guard' ),
+						turbo_guard_free_cleanup_limit(),
+						esc_url( turbo_guard_pro_url() )
+					),
+				)
+			);
+		}
+
 		$result = Turbo_Guard_Cleaner::delete_files( $result_ids );
 
 		wp_send_json_success( $result );
@@ -571,6 +573,19 @@ class Turbo_Guard_Admin {
 			wp_send_json_error( array( 'message' => __( 'No files selected.', 'turbo-guard' ) ) );
 		}
 
+		if ( ! turbo_guard_is_pro() && count( $result_ids ) > turbo_guard_free_cleanup_limit() ) {
+			wp_send_json_error(
+				array(
+					'message' => sprintf(
+						/* translators: %1$d: free limit, %2$s: pro URL */
+						__( 'The free version can quarantine up to %1$d files at a time. <a href="%2$s">Upgrade to Turbo Guard Pro</a> for unlimited cleanup.', 'turbo-guard' ),
+						turbo_guard_free_cleanup_limit(),
+						esc_url( turbo_guard_pro_url() )
+					),
+				)
+			);
+		}
+
 		$results = Turbo_Guard_Cleaner::quarantine_files( $result_ids );
 
 		wp_send_json_success( array( 'results' => $results ) );
@@ -591,14 +606,6 @@ class Turbo_Guard_Admin {
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- each value is sanitized per-key against an allowlist in Turbo_Guard_Settings::update().
 		$settings = isset( $_POST['settings'] ) ? wp_unslash( (array) $_POST['settings'] ) : array();
 
-		// Save OpenAI API key.
-		if ( isset( $settings['openai_api_key'] ) ) {
-			if ( ! empty( $settings['openai_api_key'] ) ) {
-				update_option( 'turbo_guard_openai_api_key', sanitize_text_field( $settings['openai_api_key'] ) );
-			}
-			unset( $settings['openai_api_key'] );
-		}
-
 		// Save GSC OAuth credentials separately (not through standard settings array).
 		if ( isset( $settings['gsc_client_id'] ) ) {			update_option( 'turbo_guard_gsc_client_id', sanitize_text_field( $settings['gsc_client_id'] ) );
 			unset( $settings['gsc_client_id'] );
@@ -608,6 +615,12 @@ class Turbo_Guard_Admin {
 				update_option( 'turbo_guard_gsc_client_secret', sanitize_text_field( $settings['gsc_client_secret'] ) );
 			}
 			unset( $settings['gsc_client_secret'] );
+		}
+
+		// Save WPScan API key separately.
+		if ( array_key_exists( 'wpscan_api_key', $settings ) ) {
+			update_option( 'turbo_guard_wpscan_api_key', sanitize_text_field( $settings['wpscan_api_key'] ) );
+			unset( $settings['wpscan_api_key'] );
 		}
 
 		// Save hardening options directly.
@@ -632,23 +645,8 @@ class Turbo_Guard_Admin {
 			}
 		}
 
-		// Save geo-fence options.
-		$geo_toggle_keys = array( 'trusted_ip_enabled', 'country_lock_enabled', 'upload_country_lock' );
-		foreach ( $geo_toggle_keys as $key ) {
-			if ( array_key_exists( $key, $settings ) ) {
-				update_option( 'turbo_guard_' . $key, ( 'yes' === $settings[ $key ] ) ? 'yes' : 'no' );
-				unset( $settings[ $key ] );
-			}
-		}
-		if ( isset( $_POST['settings']['trusted_ips'] ) ) {
-			update_option( 'turbo_guard_trusted_ips', sanitize_textarea_field( wp_unslash( $_POST['settings']['trusted_ips'] ) ) );
-		}
-		if ( isset( $_POST['settings']['allowed_countries'] ) && is_array( $_POST['settings']['allowed_countries'] ) ) {
-			$codes = array_map( 'sanitize_text_field', wp_unslash( $_POST['settings']['allowed_countries'] ) );
-			update_option( 'turbo_guard_allowed_countries', implode( ',', $codes ) );
-		} elseif ( array_key_exists( 'allowed_countries', $settings ) ) {
-			update_option( 'turbo_guard_allowed_countries', '' );
-		}
+		// Allow the Pro add-on to save its own settings (geo-fence, AI).
+		do_action( 'turbo_guard_settings_save', $settings );
 
 		Turbo_Guard_Settings::update( $settings );
 
@@ -949,6 +947,9 @@ class Turbo_Guard_Admin {
 			wp_send_json_error( array( 'message' => __( 'Invalid post ID.', 'turbo-guard' ) ) );
 		}
 
+		// Free users may delete spam posts; the UI caps them at the free cleanup
+		// quota. Pro users have no limit.
+
 		$result = Turbo_Guard_SEO_Spam_Detector::delete_spam_post( $post_id );
 		if ( $result ) {
 			wp_send_json_success( array(
@@ -984,6 +985,7 @@ class Turbo_Guard_Admin {
 		global $wpdb;
 
 		// Fetch the file path from the scan result.
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$row = $wpdb->get_row( $wpdb->prepare(
 			"SELECT file_path FROM {$wpdb->prefix}turbo_guard_scan_results WHERE id = %d LIMIT 1",
 			$result_id
@@ -996,6 +998,7 @@ class Turbo_Guard_Admin {
 		// Add to ignore list and mark result as ignored in DB.
 		Turbo_Guard_Scanner::ignore_file( $row->file_path );
 
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 		$wpdb->update(
 			$wpdb->prefix . 'turbo_guard_scan_results',
 			array( 'status' => 'ignored' ),
@@ -1050,19 +1053,7 @@ class Turbo_Guard_Admin {
 
 // NOTE: New AJAX handlers are appended below (added in v1.1.0 refactor).
 // The class closing brace above ends the original class block.
-// The following global functions register additional AJAX hooks on plugins_loaded.
-
-/**
- * Register v1.1.0 AJAX handlers for vulnerability scanner and live traffic.
- * These are registered as standalone wp_ajax actions to avoid reopening the class.
- *
- * @since 1.1.0
- */
-function turbo_guard_register_v110_ajax() {
-	add_action( 'wp_ajax_turbo_guard_run_vuln_scan', 'turbo_guard_ajax_run_vuln_scan' );
-	add_action( 'wp_ajax_turbo_guard_get_traffic',   'turbo_guard_ajax_get_traffic' );
-}
-add_action( 'plugins_loaded', 'turbo_guard_register_v110_ajax' );
+// The following global functions define the standalone AJAX callbacks registered in the constructor.
 
 /**
  * AJAX: Run vulnerability scan.
@@ -1076,7 +1067,7 @@ function turbo_guard_ajax_run_vuln_scan() {
 		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 	}
 
-	@set_time_limit( 120 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors, WordPress.PHP.DiscouragedFunctions.Discouraged
+	@set_time_limit( 120 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors, Squiz.PHP.DiscouragedFunctions.Discouraged
 
 	$results = Turbo_Guard_Vuln_Scanner::run_scan();
 
@@ -1092,26 +1083,3 @@ function turbo_guard_ajax_run_vuln_scan() {
 	) );
 }
 
-/**
- * AJAX: Get live traffic rows.
- *
- * @since 1.1.0
- */
-function turbo_guard_ajax_get_traffic() {
-	check_ajax_referer( 'turbo_guard_admin', 'nonce' );
-
-	if ( ! current_user_can( 'manage_options' ) ) {
-		wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
-	}
-
-	$filter = isset( $_POST['filter'] ) ? sanitize_key( $_POST['filter'] ) : 'all';
-	$limit  = isset( $_POST['limit'] )  ? absint( $_POST['limit'] )        : 100;
-
-	$rows  = Turbo_Guard_Live_Traffic::get_traffic( $limit, $filter );
-	$stats = Turbo_Guard_Live_Traffic::get_stats();
-
-	wp_send_json_success( array(
-		'rows'  => $rows,
-		'stats' => $stats,
-	) );
-}

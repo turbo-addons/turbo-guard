@@ -1,14 +1,14 @@
 === Turbo Guard – Security & Malware Scanner ===
-Contributors: turboaddons
+Contributors: turboaddons, sharifok, siraji2017
 Tags: security, malware, scanner, firewall, 2fa
 Requires at least: 5.6
-Tested up to: 7.0
-Stable tag: 1.1.0
+Tested up to: 7.1
+Stable tag: 1.1.1
 Requires PHP: 7.4
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-WordPress security plugin with malware scanner, bulk cleanup, firewall, 2FA, vulnerability scanner, file integrity checker, and SEO spam detection. 100% free.
+WordPress security plugin with malware scanner, bulk cleanup, firewall, 2FA, vulnerability scanner, and file integrity checker.
 
 == Description ==
 
@@ -208,6 +208,10 @@ Used for Google Search Console integration to detect SEO spam and manage indexed
 * Privacy Policy: https://policies.google.com/privacy
 
 == Changelog ==
+
+= 1.1.1 =
+* Update the plugin Dashboard
+* Added more feature
 
 = 1.0.0 =
 * Initial release

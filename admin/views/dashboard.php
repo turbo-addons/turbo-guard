@@ -12,10 +12,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Determine score color for SVG circle.
-$score       = $stats['security_score'];
-$circumference = 314; // 2 * pi * 50.
-$dash_offset   = $circumference - ( ( $score / 100 ) * $circumference );
-$circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc2626' );
+$turbo_guard_score       = $turbo_guard_stats['security_score'];
+$turbo_guard_circumference = 314; // 2 * pi * 50.
+$turbo_guard_dash_offset   = $turbo_guard_circumference - ( ( $turbo_guard_score / 100 ) * $turbo_guard_circumference );
+$turbo_guard_circle_color  = $turbo_guard_score >= 90 ? '#16a34a' : ( $turbo_guard_score >= 70 ? '#d97706' : '#dc2626' );
 ?>
 
 <div class="wrap turbo-guard-dashboard">
@@ -54,23 +54,23 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 				<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
 					<circle cx="60" cy="60" r="50" fill="none" stroke="#e5e7eb" stroke-width="10"/>
 					<circle cx="60" cy="60" r="50" fill="none"
-						stroke="<?php echo esc_attr( $circle_color ); ?>"
+						stroke="<?php echo esc_attr( $turbo_guard_circle_color ); ?>"
 						stroke-width="10"
 						stroke-linecap="round"
-						stroke-dasharray="<?php echo esc_attr( ( $score / 100 ) * $circumference ); ?> <?php echo esc_attr( $circumference ); ?>"
+						stroke-dasharray="<?php echo esc_attr( ( $turbo_guard_score / 100 ) * $turbo_guard_circumference ); ?> <?php echo esc_attr( $turbo_guard_circumference ); ?>"
 						transform="rotate(-90 60 60)"
 						style="transition: stroke-dasharray .6s ease;"
 					/>
 				</svg>
-				<span class="turbo-guard-score-value" style="color:<?php echo esc_attr( $circle_color ); ?>">
-					<?php echo esc_html( $score ); ?>
+				<span class="turbo-guard-score-value" style="color:<?php echo esc_attr( $turbo_guard_circle_color ); ?>">
+					<?php echo esc_html( $turbo_guard_score ); ?>
 				</span>
 			</div>
 			<p class="turbo-guard-score-label">
 				<?php
-				if ( $score >= 90 ) {
+				if ( $turbo_guard_score >= 90 ) {
 					esc_html_e( 'Excellent protection', 'turbo-guard' );
-				} elseif ( $score >= 70 ) {
+				} elseif ( $turbo_guard_score >= 70 ) {
 					esc_html_e( 'Good — can improve', 'turbo-guard' );
 				} else {
 					esc_html_e( 'Action required', 'turbo-guard' );
@@ -82,17 +82,17 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 		<!-- Active Threats -->
 		<div class="turbo-guard-card turbo-guard-stat-card tg-threat">
 			<h3><?php esc_html_e( 'Active Threats', 'turbo-guard' ); ?></h3>
-			<div class="turbo-guard-stat-value <?php echo $stats['threats_count'] > 0 ? 'tg-red' : 'tg-green'; ?>">
-				<?php echo esc_html( $stats['threats_count'] ); ?>
+			<div class="turbo-guard-stat-value <?php echo $turbo_guard_stats['threats_count'] > 0 ? 'tg-red' : 'tg-green'; ?>">
+				<?php echo esc_html( $turbo_guard_stats['threats_count'] ); ?>
 			</div>
 			<p class="turbo-guard-stat-label">
 				<?php
-				if ( $stats['threats_count'] > 0 ) {
+				if ( $turbo_guard_stats['threats_count'] > 0 ) {
 					echo esc_html(
 						sprintf(
 							/* translators: %d: threat count */
-							_n( '%d malware file found', '%d malware files found', $stats['threats_count'], 'turbo-guard' ),
-							$stats['threats_count']
+							_n( '%d malware file found', '%d malware files found', $turbo_guard_stats['threats_count'], 'turbo-guard' ),
+							$turbo_guard_stats['threats_count']
 						)
 					);
 				} else {
@@ -100,7 +100,7 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 				}
 				?>
 			</p>
-			<?php if ( $stats['threats_count'] > 0 ) : ?>
+			<?php if ( $turbo_guard_stats['threats_count'] > 0 ) : ?>
 				<a href="<?php echo esc_url( admin_url( 'admin.php?page=turbo-guard-scanner' ) ); ?>" class="button button-primary button-small">
 					<?php esc_html_e( 'Clean Now →', 'turbo-guard' ); ?>
 				</a>
@@ -115,8 +115,8 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 		<!-- Firewall Blocks -->
 		<div class="turbo-guard-card turbo-guard-stat-card tg-fire">
 			<h3><?php esc_html_e( 'Blocked Today', 'turbo-guard' ); ?></h3>
-			<div class="turbo-guard-stat-value <?php echo $stats['blocks_today'] > 0 ? 'tg-orange' : ''; ?>">
-				<?php echo esc_html( $stats['blocks_today'] ); ?>
+			<div class="turbo-guard-stat-value <?php echo $turbo_guard_stats['blocks_today'] > 0 ? 'tg-orange' : ''; ?>">
+				<?php echo esc_html( $turbo_guard_stats['blocks_today'] ); ?>
 			</div>
 			<p class="turbo-guard-stat-label">
 				<?php esc_html_e( 'Firewall blocks today', 'turbo-guard' ); ?>
@@ -132,8 +132,8 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 			<h3><?php esc_html_e( 'Last Scan', 'turbo-guard' ); ?></h3>
 			<div class="turbo-guard-stat-value" style="font-size:28px; line-height:1.2;">
 				<?php
-				if ( $stats['latest_scan'] ) {
-					echo esc_html( human_time_diff( strtotime( $stats['latest_scan']->completed_at ), current_time( 'timestamp' ) ) );
+				if ( $turbo_guard_stats['latest_scan'] ) {
+					echo esc_html( human_time_diff( strtotime( $turbo_guard_stats['latest_scan']->completed_at ), current_time( 'timestamp' ) ) );
 					echo '<br><span style="font-size:13px;font-weight:400;color:#9ca3af;">' . esc_html__( 'ago', 'turbo-guard' ) . '</span>';
 				} else {
 					echo '<span style="font-size:20px;">' . esc_html__( 'Never', 'turbo-guard' ) . '</span>';
@@ -142,12 +142,12 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 			</div>
 			<p class="turbo-guard-stat-label">
 				<?php
-				if ( $stats['latest_scan'] ) {
+				if ( $turbo_guard_stats['latest_scan'] ) {
 					echo esc_html(
 						sprintf(
 							/* translators: %d: files scanned */
 							__( '%d files scanned', 'turbo-guard' ),
-							$stats['latest_scan']->scanned_files
+							$turbo_guard_stats['latest_scan']->scanned_files
 						)
 					);
 				} else {
@@ -170,7 +170,7 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 			<a href="<?php echo esc_url( admin_url( 'admin.php?page=turbo-guard-firewall' ) ); ?>" style="font-size:12px;color:#6b7280;"><?php esc_html_e( 'View all →', 'turbo-guard' ); ?></a>
 		</div>
 
-		<?php if ( ! empty( $stats['recent_events'] ) ) : ?>
+		<?php if ( ! empty( $turbo_guard_stats['recent_events'] ) ) : ?>
 			<table class="turbo-guard-events-table">
 				<thead>
 					<tr>
@@ -181,19 +181,19 @@ $circle_color  = $score >= 90 ? '#16a34a' : ( $score >= 70 ? '#d97706' : '#dc262
 					</tr>
 				</thead>
 				<tbody>
-					<?php foreach ( $stats['recent_events'] as $event ) : ?>
+					<?php foreach ( $turbo_guard_stats['recent_events'] as $turbo_guard_event ) : ?>
 						<tr>
 							<td style="color:#9ca3af;font-size:12px;">
-								<?php echo esc_html( human_time_diff( strtotime( $event->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?>
+								<?php echo esc_html( human_time_diff( strtotime( $turbo_guard_event->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?>
 							</td>
-							<td class="turbo-guard-event-message"><?php echo esc_html( $event->message ); ?></td>
+							<td class="turbo-guard-event-message"><?php echo esc_html( $turbo_guard_event->message ); ?></td>
 							<td>
-								<span class="turbo-guard-badge turbo-guard-badge-<?php echo esc_attr( $event->severity ); ?>">
-									<?php echo esc_html( ucfirst( $event->severity ) ); ?>
+								<span class="turbo-guard-badge turbo-guard-badge-<?php echo esc_attr( $turbo_guard_event->severity ); ?>">
+									<?php echo esc_html( ucfirst( $turbo_guard_event->severity ) ); ?>
 								</span>
 							</td>
 							<td style="font-family:monospace;font-size:12px;color:#6b7280;">
-								<?php echo $event->ip_address ? esc_html( $event->ip_address ) : '<span style="color:#d1d5db;">—</span>'; ?>
+								<?php echo $turbo_guard_event->ip_address ? esc_html( $turbo_guard_event->ip_address ) : '<span style="color:#d1d5db;">—</span>'; ?>
 							</td>
 						</tr>
 					<?php endforeach; ?>

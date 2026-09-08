@@ -42,7 +42,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<td>
 						<label>
 							<input type="checkbox" id="scan_enabled" name="scan_enabled" value="yes"
-								<?php checked( $settings['scan_enabled'], 'yes' ); ?> />
+								<?php checked( $turbo_guard_settings['scan_enabled'], 'yes' ); ?> />
 							<?php esc_html_e( 'Enable automatic malware scanning', 'turbo-guard' ); ?>
 						</label>
 					</td>
@@ -53,10 +53,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 					</th>
 					<td>
 						<select id="scan_schedule" name="scan_schedule" class="regular-text">
-							<option value="hourly" <?php selected( $settings['scan_schedule'], 'hourly' ); ?>><?php esc_html_e( 'Every Hour', 'turbo-guard' ); ?></option>
-							<option value="twicedaily" <?php selected( $settings['scan_schedule'], 'twicedaily' ); ?>><?php esc_html_e( 'Twice Daily', 'turbo-guard' ); ?></option>
-							<option value="daily" <?php selected( $settings['scan_schedule'], 'daily' ); ?>><?php esc_html_e( 'Daily', 'turbo-guard' ); ?></option>
-							<option value="weekly" <?php selected( $settings['scan_schedule'], 'weekly' ); ?>><?php esc_html_e( 'Weekly', 'turbo-guard' ); ?></option>
+							<option value="hourly" <?php selected( $turbo_guard_settings['scan_schedule'], 'hourly' ); ?>><?php esc_html_e( 'Every Hour', 'turbo-guard' ); ?></option>
+							<option value="twicedaily" <?php selected( $turbo_guard_settings['scan_schedule'], 'twicedaily' ); ?>><?php esc_html_e( 'Twice Daily', 'turbo-guard' ); ?></option>
+							<option value="daily" <?php selected( $turbo_guard_settings['scan_schedule'], 'daily' ); ?>><?php esc_html_e( 'Daily', 'turbo-guard' ); ?></option>
+							<option value="weekly" <?php selected( $turbo_guard_settings['scan_schedule'], 'weekly' ); ?>><?php esc_html_e( 'Weekly', 'turbo-guard' ); ?></option>
 						</select>
 						<p class="description"><?php esc_html_e( 'How often should automatic scans run?', 'turbo-guard' ); ?></p>
 					</td>
@@ -68,7 +68,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<td>
 						<label>
 							<input type="checkbox" id="quarantine_malware" name="quarantine_malware" value="yes"
-								<?php checked( $settings['quarantine_malware'], 'yes' ); ?> />
+								<?php checked( $turbo_guard_settings['quarantine_malware'], 'yes' ); ?> />
 							<?php esc_html_e( 'Move malware to quarantine instead of deleting immediately', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Recommended for safety - allows file recovery if needed.', 'turbo-guard' ); ?></p>
@@ -79,12 +79,45 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<label for="enable_scheduled_vuln_scan"><?php esc_html_e( 'Scheduled Vulnerability Scan', 'turbo-guard' ); ?></label>
 					</th>
 					<td>
-						<label>
-							<input type="checkbox" id="enable_scheduled_vuln_scan" name="enable_scheduled_vuln_scan" value="yes"
-								<?php checked( $settings['enable_scheduled_vuln_scan'], 'yes' ); ?> />
-							<?php esc_html_e( 'Enable scheduled vulnerability scans', 'turbo-guard' ); ?>
-						</label>
-						<p class="description"><?php esc_html_e( 'Sends plugin/theme versions to the WPScan API on the scheduled scan. Off by default.', 'turbo-guard' ); ?></p>
+						<?php if ( turbo_guard_is_pro() ) : ?>
+							<label>
+								<input type="checkbox" id="enable_scheduled_vuln_scan" name="enable_scheduled_vuln_scan" value="yes"
+									<?php checked( $turbo_guard_settings['enable_scheduled_vuln_scan'], 'yes' ); ?> />
+								<?php esc_html_e( 'Enable scheduled vulnerability scans', 'turbo-guard' ); ?>
+							</label>
+							<p class="description"><?php esc_html_e( 'Automatically re-checks plugin/theme versions against the WPScan API on the scheduled scan.', 'turbo-guard' ); ?></p>
+						<?php else : ?>
+							<label>
+								<input type="checkbox" disabled
+									<?php checked( $turbo_guard_settings['enable_scheduled_vuln_scan'], 'yes' ); ?> />
+								<?php esc_html_e( 'Enable scheduled vulnerability scans', 'turbo-guard' ); ?>
+							</label>
+							<p class="description">
+								<?php
+								printf(
+									wp_kses(
+										/* translators: %s: pro URL */
+										__( 'Scheduled vulnerability scans are a Pro feature. <a href="%s" target="_blank" rel="noopener noreferrer">Upgrade to Turbo Guard Pro</a> to enable.', 'turbo-guard' ),
+										array( 'a' => array( 'href' => array(), 'target' => array(), 'rel' => array() ) )
+									),
+									esc_url( turbo_guard_pro_url() )
+								);
+								?>
+							</p>
+						<?php endif; ?>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="wpscan_api_key"><?php esc_html_e( 'WPScan API Key', 'turbo-guard' ); ?></label>
+					</th>
+					<td>
+						<input type="text" id="wpscan_api_key" name="wpscan_api_key" class="regular-text"
+							value="<?php echo esc_attr( get_option( 'turbo_guard_wpscan_api_key', '' ) ); ?>"
+							placeholder="<?php esc_attr_e( 'Free key from wpscan.com', 'turbo-guard' ); ?>" />
+						<p class="description">
+							<?php esc_html_e( 'Optional. A free WPScan API key unlocks detailed vulnerability results. Get one at wpscan.com.', 'turbo-guard' ); ?>
+						</p>
 					</td>
 				</tr>
 			</table>
@@ -102,7 +135,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<td>
 						<label>
 							<input type="checkbox" id="firewall_enabled" name="firewall_enabled" value="yes"
-								<?php checked( $settings['firewall_enabled'], 'yes' ); ?> />
+								<?php checked( $turbo_guard_settings['firewall_enabled'], 'yes' ); ?> />
 							<?php esc_html_e( 'Enable Web Application Firewall (WAF)', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Protects against SQL injection, XSS, and other attacks.', 'turbo-guard' ); ?></p>
@@ -123,7 +156,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<td>
 						<label>
 							<input type="checkbox" id="login_security_enabled" name="login_security_enabled" value="yes"
-								<?php checked( $settings['login_security_enabled'], 'yes' ); ?> />
+								<?php checked( $turbo_guard_settings['login_security_enabled'], 'yes' ); ?> />
 							<?php esc_html_e( 'Enable login security features', 'turbo-guard' ); ?>
 						</label>
 					</td>
@@ -135,7 +168,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<td>
 						<label>
 							<input type="checkbox" id="brute_force_protection" name="brute_force_protection" value="yes"
-								<?php checked( $settings['brute_force_protection'], 'yes' ); ?> />
+								<?php checked( $turbo_guard_settings['brute_force_protection'], 'yes' ); ?> />
 							<?php esc_html_e( 'Protect against brute force login attacks', 'turbo-guard' ); ?>
 						</label>
 					</td>
@@ -146,7 +179,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					</th>
 					<td>
 						<input type="number" id="max_login_attempts" name="max_login_attempts"
-							value="<?php echo esc_attr( $settings['max_login_attempts'] ); ?>"
+							value="<?php echo esc_attr( $turbo_guard_settings['max_login_attempts'] ); ?>"
 							min="1" max="20" class="small-text" />
 						<p class="description"><?php esc_html_e( 'Failed login attempts allowed before lockout (1-20).', 'turbo-guard' ); ?></p>
 					</td>
@@ -157,7 +190,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					</th>
 					<td>
 						<input type="number" id="lockout_duration" name="lockout_duration"
-							value="<?php echo esc_attr( $settings['lockout_duration'] / 60 ); ?>"
+							value="<?php echo esc_attr( $turbo_guard_settings['lockout_duration'] / 60 ); ?>"
 							min="1" max="1440" class="small-text" />
 						<?php esc_html_e( 'minutes', 'turbo-guard' ); ?>
 						<p class="description"><?php esc_html_e( 'How long to lock out an IP after max attempts (in minutes).', 'turbo-guard' ); ?></p>
@@ -177,7 +210,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					</th>
 					<td>
 						<input type="email" id="notify_admin_email" name="notify_admin_email"
-							value="<?php echo esc_attr( $settings['notify_admin_email'] ); ?>"
+							value="<?php echo esc_attr( $turbo_guard_settings['notify_admin_email'] ); ?>"
 							class="regular-text" />
 						<p class="description"><?php esc_html_e( 'Email address for security alerts.', 'turbo-guard' ); ?></p>
 					</td>
@@ -189,7 +222,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<td>
 						<label>
 							<input type="checkbox" id="notify_on_threats" name="notify_on_threats" value="yes"
-								<?php checked( $settings['notify_on_threats'], 'yes' ); ?> />
+								<?php checked( $turbo_guard_settings['notify_on_threats'], 'yes' ); ?> />
 							<?php esc_html_e( 'Send email when malware is detected', 'turbo-guard' ); ?>
 						</label>
 					</td>
@@ -201,7 +234,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<td>
 						<label>
 							<input type="checkbox" id="notify_on_scan_complete" name="notify_on_scan_complete" value="yes"
-								<?php checked( $settings['notify_on_scan_complete'], 'yes' ); ?> />
+								<?php checked( $turbo_guard_settings['notify_on_scan_complete'], 'yes' ); ?> />
 							<?php esc_html_e( 'Send email after each scan completes', 'turbo-guard' ); ?>
 						</label>
 					</td>
@@ -221,7 +254,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<td>
 						<label>
 							<input type="checkbox" id="remove_data_on_uninstall" name="remove_data_on_uninstall" value="yes"
-								<?php checked( $settings['remove_data_on_uninstall'], 'yes' ); ?> />
+								<?php checked( $turbo_guard_settings['remove_data_on_uninstall'], 'yes' ); ?> />
 							<?php esc_html_e( 'Delete all plugin data when uninstalling', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'WARNING: This will permanently delete all scans, logs, and settings.', 'turbo-guard' ); ?></p>
@@ -240,14 +273,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php esc_html_e( 'Reduce your attack surface. These settings follow security best practices used by Wordfence, MalCare, and Patchstack.', 'turbo-guard' ); ?>
 			</p>
 
-			<?php $h = Turbo_Guard_Hardening::get_hardening_options(); ?>
+			<?php $turbo_guard_h = Turbo_Guard_Hardening::get_hardening_options(); ?>
 
 			<table class="form-table">
 				<tr>
 					<th scope="row"><label for="security_headers"><?php esc_html_e( 'HTTP Security Headers', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="security_headers" name="security_headers" value="yes" <?php checked( $h['security_headers'], 'yes' ); ?> />
+							<input type="checkbox" id="security_headers" name="security_headers" value="yes" <?php checked( $turbo_guard_h['security_headers'], 'yes' ); ?> />
 							<?php esc_html_e( 'Add X-Frame-Options, X-Content-Type-Options, HSTS, Referrer-Policy headers', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Protects against clickjacking, MIME sniffing, and browser XSS attacks.', 'turbo-guard' ); ?></p>
@@ -257,7 +290,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><label for="hide_wp_version"><?php esc_html_e( 'Hide WordPress Version', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="hide_wp_version" name="hide_wp_version" value="yes" <?php checked( $h['hide_wp_version'], 'yes' ); ?> />
+							<input type="checkbox" id="hide_wp_version" name="hide_wp_version" value="yes" <?php checked( $turbo_guard_h['hide_wp_version'], 'yes' ); ?> />
 							<?php esc_html_e( 'Remove WordPress version from page source and RSS feeds', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Prevents attackers from targeting your specific WordPress version.', 'turbo-guard' ); ?></p>
@@ -267,7 +300,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><label for="prevent_user_enum"><?php esc_html_e( 'Block User Enumeration', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="prevent_user_enum" name="prevent_user_enum" value="yes" <?php checked( $h['prevent_user_enum'], 'yes' ); ?> />
+							<input type="checkbox" id="prevent_user_enum" name="prevent_user_enum" value="yes" <?php checked( $turbo_guard_h['prevent_user_enum'], 'yes' ); ?> />
 							<?php esc_html_e( 'Block ?author=1 and /wp-json/wp/v2/users for guests', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Prevents attackers from discovering valid admin usernames.', 'turbo-guard' ); ?></p>
@@ -277,7 +310,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><label for="remove_readme_links"><?php esc_html_e( 'Remove RSD/WLW Links', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="remove_readme_links" name="remove_readme_links" value="yes" <?php checked( $h['remove_readme_links'], 'yes' ); ?> />
+							<input type="checkbox" id="remove_readme_links" name="remove_readme_links" value="yes" <?php checked( $turbo_guard_h['remove_readme_links'], 'yes' ); ?> />
 							<?php esc_html_e( 'Remove RSD and Windows Live Writer manifest links from &lt;head&gt;', 'turbo-guard' ); ?>
 						</label>
 					</td>
@@ -286,7 +319,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><label for="disable_xmlrpc"><?php esc_html_e( 'Disable XML-RPC', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="disable_xmlrpc" name="disable_xmlrpc" value="yes" <?php checked( $h['disable_xmlrpc'], 'yes' ); ?> />
+							<input type="checkbox" id="disable_xmlrpc" name="disable_xmlrpc" value="yes" <?php checked( $turbo_guard_h['disable_xmlrpc'], 'yes' ); ?> />
 							<?php esc_html_e( 'Completely disable XML-RPC (used for brute force amplification attacks)', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Only enable if you do not use Jetpack, mobile WordPress app, or remote publishing.', 'turbo-guard' ); ?></p>
@@ -296,7 +329,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><label for="protect_rest_api"><?php esc_html_e( 'Protect REST API', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="protect_rest_api" name="protect_rest_api" value="yes" <?php checked( $h['protect_rest_api'], 'yes' ); ?> />
+							<input type="checkbox" id="protect_rest_api" name="protect_rest_api" value="yes" <?php checked( $turbo_guard_h['protect_rest_api'], 'yes' ); ?> />
 							<?php esc_html_e( 'Require login for REST API access (allows CF7, WooCommerce, and Gutenberg routes)', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Use with caution — some themes and plugins need public REST API access.', 'turbo-guard' ); ?></p>
@@ -306,7 +339,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><label for="disable_file_edit"><?php esc_html_e( 'Disable Theme/Plugin Editor', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="disable_file_edit" name="disable_file_edit" value="yes" <?php checked( $h['disable_file_edit'], 'yes' ); ?> />
+							<input type="checkbox" id="disable_file_edit" name="disable_file_edit" value="yes" <?php checked( $turbo_guard_h['disable_file_edit'], 'yes' ); ?> />
 							<?php esc_html_e( 'Disable the WordPress file editor (Appearance → Editor, Plugins → Editor)', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Prevents attackers who gain admin access from editing PHP files directly.', 'turbo-guard' ); ?></p>
@@ -316,7 +349,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<th scope="row"><label for="block_php_uploads"><?php esc_html_e( 'Block PHP in Uploads Folder', 'turbo-guard' ); ?></label></th>
 					<td>
 						<label>
-							<input type="checkbox" id="block_php_uploads" name="block_php_uploads" value="yes" <?php checked( $h['block_php_uploads'], 'yes' ); ?> />
+							<input type="checkbox" id="block_php_uploads" name="block_php_uploads" value="yes" <?php checked( $turbo_guard_h['block_php_uploads'], 'yes' ); ?> />
 							<?php esc_html_e( 'Add .htaccess rule to block PHP execution in wp-content/uploads/', 'turbo-guard' ); ?>
 						</label>
 						<p class="description"><?php esc_html_e( 'Strongest protection against upload-based backdoors. Even if a hacker uploads a PHP shell, the server will refuse to run it. Recommended: ON.', 'turbo-guard' ); ?></p>
@@ -325,129 +358,42 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</table>
 		</div>
 
-		<!-- Geo-Fence Settings -->
-		<div class="turbo-guard-card" id="geo-fence">
+		<?php do_action( 'turbo_guard_settings_after' ); ?>
+
+		<?php if ( ! turbo_guard_is_pro() ) : ?>
+		<!-- Locked Pro Settings -->
+		<div class="turbo-guard-card" id="geo-fence" style="opacity:.75;">
 			<h2>
 				<span style="margin-right:6px;">🌍</span>
 				<?php esc_html_e( 'Geo-Fence &amp; Trusted Location', 'turbo-guard' ); ?>
+				<span style="margin-left:6px;" class="dashicons dashicons-lock"></span>
 			</h2>
 			<p class="description" style="margin-bottom:14px;">
-				<?php esc_html_e( 'Block hackers from accessing wp-admin or uploading files from untrusted locations — even if they have valid credentials.', 'turbo-guard' ); ?>
+				<?php esc_html_e( 'Restrict wp-admin and file uploads to trusted IPs and countries.', 'turbo-guard' ); ?>
 			</p>
-
-			<table class="form-table">
-
-				<!-- Trusted IP Whitelist -->
-				<tr>
-					<th scope="row"><?php esc_html_e( 'Trusted IP Whitelist', 'turbo-guard' ); ?></th>
-					<td>
-						<label>
-							<input type="checkbox" id="trusted_ip_enabled" name="trusted_ip_enabled" value="yes"
-								<?php checked( get_option( 'turbo_guard_trusted_ip_enabled', 'no' ), 'yes' ); ?> />
-							<?php esc_html_e( 'Only allow wp-admin access from trusted IPs below', 'turbo-guard' ); ?>
-						</label>
-						<p class="description" style="color:#d63638;"><?php esc_html_e( 'WARNING: Add your IP first before enabling, or you will be locked out.', 'turbo-guard' ); ?></p>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><label for="trusted_ips"><?php esc_html_e( 'Trusted IP Addresses', 'turbo-guard' ); ?></label></th>
-					<td>
-						<textarea id="trusted_ips" name="trusted_ips" rows="4" class="large-text code"
-							placeholder="192.168.1.1&#10;203.0.113.0/24&#10;10.0.0.1-10.0.0.50"><?php echo esc_textarea( get_option( 'turbo_guard_trusted_ips', '' ) ); ?></textarea>
-						<p class="description"><?php esc_html_e( 'One IP per line. Supports single IPs, CIDR ranges (192.168.1.0/24), and IP ranges (10.0.0.1-10.0.0.50).', 'turbo-guard' ); ?></p>
-						<button type="button" id="turbo-guard-add-my-ip" class="button button-secondary" style="margin-top:6px;">
-							<?php esc_html_e( '+ Add My Current IP', 'turbo-guard' ); ?>
-						</button>
-						<span id="turbo-guard-my-ip-result" style="margin-left:10px;color:#2271b1;"></span>
-					</td>
-				</tr>
-
-				<!-- Country Lock -->
-				<tr>
-					<th scope="row"><?php esc_html_e( 'Country Lock (Admin)', 'turbo-guard' ); ?></th>
-					<td>
-						<label>
-							<input type="checkbox" id="country_lock_enabled" name="country_lock_enabled" value="yes"
-								<?php checked( get_option( 'turbo_guard_country_lock_enabled', 'no' ), 'yes' ); ?> />
-							<?php esc_html_e( 'Only allow wp-admin access from selected countries', 'turbo-guard' ); ?>
-						</label>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><label for="allowed_countries"><?php esc_html_e( 'Allowed Countries', 'turbo-guard' ); ?></label></th>
-					<td>
-						<?php
-						$allowed   = Turbo_Guard_Geo_Fence::get_allowed_countries();
-						$countries = Turbo_Guard_Geo_Fence::get_countries_list();
-						?>
-						<select id="allowed_countries" name="allowed_countries[]" multiple size="8" class="large-text">
-							<?php foreach ( $countries as $code => $name ) : ?>
-								<option value="<?php echo esc_attr( $code ); ?>"
-									<?php echo in_array( $code, $allowed, true ) ? 'selected' : ''; ?>>
-									<?php echo esc_html( $name . ' (' . $code . ')' ); ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-						<p class="description"><?php esc_html_e( 'Hold Ctrl (Windows) or Cmd (Mac) to select multiple countries.', 'turbo-guard' ); ?></p>
-						<button type="button" id="turbo-guard-detect-country" class="button button-secondary" style="margin-top:6px;">
-							<?php esc_html_e( 'Detect My Country', 'turbo-guard' ); ?>
-						</button>
-						<span id="turbo-guard-my-country-result" style="margin-left:10px;color:#2271b1;"></span>
-					</td>
-				</tr>
-
-				<!-- Upload Country Lock -->
-				<tr>
-					<th scope="row"><?php esc_html_e( 'Upload Country Lock', 'turbo-guard' ); ?></th>
-					<td>
-						<label>
-							<input type="checkbox" id="upload_country_lock" name="upload_country_lock" value="yes"
-								<?php checked( get_option( 'turbo_guard_upload_country_lock', 'no' ), 'yes' ); ?> />
-							<?php esc_html_e( 'Block file uploads from countries not in the Allowed Countries list above', 'turbo-guard' ); ?>
-						</label>
-						<p class="description"><?php esc_html_e( 'Prevents hackers from uploading malware even if they bypass login. Uses the same Allowed Countries list.', 'turbo-guard' ); ?></p>
-					</td>
-				</tr>
-
-			</table>
+			<p>
+				<a href="<?php echo esc_url( turbo_guard_pro_url() ); ?>" target="_blank" rel="noopener noreferrer" class="button button-primary">
+					<?php esc_html_e( 'Upgrade to Pro to enable', 'turbo-guard' ); ?>
+				</a>
+			</p>
 		</div>
 
-		<!-- AI Advisor Settings -->
-		<div class="turbo-guard-card" id="ai">
+		<div class="turbo-guard-card" id="ai" style="opacity:.75;">
 			<h2>
 				<span style="margin-right:6px;">🤖</span>
-				<?php esc_html_e( 'AI Advisor — OpenAI Integration (Optional)', 'turbo-guard' ); ?>
+				<?php esc_html_e( 'AI Advisor — OpenAI Integration', 'turbo-guard' ); ?>
+				<span style="margin-left:6px;" class="dashicons dashicons-lock"></span>
 			</h2>
 			<p class="description" style="margin-bottom:14px;">
-				<?php esc_html_e( 'Connect your OpenAI API key to get GPT-powered security analysis after every scan — plain-English explanations of what happened and exactly how to fix it. Free tier uses built-in AI analysis.', 'turbo-guard' ); ?>
+				<?php esc_html_e( 'GPT-powered security analysis after every scan.', 'turbo-guard' ); ?>
 			</p>
-			<table class="form-table">
-				<tr>
-					<th scope="row">
-						<label for="openai_api_key"><?php esc_html_e( 'OpenAI API Key', 'turbo-guard' ); ?></label>
-					</th>
-					<td>
-						<input type="password"
-							id="openai_api_key"
-							name="openai_api_key"
-							value="<?php echo esc_attr( get_option( 'turbo_guard_openai_api_key', '' ) ); ?>"
-							class="regular-text"
-							autocomplete="new-password"
-							placeholder="sk-..."
-						/>
-						<p class="description">
-							<?php
-							printf(
-								/* translators: %s: OpenAI link */
-								esc_html__( 'Get a free API key at %s. Uses gpt-4o-mini (very low cost — ~$0.001 per scan report).', 'turbo-guard' ),
-								'<a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer">platform.openai.com</a>'
-							);
-							?>
-						</p>
-					</td>
-				</tr>
-			</table>
+			<p>
+				<a href="<?php echo esc_url( turbo_guard_pro_url() ); ?>" target="_blank" rel="noopener noreferrer" class="button button-primary">
+					<?php esc_html_e( 'Upgrade to Pro to enable', 'turbo-guard' ); ?>
+				</a>
+			</p>
 		</div>
+		<?php endif; ?>
 
 		<!-- Google Search Console Settings -->
 		<div class="turbo-guard-card">

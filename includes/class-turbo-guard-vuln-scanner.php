@@ -115,8 +115,8 @@ class Turbo_Guard_Vuln_Scanner {
 			)
 		);
 
-		// Send alert email if vulnerabilities found.
-		if ( $results['total'] > 0 && 'yes' === get_option( 'turbo_guard_notify_on_threats', 'yes' ) ) {
+		// Send alert email if vulnerabilities found (Pro feature).
+		if ( $results['total'] > 0 && turbo_guard_is_pro() && 'yes' === get_option( 'turbo_guard_notify_on_threats', 'yes' ) ) {
 			self::send_vuln_alert( $results );
 		}
 
