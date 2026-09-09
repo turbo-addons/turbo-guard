@@ -1,5 +1,5 @@
 === Turbo Guard – Security & Malware Scanner ===
-Contributors: turboaddons, sharifok, siraji2017
+Contributors: turboaddons, siraji2017, sharifok,
 Tags: security, malware, scanner, firewall, 2fa
 Requires at least: 5.6
 Tested up to: 7.1
