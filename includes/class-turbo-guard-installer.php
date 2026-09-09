@@ -152,27 +152,8 @@ class Turbo_Guard_Installer {
 		dbDelta( $sql_events );
 		dbDelta( $sql_logins );
 
-		// Live traffic table (added in v1.1.0).
-		$sql_traffic = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}turbo_guard_traffic (
-			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-			ip_address varchar(45) NOT NULL DEFAULT '',
-			user_agent varchar(512) NOT NULL DEFAULT '',
-			method varchar(10) NOT NULL DEFAULT 'GET',
-			request_uri varchar(512) NOT NULL DEFAULT '/',
-			referer varchar(512) NOT NULL DEFAULT '',
-			status_code smallint(5) UNSIGNED NOT NULL DEFAULT 200,
-			user_id bigint(20) UNSIGNED NOT NULL DEFAULT 0,
-			is_bot tinyint(1) NOT NULL DEFAULT 0,
-			bot_name varchar(80) NOT NULL DEFAULT '',
-			created_at datetime DEFAULT CURRENT_TIMESTAMP,
-			PRIMARY KEY (id),
-			KEY ip_address (ip_address),
-			KEY is_bot (is_bot),
-			KEY status_code (status_code),
-			KEY created_at (created_at)
-		) $charset_collate;";
-
-		dbDelta( $sql_traffic );
+		// Note: The live traffic table (turbo_guard_traffic) is a Turbo Guard Pro
+		// feature and is created by the Pro add-on's own installer, not here.
 
 		// Update database version.
 		update_option( 'turbo_guard_db_version', '1.1.0' );
@@ -199,7 +180,6 @@ class Turbo_Guard_Installer {
 			'turbo_guard_remove_data_on_uninstall' => 'no',
 			// v1.1.0 defaults.
 			'turbo_guard_2fa_enabled_global'       => 'yes',
-			'turbo_guard_live_traffic_enabled'     => 'yes',
 			'turbo_guard_security_headers'         => 'yes',
 			'turbo_guard_hide_wp_version'          => 'yes',
 			'turbo_guard_prevent_user_enum'        => 'yes',

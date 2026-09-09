@@ -62,28 +62,65 @@ $turbo_guard_site_is_hacked = $turbo_guard_critical_count > 0;
 				<?php
 				printf(
 					/* translators: 1: number of critical malware files, 2: total number of threats */
-					esc_html__( 'Turbo Guard found %1$d critical malware file(s) out of %2$d total threats. Select all critical files below and click "Delete Selected" — a backup is created automatically. This is 100%% free.', 'turbo-guard' ),
+					esc_html__( 'Turbo Guard found %1$d critical malware file(s) out of %2$d total threats. Select files below and click "Delete Selected" — a backup is created automatically.', 'turbo-guard' ),
 					absint( $turbo_guard_critical_count ),
 					absint( $turbo_guard_total_threats )
 				);
 				?>
 			</p>
+			<?php
+			// Free users can clean only the free quota; Pro users can clean everything.
+			$turbo_guard_critical_deletable = $turbo_guard_is_pro
+				? $turbo_guard_critical_count
+				: min( $turbo_guard_critical_count, $turbo_guard_free_remain );
+			?>
 			<div style="display:flex;gap:10px;flex-wrap:wrap;">
-				<button id="turbo-guard-quick-delete-critical" class="button" type="button"
-					style="background:#fff;border-color:#fff;color:#dc2626;font-weight:700;height:36px;line-height:34px;padding:0 18px;">
-					<span class="dashicons dashicons-trash" style="font-size:14px;width:14px;height:14px;vertical-align:middle;margin-right:4px;"></span>
-					<?php
-					printf(
-						/* translators: %d: number of critical files */
-						esc_html__( 'Delete All %d Critical Files Now (Free)', 'turbo-guard' ),
-						absint( $turbo_guard_critical_count )
-					);
-					?>
-				</button>
-				<a href="<?php echo esc_url( turbo_guard_pro_url() ); ?>"
-					style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;height:36px;line-height:34px;padding:0 16px;border-radius:4px;text-decoration:none;font-size:13px;display:inline-flex;align-items:center;">
-					<?php esc_html_e( 'Upgrade to Pro for AI Analysis', 'turbo-guard' ); ?>
-				</a>
+				<?php if ( $turbo_guard_critical_deletable > 0 ) : ?>
+					<button id="turbo-guard-quick-delete-critical" class="button" type="button"
+						data-limit="<?php echo absint( $turbo_guard_critical_deletable ); ?>"
+						style="background:#fff;border-color:#fff;color:#dc2626;font-weight:700;height:36px;line-height:34px;padding:0 18px;">
+						<span class="dashicons dashicons-trash" style="font-size:14px;width:14px;height:14px;vertical-align:middle;margin-right:4px;"></span>
+						<?php
+						if ( $turbo_guard_is_pro ) {
+							printf(
+								/* translators: %d: number of critical files */
+								esc_html__( 'Delete All %d Critical Files Now', 'turbo-guard' ),
+								absint( $turbo_guard_critical_count )
+							);
+						} elseif ( $turbo_guard_critical_deletable >= $turbo_guard_critical_count ) {
+							printf(
+								/* translators: %d: number of critical files */
+								esc_html__( 'Delete All %d Critical Files Now (Free)', 'turbo-guard' ),
+								absint( $turbo_guard_critical_count )
+							);
+						} else {
+							printf(
+								/* translators: %d: number of files the free version can clean */
+								esc_html__( 'Delete First %d Critical Files (Free)', 'turbo-guard' ),
+								absint( $turbo_guard_critical_deletable )
+							);
+						}
+						?>
+					</button>
+				<?php endif; ?>
+
+				<?php if ( ! $turbo_guard_is_pro && $turbo_guard_critical_count > $turbo_guard_critical_deletable ) : ?>
+					<a href="<?php echo esc_url( turbo_guard_pro_url() ); ?>" target="_blank" rel="noopener noreferrer"
+						style="background:#fff;border:1px solid #fff;color:#dc2626;font-weight:700;height:36px;line-height:34px;padding:0 16px;border-radius:4px;text-decoration:none;font-size:13px;display:inline-flex;align-items:center;">
+						<?php
+						printf(
+							/* translators: %d: number of critical files */
+							esc_html__( 'Upgrade to Pro to Delete All %d Critical Files', 'turbo-guard' ),
+							absint( $turbo_guard_critical_count )
+						);
+						?>
+					</a>
+				<?php elseif ( ! $turbo_guard_is_pro ) : ?>
+					<a href="<?php echo esc_url( turbo_guard_pro_url() ); ?>"
+						style="background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.4);color:#fff;height:36px;line-height:34px;padding:0 16px;border-radius:4px;text-decoration:none;font-size:13px;display:inline-flex;align-items:center;">
+						<?php esc_html_e( 'Upgrade to Pro for AI Analysis', 'turbo-guard' ); ?>
+					</a>
+				<?php endif; ?>
 			</div>
 		</div>
 		<div style="text-align:center;background:rgba(255,255,255,.15);border-radius:8px;padding:12px 16px;flex-shrink:0;min-width:100px;">
@@ -218,7 +255,10 @@ $turbo_guard_site_is_hacked = $turbo_guard_critical_count > 0;
 						</tr>
 					</thead>
 					<tbody>
-						<?php foreach ( $turbo_guard_results as $turbo_guard_result ) : ?>
+						<?php
+						$turbo_guard_cleanup_index = 0;
+						foreach ( $turbo_guard_results as $turbo_guard_result ) :
+						?>
 							<?php
 							$turbo_guard_is_db   = ( strpos( $turbo_guard_result->file_path, 'database://' ) === 0 );
 							$turbo_guard_relpath = $turbo_guard_is_db
@@ -261,17 +301,37 @@ $turbo_guard_site_is_hacked = $turbo_guard_critical_count > 0;
 								</td>
 								<td class="turbo-guard-row-actions">
 									<?php if ( ! $turbo_guard_is_db ) : ?>
-										<button class="button turbo-guard-quarantine-single" type="button"
+										<?php
+										$turbo_guard_can_clean = $turbo_guard_is_pro || $turbo_guard_cleanup_index < $turbo_guard_free_remain;
+										++$turbo_guard_cleanup_index;
+										?>
+										<button class="button turbo-guard-view-single" type="button"
 											data-id="<?php echo absint( $turbo_guard_result->id ); ?>"
-											title="<?php esc_attr_e( 'Move to quarantine folder', 'turbo-guard' ); ?>">
-											<?php esc_html_e( 'Quarantine', 'turbo-guard' ); ?>
+											data-path="<?php echo esc_attr( $turbo_guard_result->file_path ); ?>"
+											title="<?php esc_attr_e( 'View file contents', 'turbo-guard' ); ?>">
+											<span class="dashicons dashicons-visibility" style="font-size:13px;width:13px;height:13px;vertical-align:middle;margin-right:3px;"></span>
+											<?php esc_html_e( 'View', 'turbo-guard' ); ?>
 										</button>
-										<button class="button turbo-guard-delete-single" type="button"
-											data-id="<?php echo absint( $turbo_guard_result->id ); ?>"
-											title="<?php esc_attr_e( 'Permanently delete — backup created automatically', 'turbo-guard' ); ?>"
-											style="color:#dc2626;border-color:#fca5a5;">
-											<?php esc_html_e( 'Delete (Free)', 'turbo-guard' ); ?>
-										</button>
+										<?php if ( $turbo_guard_can_clean ) : ?>
+											<button class="button turbo-guard-quarantine-single" type="button"
+												data-id="<?php echo absint( $turbo_guard_result->id ); ?>"
+												title="<?php esc_attr_e( 'Move to quarantine folder', 'turbo-guard' ); ?>">
+												<?php esc_html_e( 'Quarantine', 'turbo-guard' ); ?>
+											</button>
+											<button class="button turbo-guard-delete-single" type="button"
+												data-id="<?php echo absint( $turbo_guard_result->id ); ?>"
+												title="<?php esc_attr_e( 'Permanently delete — backup created automatically', 'turbo-guard' ); ?>"
+												style="color:#dc2626;border-color:#fca5a5;">
+												<?php esc_html_e( 'Delete', 'turbo-guard' ); ?>
+											</button>
+										<?php else : ?>
+											<a href="<?php echo esc_url( turbo_guard_pro_url() ); ?>"
+												class="button button-primary turbo-guard-upgrade-single" target="_blank" rel="noopener noreferrer"
+												title="<?php esc_attr_e( 'Free version can clean a limited number of files. Upgrade to clean this file and unlock unlimited cleanup.', 'turbo-guard' ); ?>">
+												<span class="dashicons dashicons-lock" style="font-size:13px;width:13px;height:13px;vertical-align:middle;margin-right:3px;"></span>
+												<?php esc_html_e( 'Upgrade to Pro', 'turbo-guard' ); ?>
+											</a>
+										<?php endif; ?>
 										<button class="button turbo-guard-ignore-single" type="button"
 											data-id="<?php echo absint( $turbo_guard_result->id ); ?>"
 											title="<?php esc_attr_e( 'Mark as safe — exclude from all future scans (like Wordfence Ignore)', 'turbo-guard' ); ?>"
@@ -284,6 +344,10 @@ $turbo_guard_site_is_hacked = $turbo_guard_critical_count > 0;
 										// Extract post ID from path like: database://wp_posts#42 (post: Title)
 										preg_match( '/wp_posts#(\d+)/', $turbo_guard_result->file_path, $turbo_guard_post_match );
 										$turbo_guard_post_id = ! empty( $turbo_guard_post_match[1] ) ? absint( $turbo_guard_post_match[1] ) : 0;
+										if ( $turbo_guard_post_id ) {
+											$turbo_guard_can_clean = $turbo_guard_is_pro || $turbo_guard_cleanup_index < $turbo_guard_free_remain;
+											++$turbo_guard_cleanup_index;
+										}
 										?>
 										<?php if ( $turbo_guard_post_id ) : ?>
 											<a href="<?php echo esc_url( get_edit_post_link( $turbo_guard_post_id ) ); ?>"
@@ -291,13 +355,22 @@ $turbo_guard_site_is_hacked = $turbo_guard_critical_count > 0;
 												title="<?php esc_attr_e( 'View and edit this post in WordPress', 'turbo-guard' ); ?>">
 												<?php esc_html_e( 'View Post', 'turbo-guard' ); ?>
 											</a>
-											<button class="button turbo-guard-delete-post" type="button"
-												data-post-id="<?php echo absint( $turbo_guard_post_id ); ?>"
-												data-result-id="<?php echo absint( $turbo_guard_result->id ); ?>"
-												style="color:#dc2626;border-color:#fca5a5;font-size:11px;"
-												title="<?php esc_attr_e( 'Permanently delete this spam post from the database', 'turbo-guard' ); ?>">
-												<?php esc_html_e( 'Delete Post', 'turbo-guard' ); ?>
-											</button>
+											<?php if ( $turbo_guard_can_clean ) : ?>
+												<button class="button turbo-guard-delete-post" type="button"
+													data-post-id="<?php echo absint( $turbo_guard_post_id ); ?>"
+													data-result-id="<?php echo absint( $turbo_guard_result->id ); ?>"
+													style="color:#dc2626;border-color:#fca5a5;font-size:11px;"
+													title="<?php esc_attr_e( 'Permanently delete this spam post from the database', 'turbo-guard' ); ?>">
+													<?php esc_html_e( 'Delete Post', 'turbo-guard' ); ?>
+												</button>
+											<?php else : ?>
+												<a href="<?php echo esc_url( turbo_guard_pro_url() ); ?>"
+													class="button button-primary" target="_blank" rel="noopener noreferrer" style="font-size:11px;"
+													title="<?php esc_attr_e( 'Free version can clean a limited number of items. Upgrade to clean this post and unlock unlimited cleanup.', 'turbo-guard' ); ?>">
+													<span class="dashicons dashicons-lock" style="font-size:13px;width:13px;height:13px;vertical-align:middle;margin-right:3px;"></span>
+													<?php esc_html_e( 'Upgrade to Pro', 'turbo-guard' ); ?>
+												</a>
+											<?php endif; ?>
 										<?php else : ?>
 											<a href="<?php echo esc_url( turbo_guard_pro_url() ); ?>"
 												class="button" style="font-size:11px;">
@@ -318,11 +391,20 @@ $turbo_guard_site_is_hacked = $turbo_guard_critical_count > 0;
 			</div>
 			<p class="turbo-guard-results-summary">
 				<?php
-				printf(
-					/* translators: %d: total number of threats */
-					esc_html__( 'Showing %d threat(s). ZIP backup is created automatically before any deletion. Upgrade to Turbo Guard Pro for unlimited cleanup and advanced features.', 'turbo-guard' ),
-					absint( $turbo_guard_total_threats )
-				);
+				if ( $turbo_guard_is_pro ) {
+					printf(
+						/* translators: %d: total number of threats */
+						esc_html__( 'Showing %d threat(s). ZIP backup is created automatically before any deletion.', 'turbo-guard' ),
+						absint( $turbo_guard_total_threats )
+					);
+				} else {
+					printf(
+						/* translators: 1: total threats, 2: remaining free cleanups */
+						esc_html__( 'Showing %1$d threat(s). Free version can clean %2$d more file(s) — upgrade to Turbo Guard Pro for unlimited cleanup.', 'turbo-guard' ),
+						absint( $turbo_guard_total_threats ),
+						absint( $turbo_guard_free_remain )
+					);
+				}
 				?>
 			</p>
 
@@ -348,9 +430,23 @@ $turbo_guard_site_is_hacked = $turbo_guard_critical_count > 0;
 		<?php endif; ?>
 	</div>
 
+	<!-- File View Modal (Pro) -->
+	<div id="turbo-guard-view-modal" class="turbo-guard-view-modal" style="display:none;">
+		<div class="turbo-guard-view-modal-overlay"></div>
+		<div class="turbo-guard-view-modal-dialog">
+			<div class="turbo-guard-view-modal-header">
+				<strong id="turbo-guard-view-modal-title"></strong>
+				<button type="button" class="turbo-guard-view-modal-close" aria-label="<?php esc_attr_e( 'Close', 'turbo-guard' ); ?>">&times;</button>
+			</div>
+			<div class="turbo-guard-view-modal-meta" id="turbo-guard-view-modal-meta"></div>
+			<pre class="turbo-guard-view-modal-code" id="turbo-guard-view-modal-code"></pre>
+		</div>
+	</div>
+
 </div>
 
 <?php
 // "Delete All Critical Files Now" shortcut handling lives in
 // admin/js/turbo-guard-admin-v3.js (enqueued via admin_enqueue_scripts).
+// File-view modal + Pro upsell tooltip also live in that file.
 ?>

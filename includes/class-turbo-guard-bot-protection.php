@@ -214,29 +214,4 @@ class Turbo_Guard_Bot_Protection {
 			'bad'  => self::get_bad_bots(),
 		);
 	}
-
-	/**
-	 * Get bot traffic stats from the live traffic table.
-	 *
-	 * @since 1.2.0
-	 * @return array { total_bots: int, blocked_bots: int, good_bots: int }
-	 */
-	public static function get_stats() {
-		global $wpdb;
-
-		$total = (int) $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$wpdb->prefix}turbo_guard_traffic WHERE is_bot = 1"
-		);
-
-		$blocked = (int) $wpdb->get_var(
-			"SELECT COUNT(*) FROM {$wpdb->prefix}turbo_guard_events
-			 WHERE event_type = 'bot_blocked'
-			 AND created_at > DATE_SUB(NOW(), INTERVAL 30 DAY)"
-		);
-
-		return array(
-			'total_bots'   => $total,
-			'blocked_bots' => $blocked,
-		);
-	}
 }

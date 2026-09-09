@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Turbo Guard – Security & Malware Scanner
  * Plugin URI: https://wp-turbo.com/turbo-guard/
- * Description: Advanced WordPress security with AI-powered malware scanning, WordPress core file manifest verification, bulk cleanup, firewall, 2FA, vulnerability scanner, file integrity checker, live traffic monitor, bot protection, geo-fence & SEO spam removal. 100% free.
+ * Description: Advanced WordPress security with AI-powered malware scanning, WordPress core file manifest verification, firewall, 2FA, vulnerability scanner, file integrity checker, bot protection & SEO spam removal. Detects every threat for free — clean up to 3 files free, then upgrade to Turbo Guard Pro.
  * Version: 1.1.1
  * Author: Turbo Addons
  * Author URI: https://wp-turbo.com
@@ -39,6 +39,36 @@ define( 'TURBO_GUARD_FREE_CLEANUP_LIMIT', 3 );
  */
 function turbo_guard_free_cleanup_limit() {
 	return (int) apply_filters( 'turbo_guard_free_cleanup_limit', TURBO_GUARD_FREE_CLEANUP_LIMIT );
+}
+
+/**
+ * Number of files a free user has already cleaned (delete + quarantine).
+ *
+ * @since 2.0.0
+ * @return int
+ */
+function turbo_guard_free_cleanup_used() {
+	return (int) get_option( 'turbo_guard_free_cleanup_used', 0 );
+}
+
+/**
+ * Number of files a free user can still clean before hitting the limit.
+ *
+ * @since 2.0.0
+ * @return int
+ */
+function turbo_guard_free_cleanup_remaining() {
+	return max( 0, turbo_guard_free_cleanup_limit() - turbo_guard_free_cleanup_used() );
+}
+
+/**
+ * Record cleaned files against the free-tier quota.
+ *
+ * @since 2.0.0
+ * @param int $count Number of files cleaned.
+ */
+function turbo_guard_increment_free_cleanup( $count ) {
+	update_option( 'turbo_guard_free_cleanup_used', turbo_guard_free_cleanup_used() + absint( $count ) );
 }
 
 /**

@@ -16,6 +16,11 @@ $turbo_guard_score       = $turbo_guard_stats['security_score'];
 $turbo_guard_circumference = 314; // 2 * pi * 50.
 $turbo_guard_dash_offset   = $turbo_guard_circumference - ( ( $turbo_guard_score / 100 ) * $turbo_guard_circumference );
 $turbo_guard_circle_color  = $turbo_guard_score >= 90 ? '#16a34a' : ( $turbo_guard_score >= 70 ? '#d97706' : '#dc2626' );
+
+// Branding: "Turbo Guard Pro" when the Pro add-on is licensed.
+$turbo_guard_is_pro      = turbo_guard_is_pro();
+$turbo_guard_brand_name  = $turbo_guard_is_pro ? __( 'Turbo Guard Pro', 'turbo-guard' ) : __( 'Turbo Guard', 'turbo-guard' );
+$turbo_guard_brand_badge = $turbo_guard_is_pro ? __( 'Pro', 'turbo-guard' ) : __( 'Free', 'turbo-guard' );
 ?>
 
 <div class="wrap turbo-guard-dashboard">
@@ -27,11 +32,11 @@ $turbo_guard_circle_color  = $turbo_guard_score >= 90 ? '#16a34a' : ( $turbo_gua
 				<span class="dashicons dashicons-shield"></span>
 			</div>
 			<div>
-				<h1><?php esc_html_e( 'Turbo Guard', 'turbo-guard' ); ?></h1>
+				<h1><?php echo esc_html( $turbo_guard_brand_name ); ?></h1>
 				<p><?php esc_html_e( 'Security Dashboard — All systems overview', 'turbo-guard' ); ?></p>
 			</div>
 		</div>
-		<span class="turbo-guard-header-badge">v<?php echo esc_html( TURBO_GUARD_VERSION ); ?> Free</span>
+		<span class="turbo-guard-header-badge">v<?php echo esc_html( TURBO_GUARD_VERSION ); ?> <?php echo esc_html( $turbo_guard_brand_badge ); ?></span>
 	</div>
 
 	<?php

@@ -10,9 +10,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Clear stale cache so latest detection logic is used.
-delete_transient( 'turbo_guard_seo_spam_results' );
-
 // Prefixed variables: satisfies WordPress.NamingConventions.PrefixAllGlobals.
 $turbo_guard_seo_results = Turbo_Guard_SEO_Spam_Detector::get_cached_results();
 $turbo_guard_seo_total   = $turbo_guard_seo_results ? (int) $turbo_guard_seo_results['total'] : 0;
@@ -107,12 +104,13 @@ $turbo_guard_free_limit  = turbo_guard_free_cleanup_limit();
 	<?php if ( $turbo_guard_seo_results ) : ?>
 
 		<!-- Summary stats -->
-		<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+		<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px;">
 			<?php
 			$turbo_guard_seo_cards = array(
 				array( 'label' => __( 'Total Found', 'turbo-guard' ),      'value' => $turbo_guard_seo_total,                                        'sub' => __( 'spam indicators', 'turbo-guard' ) ),
 				array( 'label' => __( 'Spam Posts', 'turbo-guard' ),       'value' => count( $turbo_guard_seo_results['spam_posts'] ),               'sub' => __( 'in database', 'turbo-guard' ) ),
 				array( 'label' => __( 'Spam Files', 'turbo-guard' ),       'value' => count( $turbo_guard_seo_results['spam_files'] ),               'sub' => __( 'on disk', 'turbo-guard' ) ),
+				array( 'label' => __( 'Options', 'turbo-guard' ),           'value' => count( $turbo_guard_seo_results['spam_options'] ),             'sub' => __( 'contaminated', 'turbo-guard' ) ),
 				array( 'label' => __( '.htaccess Hacks', 'turbo-guard' ),  'value' => count( $turbo_guard_seo_results['htaccess_hacks'] ),           'sub' => __( 'redirect rules', 'turbo-guard' ) ),
 			);
 			foreach ( $turbo_guard_seo_cards as $turbo_guard_seo_card ) :
@@ -251,6 +249,45 @@ $turbo_guard_free_limit  = turbo_guard_free_cleanup_limit();
 							</a>
 							<?php endif; ?>
 						</td>
+					</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+		<?php endif; ?>
+
+		<!-- Contaminated Options -->
+		<?php if ( ! empty( $turbo_guard_seo_results['spam_options'] ) ) : ?>
+		<div class="turbo-guard-card" style="border-left:4px solid #dc2626;">
+			<h2 style="color:#dc2626;">
+				<span class="dashicons dashicons-admin-settings" style="vertical-align:middle;margin-right:6px;"></span>
+				<?php
+				printf(
+					/* translators: %d: number of contaminated options */
+					esc_html__( '%d Contaminated WordPress Option(s)', 'turbo-guard' ),
+					count( $turbo_guard_seo_results['spam_options'] )
+				);
+				?>
+			</h2>
+			<p style="font-size:13px;color:#6b7280;margin-bottom:14px;">
+				<?php esc_html_e( 'These WordPress settings contain spam text. Review and correct them under Settings, or contact your host if you are unsure.', 'turbo-guard' ); ?>
+			</p>
+			<table class="widefat">
+				<thead>
+					<tr>
+						<th style="width:180px;"><?php esc_html_e( 'Setting', 'turbo-guard' ); ?></th>
+						<th style="width:110px;"><?php esc_html_e( 'Option', 'turbo-guard' ); ?></th>
+						<th><?php esc_html_e( 'Current Value', 'turbo-guard' ); ?></th>
+						<th><?php esc_html_e( 'Reason', 'turbo-guard' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $turbo_guard_seo_results['spam_options'] as $turbo_guard_spam_option ) : ?>
+					<tr style="background:#fff5f5;">
+						<td><strong style="font-size:13px;"><?php echo esc_html( $turbo_guard_spam_option['label'] ); ?></strong></td>
+						<td style="font-family:monospace;font-size:12px;"><?php echo esc_html( $turbo_guard_spam_option['option'] ); ?></td>
+						<td><code style="font-size:11px;word-break:break-all;"><?php echo esc_html( $turbo_guard_spam_option['value'] ); ?></code></td>
+						<td style="font-size:12px;color:#dc2626;"><?php echo esc_html( implode( ', ', $turbo_guard_spam_option['reasons'] ) ); ?></td>
 					</tr>
 					<?php endforeach; ?>
 				</tbody>

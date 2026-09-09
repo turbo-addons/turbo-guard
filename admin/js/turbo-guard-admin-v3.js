@@ -1163,84 +1163,6 @@ jQuery( document ).ready( function( $ ) {
 
 /**
  * =========================================================
- * Geo-Fence Settings Helpers
- * =========================================================
- */
-
-jQuery( document ).ready( function( $ ) {
-
-	// "Add My Current IP" button.
-	$( '#turbo-guard-add-my-ip' ).on( 'click', function () {
-		var $btn    = $( this );
-		var $result = $( '#turbo-guard-my-ip-result' );
-
-		$btn.prop( 'disabled', true ).text( 'Detecting...' );
-		$result.text( '' );
-
-		$.post(
-			turboGuardAdmin.ajaxUrl,
-			{
-				action: 'turbo_guard_save_my_ip',
-				nonce:  turboGuardAdmin.nonce
-			},
-			function ( response ) {
-				if ( response.success ) {
-					var ip       = response.data.ip;
-					var $textarea = $( '#trusted_ips' );
-					var current  = $textarea.val().trim();
-
-					// Append IP if not already present.
-					if ( current.indexOf( ip ) === -1 ) {
-						$textarea.val( current ? current + '\n' + ip : ip );
-					}
-
-					$result.text( '\u2713 ' + ip + ' added.' ).css( 'color', '#00a32a' );
-				} else {
-					$result.text( '\u2717 ' + ( response.data ? response.data.message : 'Failed.' ) ).css( 'color', '#d63638' );
-				}
-			}
-		).always( function () {
-			$btn.prop( 'disabled', false ).text( '+ Add My Current IP' );
-		} );
-	} );
-
-	// "Detect My Country" button.
-	$( '#turbo-guard-detect-country' ).on( 'click', function () {
-		var $btn    = $( this );
-		var $result = $( '#turbo-guard-my-country-result' );
-
-		$btn.prop( 'disabled', true ).text( 'Detecting...' );
-		$result.text( '' );
-
-		$.post(
-			turboGuardAdmin.ajaxUrl,
-			{
-				action: 'turbo_guard_get_my_country',
-				nonce:  turboGuardAdmin.nonce
-			},
-			function ( response ) {
-				if ( response.success ) {
-					var code = response.data.country_code;
-					var name = response.data.country_name;
-
-					// Auto-select the detected country in the multi-select.
-					$( '#allowed_countries option[value="' + code + '"]' ).prop( 'selected', true );
-
-					$result.text( '\u2713 ' + name + ' (' + code + ') selected.' ).css( 'color', '#00a32a' );
-				} else {
-					$result.text( '\u2717 Could not detect country.' ).css( 'color', '#d63638' );
-				}
-			}
-		).always( function () {
-			$btn.prop( 'disabled', false ).text( 'Detect My Country' );
-		} );
-	} );
-
-} );
-
-
-/**
- * =========================================================
  * Remote Notices Module — v1.3.0
  * Handles dismissal of remote notification banners fetched
  * from the Turbo Addons notification server.
@@ -1300,110 +1222,6 @@ jQuery( document ).ready( function( $ ) {
 	} );
 
 } )( jQuery );
-
-
-/**
- * =========================================================
- * AI Security Advisor — Security Score Trend Chart
- * =========================================================
- */
-
-jQuery( function( $ ) {
-	var canvas = document.getElementById( 'turbo-guard-trend-chart' );
-	if ( ! canvas ) {
-		return; // Not on the AI report page, or no trend canvas rendered.
-	}
-
-	var data = ( typeof turboGuardAdmin !== 'undefined' && turboGuardAdmin.trend ) ? turboGuardAdmin.trend : [];
-	if ( data.length < 2 ) {
-		return;
-	}
-
-	var ctx = canvas.getContext( '2d' );
-	var W = canvas.offsetWidth;
-	canvas.width = W;
-	var H = 80;
-	var scores = data.map( function( d ) { return d.score; } );
-	var minS = Math.min.apply( null, scores );
-	var maxS = Math.max.apply( null, scores ) || 100;
-	var step = W / Math.max( data.length - 1, 1 );
-
-	ctx.fillStyle = '#f9fafb';
-	ctx.fillRect( 0, 0, W, H );
-
-	// Draw grid lines.
-	ctx.strokeStyle = '#e5e7eb';
-	ctx.lineWidth = 1;
-	[ 0, 25, 50, 75, 100 ].forEach( function( pct ) {
-		var y = H - ( pct / 100 ) * H;
-		ctx.beginPath(); ctx.moveTo( 0, y ); ctx.lineTo( W, y ); ctx.stroke();
-	} );
-
-	// Draw gradient fill.
-	var gradient = ctx.createLinearGradient( 0, 0, 0, H );
-	gradient.addColorStop( 0, 'rgba(37,99,235,.3)' );
-	gradient.addColorStop( 1, 'rgba(37,99,235,.02)' );
-
-	ctx.beginPath();
-	data.forEach( function( d, i ) {
-		var x = i * step;
-		var y = H - ( ( d.score - minS ) / ( maxS - minS + 1 ) ) * ( H - 10 ) - 5;
-		i === 0 ? ctx.moveTo( x, y ) : ctx.lineTo( x, y );
-	} );
-	ctx.lineTo( ( data.length - 1 ) * step, H );
-	ctx.lineTo( 0, H );
-	ctx.closePath();
-	ctx.fillStyle = gradient;
-	ctx.fill();
-
-	// Draw line.
-	ctx.beginPath();
-	ctx.strokeStyle = '#2563eb';
-	ctx.lineWidth = 2;
-	data.forEach( function( d, i ) {
-		var x = i * step;
-		var y = H - ( ( d.score - minS ) / ( maxS - minS + 1 ) ) * ( H - 10 ) - 5;
-		i === 0 ? ctx.moveTo( x, y ) : ctx.lineTo( x, y );
-	} );
-	ctx.stroke();
-} );
-
-
-/**
- * =========================================================
- * Live Traffic — Refresh + Block IP
- * =========================================================
- */
-
-jQuery( document ).ready( function( $ ) {
-	$( '#turbo-guard-refresh-traffic' ).on( 'click', function() {
-		location.reload();
-	} );
-
-	$( document ).on( 'click', '.turbo-guard-block-traffic-ip', function() {
-		var ip      = $( this ).data( 'ip' );
-		var nonce   = $( this ).data( 'nonce' );
-		var strings = turboGuardAdmin.strings || {};
-
-		if ( ! ip || ! window.confirm( ( strings.blockIpConfirm || 'Block IP %s?' ).replace( '%s', ip ) ) ) {
-			return;
-		}
-
-		var $btn = $( this ).prop( 'disabled', true ).text( strings.blocking || 'Blocking...' );
-		$.post(
-			turboGuardAdmin.ajaxUrl,
-			{ action: 'turbo_guard_block_ip', nonce: nonce, ip_address: ip },
-			function( r ) {
-				if ( r.success ) {
-					$btn.text( strings.blocked || 'Blocked' ).css( 'color', '#16a34a' );
-				} else {
-					$btn.prop( 'disabled', false ).text( strings.block || 'Block' );
-					alert( r.data ? r.data.message : 'Error' );
-				}
-			}
-		);
-	} );
-} );
 
 
 /**
@@ -1502,7 +1320,23 @@ jQuery( document ).ready( function( $ ) {
 
 jQuery( document ).ready( function( $ ) {
 	$( '#turbo-guard-quick-delete-critical' ).on( 'click', function() {
-		$( '#turbo-guard-select-critical' ).trigger( 'click' );
+		var $btn  = $( this );
+		var limit = parseInt( $btn.attr( 'data-limit' ), 10 );
+
+		// Uncheck all, then check critical files up to the allowed limit.
+		$( '.turbo-guard-file-check' ).prop( 'checked', false );
+
+		if ( turboGuardAdmin.isPro ) {
+			$( '.turbo-guard-file-check[data-severity="critical"]' ).prop( 'checked', true );
+		} else {
+			$( '.turbo-guard-file-check[data-severity="critical"]' ).slice( 0, limit ).prop( 'checked', true );
+		}
+
+		// Refresh selection count + button state.
+		var count = $( '.turbo-guard-file-check:checked' ).length;
+		$( '#turbo-guard-selection-count' ).text( count + ' selected' );
+		$( '#turbo-guard-delete-selected, #turbo-guard-quarantine-selected' ).prop( 'disabled', count === 0 );
+
 		$( 'html,body' ).animate( { scrollTop: $( '#turbo-guard-delete-selected' ).offset().top - 100 }, 400 );
 		$( '#turbo-guard-delete-selected' ).trigger( 'click' );
 	} );
@@ -1576,4 +1410,115 @@ jQuery( function( $ ) {
 			}
 		).always( function() { $btn.prop( 'disabled', false ).text( strings.rebuildBaseline || 'Rebuild Baseline' ); } );
 	} );
+} );
+
+
+/**
+ * =========================================================
+ * Malware Scanner — View File (Pro) + Free Upsell Tooltip
+ * =========================================================
+ */
+
+jQuery( function( $ ) {
+	var strings = turboGuardAdmin.strings || {};
+	var isPro   = !! turboGuardAdmin.isPro;
+	var proUrl  = turboGuardAdmin.proUrl || '#';
+
+	var $modal = $( '#turbo-guard-view-modal' );
+
+	// Close the modal (overlay, close button, or Esc).
+	function closeModal() {
+		$modal.hide();
+	}
+
+	$( document ).on( 'click', '.turbo-guard-view-modal-close, .turbo-guard-view-modal-overlay', closeModal );
+	$( document ).on( 'keyup', function( e ) {
+		if ( e.key === 'Escape' || e.keyCode === 27 ) {
+			closeModal();
+		}
+	} );
+
+	// Handle "View" button click on each result row.
+	$( document ).on( 'click', '.turbo-guard-view-single', function( e ) {
+		e.preventDefault();
+		e.stopPropagation();
+
+		var $btn  = $( this );
+		var id    = $btn.data( 'id' );
+
+		if ( ! isPro ) {
+			showProUpsell( $btn );
+			return;
+		}
+
+		if ( ! id ) {
+			return;
+		}
+
+		$btn.prop( 'disabled', true );
+
+		$.post(
+			turboGuardAdmin.ajaxUrl,
+			{ action: 'turbo_guard_view_file', nonce: turboGuardAdmin.nonce, result_id: id },
+			function( r ) {
+				$btn.prop( 'disabled', false );
+				if ( r.success && r.data ) {
+					openModal( r.data );
+				} else {
+					alert( r.data ? r.data.message : ( strings.viewFile + ' failed.' ) );
+				}
+			}
+		).fail( function() {
+			$btn.prop( 'disabled', false );
+			alert( 'Server error while loading the file.' );
+		} );
+	} );
+
+	// Populate and open the file-view modal.
+	function openModal( data ) {
+		$( '#turbo-guard-view-modal-title' ).text( data.file_path || '' );
+		$( '#turbo-guard-view-modal-meta' )
+			.empty()
+			.append( $( '<span>' ).addClass( 'turbo-guard-badge turbo-guard-badge-' + ( data.severity || 'info' ) ).text( ( data.severity || 'info' ).charAt( 0 ).toUpperCase() + ( data.severity || 'info' ).slice( 1 ) ) )
+			.append( ' ' )
+			.append( $( '<span>' ).text( data.threat_name || '' ) );
+
+		var $code = $( '#turbo-guard-view-modal-code' );
+		$code.text( data.content || '' );
+		if ( data.truncated ) {
+			$code.append( '\n\n\u2026 (truncated \u2014 showing first 8 KB)' );
+		}
+
+		$modal.show();
+	}
+
+	// Show a small upsell tooltip near the clicked View button (free users).
+	function showProUpsell( $btn ) {
+		// Remove any existing tooltip.
+		$( '.turbo-guard-pro-tooltip' ).remove();
+
+		var msg  = strings.viewProMessage || 'Viewing file contents is a Pro feature. Upgrade to inspect every threat in detail and clean unlimited files.';
+		var link = $( '<a>' )
+			.attr( 'href', proUrl )
+			.attr( 'target', '_blank' )
+			.attr( 'rel', 'noopener noreferrer' )
+			.text( strings.upgradeNow || 'Upgrade Now' );
+
+		var $tip = $( '<div>' ).addClass( 'turbo-guard-pro-tooltip' );
+		$tip.append( $( '<strong>' ).text( strings.viewProTitle || 'Turbo Guard Pro' ) );
+		$tip.append( $( '<p>' ).text( msg ) );
+		$tip.append( link );
+
+		$btn.after( $tip );
+
+		// Close on outside click.
+		$( document ).one( 'click', function() {
+			$tip.remove();
+		} );
+
+		// Prevent the outside-click handler from firing immediately.
+		$tip.on( 'click', function( e ) {
+			e.stopPropagation();
+		} );
+	}
 } );

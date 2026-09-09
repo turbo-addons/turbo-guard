@@ -113,8 +113,9 @@ class Turbo_Guard_SEO_Spam_Detector {
 			$is_spam        = false;
 			$spam_reasons   = array();
 
-			// Check for CJK in title.
-			if ( preg_match( self::CJK_REGEX, $post->post_title ) ) {
+			// Check for CJK in title — only suspicious when the site itself is
+			// NOT a Japanese/Chinese/Korean-language site.
+			if ( ! self::is_cjk_site() && preg_match( self::CJK_REGEX, $post->post_title ) ) {
 				$is_spam      = true;
 				$spam_reasons[] = 'CJK characters in title';
 			}
@@ -143,33 +144,36 @@ class Turbo_Guard_SEO_Spam_Detector {
 			}
 		}
 
-		// Also search post content for CJK.
-		$cjk_posts = $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT ID, post_title, post_type, post_status, guid
-				 FROM {$wpdb->posts}
-				 WHERE post_status = 'publish'
-				 AND (post_content REGEXP %s OR post_excerpt REGEXP %s)
-				 LIMIT 50",
-				'[\\x{3040}-\\x{30FF}\\x{4E00}-\\x{9FFF}]',
-				'[\\x{3040}-\\x{30FF}\\x{4E00}-\\x{9FFF}]'
-			)
-		);
+		// Also search post content for CJK — skipped entirely on CJK-language
+		// sites, where Japanese/Chinese/Korean text is legitimate.
+		if ( ! self::is_cjk_site() ) {
+			$cjk_posts = $wpdb->get_results(
+				$wpdb->prepare(
+					"SELECT ID, post_title, post_type, post_status, guid
+					 FROM {$wpdb->posts}
+					 WHERE post_status = 'publish'
+					 AND (post_content REGEXP %s OR post_excerpt REGEXP %s)
+					 LIMIT 50",
+					'[\\x{3040}-\\x{30FF}\\x{4E00}-\\x{9FFF}]',
+					'[\\x{3040}-\\x{30FF}\\x{4E00}-\\x{9FFF}]'
+				)
+			);
 
-		foreach ( $cjk_posts as $post ) {
-			// Avoid duplicates.
-			$existing_ids = array_column( $spam_posts, 'id' );
-			if ( ! in_array( $post->ID, $existing_ids, true ) ) {
-				$spam_posts[] = array(
-					'id'      => $post->ID,
-					'title'   => $post->post_title,
-					'type'    => $post->post_type,
-					'status'  => $post->post_status,
-					'date'    => '',
-					'url'     => get_permalink( $post->ID ),
-					'reasons' => array( 'CJK characters in post content' ),
-					'edit_url'=> get_edit_post_link( $post->ID ),
-				);
+			foreach ( $cjk_posts as $post ) {
+				// Avoid duplicates.
+				$existing_ids = array_column( $spam_posts, 'id' );
+				if ( ! in_array( $post->ID, $existing_ids, true ) ) {
+					$spam_posts[] = array(
+						'id'      => $post->ID,
+						'title'   => $post->post_title,
+						'type'    => $post->post_type,
+						'status'  => $post->post_status,
+						'date'    => '',
+						'url'     => get_permalink( $post->ID ),
+						'reasons' => array( 'CJK characters in post content' ),
+						'edit_url'=> get_edit_post_link( $post->ID ),
+					);
+				}
 			}
 		}
 
@@ -200,7 +204,7 @@ class Turbo_Guard_SEO_Spam_Detector {
 			}
 
 			$reasons = array();
-			if ( preg_match( self::CJK_REGEX, $value ) ) {
+			if ( ! self::is_cjk_site() && preg_match( self::CJK_REGEX, $value ) ) {
 				$reasons[] = 'Contains CJK (Japanese/Chinese/Korean) characters';
 			}
 
@@ -369,7 +373,8 @@ class Turbo_Guard_SEO_Spam_Detector {
 					}
 
 					// Only flag if it has dangerous patterns.
-					$has_cjk    = preg_match( self::CJK_REGEX, $content );
+					// CJK alone is only suspicious when the site is not CJK-language.
+					$has_cjk    = ( ! self::is_cjk_site() && preg_match( self::CJK_REGEX, $content ) );
 					$has_eval   = preg_match( '/eval\s*\(/i', $content );
 					$has_base64 = preg_match( '/base64_decode\s*\(/i', $content );
 					$has_spam   = false;
@@ -395,7 +400,7 @@ class Turbo_Guard_SEO_Spam_Detector {
 					}
 				} elseif ( in_array( $ext, array( 'html', 'htm' ), true ) ) {
 					// HTML files in uploads: flag if CJK or spam keywords.
-					if ( preg_match( self::CJK_REGEX, $content ) ) {
+					if ( ! self::is_cjk_site() && preg_match( self::CJK_REGEX, $content ) ) {
 						$reasons[] = 'HTML file with Japanese/Chinese text in uploads';
 					}
 					$content_lower = strtolower( $content );
@@ -443,6 +448,23 @@ class Turbo_Guard_SEO_Spam_Detector {
 	 */
 	public static function get_cached_results() {
 		return get_transient( 'turbo_guard_seo_spam_results' );
+	}
+
+	/**
+	 * Whether the site's own language is Japanese/Chinese/Korean.
+	 *
+	 * On CJK-language sites, Japanese/Chinese/Korean text is legitimate content,
+	 * so the detector must NOT flag CJK text alone as spam — this prevents the
+	 * most common false positive on shared hosting and international sites.
+	 *
+	 * @since 1.3.0
+	 * @return bool
+	 */
+	private static function is_cjk_site() {
+		$locale = strtolower( get_locale() );
+		return ( 0 === strpos( $locale, 'ja' )
+			|| 0 === strpos( $locale, 'zh' )
+			|| 0 === strpos( $locale, 'ko' ) );
 	}
 
 	/**

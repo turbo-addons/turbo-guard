@@ -8,14 +8,15 @@ Requires PHP: 7.4
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-WordPress security plugin with malware scanner, bulk cleanup, firewall, 2FA, vulnerability scanner, and file integrity checker.
+WordPress security plugin with malware scanner, firewall, 2FA, vulnerability scanner, and file integrity checker. Free scan, 3 free cleanups.
 
 == Description ==
 
-Turbo Guard is a comprehensive, 100% free WordPress security plugin built by a team that manages 40+ WordPress sites. It solves real problems: bulk malware removal, Japanese/Chinese SEO spam cleanup, vulnerability alerts, file integrity monitoring, and live traffic analysis — all with AI-powered guidance that explains what happened and exactly what to do.
+Turbo Guard is a comprehensive WordPress security plugin built by a team that manages 40+ WordPress sites. It solves real problems: malware removal, Japanese/Chinese SEO spam cleanup, vulnerability alerts, file integrity monitoring, and bot protection. Every scan, detection, and list is 100% free — you can clean up to 3 files for free. Upgrade to Turbo Guard Pro to unlock unlimited cleanup, Live Traffic Monitor, AI Security Advisor, and Geo-Fence.
 
-= AI Security Advisor =
+= AI Security Advisor (Pro) =
 
+Available in Turbo Guard Pro.
 * After every scan, Turbo Guard AI identifies the attack campaign (Japanese SEO spam, web shell, brute force, database injection)
 * Explains in plain English what happened and the business risk
 * Provides numbered, step-by-step fix instructions tailored to your specific threats
@@ -49,6 +50,7 @@ Turbo Guard is a comprehensive, 100% free WordPress security plugin built by a t
 * Select All Critical button — delete multiple files at once
 * Automatic ZIP backup before any deletion
 * Quarantine option — moves files to a protected directory
+* Free version cleans up to 3 files — upgrade to Turbo Guard Pro for unlimited cleanup
 
 = Web Application Firewall =
 
@@ -58,8 +60,9 @@ Turbo Guard is a comprehensive, 100% free WordPress security plugin built by a t
 * Rate limiting (120 requests per minute per IP)
 * Bad bot blocker: blocks 25+ vulnerability scanners and scrapers
 
-= Geo-Fence and Trusted Location =
+= Geo-Fence and Trusted Location (Pro) =
 
+Available in Turbo Guard Pro.
 * Restrict WordPress admin access to specific IP addresses
 * Country-based admin lock: only allow access from your country
 * Block file uploads from untrusted countries
@@ -86,8 +89,9 @@ Turbo Guard is a comprehensive, 100% free WordPress security plugin built by a t
 * Works without API key (optional WPScan key for higher limits)
 * Email alert when new vulnerabilities are found
 
-= Live Traffic Monitor =
+= Live Traffic Monitor (Pro) =
 
+Available in Turbo Guard Pro.
 * Logs every HTTP request with bot/human detection
 * Identifies 30+ bots including AI crawlers (GPTBot, ClaudeBot, PerplexityBot)
 * 24-hour stats: total requests, humans, bots, blocked, errors
@@ -124,11 +128,11 @@ Turbo Guard does not send your website files to any external server. Vulnerabili
 
 = Is Turbo Guard completely free? =
 
-Yes. All features are 100% free with no feature limits and no account required.
+Yes — all scanning, detection, and protection features are 100% free. The free version can clean up to 3 infected files. Upgrade to Turbo Guard Pro for unlimited cleanup plus Live Traffic Monitor, AI Security Advisor, and Geo-Fence. No account required.
 
 = Will it slow my website? =
 
-No. Scanning runs via AJAX in your browser. The firewall adds negligible overhead. Live traffic logging uses PHP shutdown function (after the response is sent to the visitor).
+No. Scanning runs via AJAX in your browser. The firewall adds negligible overhead.
 
 = My site shows Japanese spam in Google but files are gone. What do I do? =
 
@@ -149,13 +153,13 @@ Turbo Guard whitelists 15+ popular security plugins (Wordfence, Sucuri, MalCare,
 == Screenshots ==
 
 1. Security Dashboard — score, threats, firewall blocks, scan summary
-2. AI Security Advisor — attack campaign analysis, step-by-step fix guide
+2. AI Security Advisor (Pro) — attack campaign analysis, step-by-step fix guide
 3. Malware Scanner — live progress, severity badges, bulk delete with backup
 4. File Integrity — core checksum verification, file watcher, baseline stats
 5. Vulnerability Scanner — CVE listing with CVSS severity and fix versions
-6. Live Traffic — paginated log, bot/human detection, filter tabs
+6. Live Traffic (Pro) — paginated log, bot/human detection, filter tabs
 7. Google Search Console Cleanup — OAuth setup, spam URL table, removal request
-8. Geo-Fence Settings — trusted IP whitelist, country lock
+8. Geo-Fence Settings (Pro) — trusted IP whitelist, country lock
 9. Firewall Logs — blocked requests with IP blocking options
 10. Settings Page — all features independently configurable
 

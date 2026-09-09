@@ -82,6 +82,9 @@ class Turbo_Guard_Admin {
 		add_action( 'wp_ajax_turbo_guard_ignore_file',   array( $this, 'ajax_ignore_file' ) );
 		add_action( 'wp_ajax_turbo_guard_unignore_file', array( $this, 'ajax_unignore_file' ) );
 
+		// Scanner: view a threat's file content (Pro only).
+		add_action( 'wp_ajax_turbo_guard_view_file', array( $this, 'ajax_view_file' ) );
+
 		// Remote notices: dismiss is handled inside Turbo_Guard_Notices itself,
 		// but we enqueue the nonce data here so JS can access it.
 		add_action( 'admin_footer', array( $this, 'print_notices_nonce_data' ) );
@@ -93,9 +96,14 @@ class Turbo_Guard_Admin {
 	 * @since 1.0.0
 	 */
 	public function add_admin_menu() {
+		// Show "Turbo Guard Pro" in the sidebar when the Pro add-on is licensed.
+		$turbo_guard_menu_title = turbo_guard_is_pro()
+			? __( 'Turbo Guard Pro', 'turbo-guard' )
+			: __( 'Turbo Guard', 'turbo-guard' );
+
 		add_menu_page(
 			__( 'Turbo Guard', 'turbo-guard' ),
-			__( 'Turbo Guard', 'turbo-guard' ),
+			$turbo_guard_menu_title,
 			'manage_options',
 			'turbo-guard',
 			array( $this, 'render_dashboard_page' ),
@@ -233,7 +241,8 @@ class Turbo_Guard_Admin {
 			array(
 				'ajaxUrl'    => admin_url( 'admin-ajax.php' ),
 				'nonce'      => wp_create_nonce( 'turbo_guard_admin' ),
-				'trend'      => apply_filters( 'turbo_guard_security_trend', array() ),
+				'isPro'      => turbo_guard_is_pro(),
+				'proUrl'     => turbo_guard_pro_url(),
 				'strings' => array(
 					'scanning'       => __( 'Scanning...', 'turbo-guard' ),
 					'scanComplete'   => __( 'Scan Complete!', 'turbo-guard' ),
@@ -243,13 +252,6 @@ class Turbo_Guard_Admin {
 					'selectFiles'    => __( 'Please select at least one file.', 'turbo-guard' ),
 					'savingSettings' => __( 'Saving...', 'turbo-guard' ),
 					'settingsSaved'  => __( 'Settings saved successfully!', 'turbo-guard' ),
-
-					// Live Traffic.
-					/* translators: %s: IP address to block. */
-					'blockIpConfirm' => __( 'Block IP %s?', 'turbo-guard' ),
-					'blocking'       => __( 'Blocking...', 'turbo-guard' ),
-					'blocked'        => __( 'Blocked', 'turbo-guard' ),
-					'block'          => __( 'Block', 'turbo-guard' ),
 
 					// SEO Spam Detector.
 					'seoSpamFound'              => __( 'spam indicator(s) found.', 'turbo-guard' ),
@@ -267,6 +269,12 @@ class Turbo_Guard_Admin {
 					'building'               => __( 'Building...', 'turbo-guard' ),
 					'rebuildBaseline'        => __( 'Rebuild Baseline', 'turbo-guard' ),
 					'confirmRebuildBaseline' => __( 'Rebuild baseline? This marks all current files as trusted. Only do this on a clean site.', 'turbo-guard' ),
+
+					// Scanner file view (Pro upsell).
+					'viewFile'      => __( 'View', 'turbo-guard' ),
+					'viewProTitle'  => __( 'Turbo Guard Pro', 'turbo-guard' ),
+					'viewProMessage'=> __( 'Viewing file contents is a Pro feature. Upgrade to inspect every threat in detail and clean unlimited files.', 'turbo-guard' ),
+					'upgradeNow'    => __( 'Upgrade Now', 'turbo-guard' ),
 				),
 			)
 		);
@@ -294,6 +302,9 @@ class Turbo_Guard_Admin {
 		if ( $turbo_guard_latest_scan ) {
 			$turbo_guard_results = Turbo_Guard_Scanner::get_scan_results( $turbo_guard_latest_scan->id );
 		}
+
+		$turbo_guard_is_pro      = turbo_guard_is_pro();
+		$turbo_guard_free_remain = turbo_guard_free_cleanup_remaining();
 
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/scanner.php';
 	}
@@ -537,20 +548,41 @@ class Turbo_Guard_Admin {
 			wp_send_json_error( array( 'message' => __( 'No files selected.', 'turbo-guard' ) ) );
 		}
 
-		if ( ! turbo_guard_is_pro() && count( $result_ids ) > turbo_guard_free_cleanup_limit() ) {
-			wp_send_json_error(
-				array(
-					'message' => sprintf(
-						/* translators: %1$d: free limit, %2$s: pro URL */
-						__( 'The free version can delete up to %1$d files at a time. <a href="%2$s">Upgrade to Turbo Guard Pro</a> for unlimited cleanup.', 'turbo-guard' ),
-						turbo_guard_free_cleanup_limit(),
-						esc_url( turbo_guard_pro_url() )
-					),
-				)
-			);
+		if ( ! turbo_guard_is_pro() ) {
+			$remaining = turbo_guard_free_cleanup_remaining();
+
+			if ( $remaining <= 0 ) {
+				wp_send_json_error(
+					array(
+						'message' => sprintf(
+							/* translators: %s: pro URL */
+							__( 'You have reached the free cleanup limit. <a href="%s">Upgrade to Turbo Guard Pro</a> for unlimited cleanup.', 'turbo-guard' ),
+							esc_url( turbo_guard_pro_url() )
+						),
+					)
+				);
+			}
+
+			if ( count( $result_ids ) > $remaining ) {
+				wp_send_json_error(
+					array(
+						'message' => sprintf(
+							/* translators: 1: remaining count, 2: pro URL */
+							__( 'The free version can only clean %1$d more file(s). <a href="%2$s">Upgrade to Turbo Guard Pro</a> for unlimited cleanup.', 'turbo-guard' ),
+							$remaining,
+							esc_url( turbo_guard_pro_url() )
+						),
+					)
+				);
+			}
 		}
 
 		$result = Turbo_Guard_Cleaner::delete_files( $result_ids );
+
+		// Record successful cleanup against the free-tier quota.
+		if ( ! turbo_guard_is_pro() && ! empty( $result['deleted'] ) ) {
+			turbo_guard_increment_free_cleanup( (int) $result['deleted'] );
+		}
 
 		wp_send_json_success( $result );
 	}
@@ -573,22 +605,120 @@ class Turbo_Guard_Admin {
 			wp_send_json_error( array( 'message' => __( 'No files selected.', 'turbo-guard' ) ) );
 		}
 
-		if ( ! turbo_guard_is_pro() && count( $result_ids ) > turbo_guard_free_cleanup_limit() ) {
-			wp_send_json_error(
-				array(
-					'message' => sprintf(
-						/* translators: %1$d: free limit, %2$s: pro URL */
-						__( 'The free version can quarantine up to %1$d files at a time. <a href="%2$s">Upgrade to Turbo Guard Pro</a> for unlimited cleanup.', 'turbo-guard' ),
-						turbo_guard_free_cleanup_limit(),
-						esc_url( turbo_guard_pro_url() )
-					),
-				)
-			);
+		if ( ! turbo_guard_is_pro() ) {
+			$remaining = turbo_guard_free_cleanup_remaining();
+
+			if ( $remaining <= 0 ) {
+				wp_send_json_error(
+					array(
+						'message' => sprintf(
+							/* translators: %s: pro URL */
+							__( 'You have reached the free cleanup limit. <a href="%s">Upgrade to Turbo Guard Pro</a> for unlimited cleanup.', 'turbo-guard' ),
+							esc_url( turbo_guard_pro_url() )
+						),
+					)
+				);
+			}
+
+			if ( count( $result_ids ) > $remaining ) {
+				wp_send_json_error(
+					array(
+						'message' => sprintf(
+							/* translators: 1: remaining count, 2: pro URL */
+							__( 'The free version can only clean %1$d more file(s). <a href="%2$s">Upgrade to Turbo Guard Pro</a> for unlimited cleanup.', 'turbo-guard' ),
+							$remaining,
+							esc_url( turbo_guard_pro_url() )
+						),
+					)
+				);
+			}
 		}
 
 		$results = Turbo_Guard_Cleaner::quarantine_files( $result_ids );
 
+		// Record successful cleanup against the free-tier quota.
+		if ( ! turbo_guard_is_pro() && ! empty( $results ) && is_array( $results ) ) {
+			$quarantined = 0;
+			foreach ( $results as $qr ) {
+				if ( is_array( $qr ) && ! empty( $qr['success'] ) ) {
+					++$quarantined;
+				}
+			}
+			if ( $quarantined > 0 ) {
+				turbo_guard_increment_free_cleanup( $quarantined );
+			}
+		}
+
 		wp_send_json_success( array( 'results' => $results ) );
+	}
+
+	/**
+	 * AJAX: View a threat's file content (Pro only).
+	 *
+	 * Reads the flagged file and returns a sanitized snippet for display.
+	 * Restricted to Pro to protect the free tier and avoid exposing raw
+	 * file contents to users who have not upgraded.
+	 *
+	 * @since 1.1.1
+	 */
+	public function ajax_view_file() {
+		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
+		}
+
+		// View is a Pro feature.
+		if ( ! turbo_guard_is_pro() ) {
+			wp_send_json_error( array( 'message' => __( 'Viewing file contents is a Turbo Guard Pro feature.', 'turbo-guard' ) ) );
+		}
+
+		$result_id = isset( $_POST['result_id'] ) ? absint( $_POST['result_id'] ) : 0;
+
+		if ( ! $result_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid file.', 'turbo-guard' ) ) );
+		}
+
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$row = $wpdb->get_row(
+			$wpdb->prepare(
+				"SELECT file_path, threat_name, threat_details, severity FROM {$wpdb->prefix}turbo_guard_scan_results WHERE id = %d",
+				$result_id
+			)
+		);
+
+		if ( ! $row ) {
+			wp_send_json_error( array( 'message' => __( 'File not found.', 'turbo-guard' ) ) );
+		}
+
+		// Only filesystem files can be viewed — not database entries.
+		if ( 0 === strpos( $row->file_path, 'database://' ) ) {
+			wp_send_json_error( array( 'message' => __( 'This is a database entry and cannot be viewed as a file.', 'turbo-guard' ) ) );
+		}
+
+		$file_path = $row->file_path;
+		if ( ! is_readable( $file_path ) || ! is_file( $file_path ) ) {
+			wp_send_json_error( array( 'message' => __( 'The file is no longer available on disk.', 'turbo-guard' ) ) );
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		$content = @file_get_contents( $file_path, false, null, 0, 8192 );
+		if ( false === $content ) {
+			wp_send_json_error( array( 'message' => __( 'Could not read the file.', 'turbo-guard' ) ) );
+		}
+
+		wp_send_json_success(
+			array(
+				'file_path'      => str_replace( ABSPATH, '', $file_path ),
+				'threat_name'    => $row->threat_name,
+				'threat_details' => $row->threat_details,
+				'severity'       => $row->severity,
+				'content'        => $content,
+				'truncated'      => strlen( $content ) >= 8192,
+			)
+		);
 	}
 
 	/**
@@ -947,11 +1077,31 @@ class Turbo_Guard_Admin {
 			wp_send_json_error( array( 'message' => __( 'Invalid post ID.', 'turbo-guard' ) ) );
 		}
 
-		// Free users may delete spam posts; the UI caps them at the free cleanup
-		// quota. Pro users have no limit.
+		// Enforce the free cleanup quota server-side — same shared limit as
+		// malware file cleanup. Pro users have no limit.
+		if ( ! turbo_guard_is_pro() ) {
+			$remaining = turbo_guard_free_cleanup_remaining();
+
+			if ( $remaining <= 0 ) {
+				wp_send_json_error(
+					array(
+						'message' => sprintf(
+							/* translators: %s: pro URL */
+							__( 'You have reached the free cleanup limit. <a href="%s">Upgrade to Turbo Guard Pro</a> for unlimited cleanup.', 'turbo-guard' ),
+							esc_url( turbo_guard_pro_url() )
+						),
+					)
+				);
+			}
+		}
 
 		$result = Turbo_Guard_SEO_Spam_Detector::delete_spam_post( $post_id );
 		if ( $result ) {
+			// Record against the free cleanup quota.
+			if ( ! turbo_guard_is_pro() ) {
+				turbo_guard_increment_free_cleanup( 1 );
+			}
+
 			wp_send_json_success( array(
 				// translators: %d: post ID that was deleted
 				'message' => sprintf( __( 'Post %d deleted.', 'turbo-guard' ), $post_id ),

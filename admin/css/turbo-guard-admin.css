@@ -1000,3 +1000,130 @@
 	outline-offset: 2px;
 	border-radius: 3px;
 }
+
+
+/* =========================================================
+   Scanner File-View Modal + Pro Upsell Tooltip
+   ========================================================= */
+
+.turbo-guard-view-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 100000;
+}
+
+.turbo-guard-view-modal-overlay {
+	position: absolute;
+	inset: 0;
+	background: rgba(15, 23, 42, 0.6);
+}
+
+.turbo-guard-view-modal-dialog {
+	position: relative;
+	max-width: 760px;
+	width: calc(100% - 40px);
+	max-height: 80vh;
+	margin: 8vh auto 0;
+	background: #fff;
+	border-radius: 10px;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+.turbo-guard-view-modal-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	padding: 14px 18px;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.turbo-guard-view-modal-header strong {
+	font-size: 13px;
+	color: #1f2937;
+	word-break: break-all;
+	font-family: Consolas, Monaco, monospace;
+}
+
+.turbo-guard-view-modal-close {
+	background: none;
+	border: none;
+	font-size: 26px;
+	line-height: 1;
+	color: #9ca3af;
+	cursor: pointer;
+	padding: 0 4px;
+	flex-shrink: 0;
+}
+.turbo-guard-view-modal-close:hover {
+	color: #dc2626;
+}
+
+.turbo-guard-view-modal-meta {
+	padding: 10px 18px;
+	font-size: 12px;
+	color: #6b7280;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	border-bottom: 1px solid #f3f4f6;
+}
+
+.turbo-guard-view-modal-code {
+	margin: 0;
+	padding: 16px 18px;
+	overflow: auto;
+	flex: 1;
+	min-height: 180px;
+	font-size: 12px;
+	line-height: 1.5;
+	font-family: Consolas, Monaco, 'Courier New', monospace;
+	background: #0f172a;
+	color: #e2e8f0;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+/* Pro upsell tooltip shown near the View button for free users. */
+.turbo-guard-pro-tooltip {
+	position: absolute;
+	z-index: 1000;
+	margin-top: 6px;
+	width: 300px;
+	background: #1e293b;
+	color: #e2e8f0;
+	border-radius: 8px;
+	padding: 14px 16px;
+	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.turbo-guard-pro-tooltip strong {
+	display: block;
+	font-size: 13px;
+	margin-bottom: 6px;
+	color: #fff;
+}
+
+.turbo-guard-pro-tooltip p {
+	margin: 0 0 10px;
+	font-size: 12px;
+	line-height: 1.5;
+	color: #cbd5e1;
+}
+
+.turbo-guard-pro-tooltip a {
+	display: inline-block;
+	background: var(--tg-blue, #2563eb);
+	color: #fff;
+	text-decoration: none;
+	font-size: 12px;
+	font-weight: 600;
+	padding: 6px 12px;
+	border-radius: 5px;
+}
+.turbo-guard-pro-tooltip a:hover {
+	background: #1d4ed8;
+}
