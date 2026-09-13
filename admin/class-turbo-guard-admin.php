@@ -82,6 +82,9 @@ class Turbo_Guard_Admin {
 		add_action( 'wp_ajax_turbo_guard_ignore_file',   array( $this, 'ajax_ignore_file' ) );
 		add_action( 'wp_ajax_turbo_guard_unignore_file', array( $this, 'ajax_unignore_file' ) );
 
+		// Scanner: mark a finding as fixed.
+		add_action( 'wp_ajax_turbo_guard_mark_fixed', array( $this, 'ajax_mark_fixed' ) );
+
 		// Scanner: view a threat's file content (Pro only).
 		add_action( 'wp_ajax_turbo_guard_view_file', array( $this, 'ajax_view_file' ) );
 
@@ -303,10 +306,31 @@ class Turbo_Guard_Admin {
 			$turbo_guard_results = Turbo_Guard_Scanner::get_scan_results( $turbo_guard_latest_scan->id );
 		}
 
-		$turbo_guard_is_pro      = turbo_guard_is_pro();
-		$turbo_guard_free_remain = turbo_guard_free_cleanup_remaining();
+		$turbo_guard_is_pro       = turbo_guard_is_pro();
+		$turbo_guard_free_remain  = turbo_guard_free_cleanup_remaining();
+		$turbo_guard_scan_summary = $this->get_scan_summary( $turbo_guard_latest_scan );
 
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/scanner.php';
+	}
+
+	/**
+	 * Build the Wordfence-style scan summary (what was checked, by category).
+	 *
+	 * @since 1.3.0
+	 * @param object|null $scan Latest completed scan row.
+	 * @return array Category => count.
+	 */
+	private function get_scan_summary( $scan ) {
+		$posts = wp_count_posts();
+		$users = count_users();
+
+		return array(
+			'files'   => $scan ? absint( $scan->scanned_files ) : 0,
+			'plugins' => function_exists( 'get_plugins' ) ? count( get_plugins() ) : 0,
+			'themes'  => count( wp_get_themes() ),
+			'posts'   => absint( $posts->publish ) + absint( $posts->draft ) + absint( $posts->pending ) + absint( $posts->private ),
+			'users'   => absint( $users['total_users'] ),
+		);
 	}
 
 	/**
@@ -1159,6 +1183,47 @@ class Turbo_Guard_Admin {
 
 		wp_send_json_success( array(
 			'message'   => __( 'File marked as safe and will be excluded from future scans.', 'turbo-guard' ),
+			'result_id' => $result_id,
+		) );
+	}
+
+	/**
+	 * AJAX: Mark a scan finding as fixed (resolved).
+	 *
+	 * Sets the result status to "fixed" so it is hidden from active results
+	 * (get_scan_results only returns pending rows). Mirrors Wordfence's
+	 * "Mark as Fixed" workflow.
+	 *
+	 * @since 1.3.0
+	 */
+	public function ajax_mark_fixed() {
+		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
+		}
+
+		$result_id = isset( $_POST['result_id'] ) ? absint( $_POST['result_id'] ) : 0;
+		if ( ! $result_id ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid result ID.', 'turbo-guard' ) ) );
+		}
+
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$updated = $wpdb->update(
+			$wpdb->prefix . 'turbo_guard_scan_results',
+			array( 'status' => 'fixed' ),
+			array( 'id' => $result_id ),
+			array( '%s' ),
+			array( '%d' )
+		);
+
+		if ( false === $updated ) {
+			wp_send_json_error( array( 'message' => __( 'Failed to update the result.', 'turbo-guard' ) ) );
+		}
+
+		wp_send_json_success( array(
+			'message'   => __( 'Finding marked as fixed.', 'turbo-guard' ),
 			'result_id' => $result_id,
 		) );
 	}

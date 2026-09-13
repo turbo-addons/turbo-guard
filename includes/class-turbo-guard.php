@@ -55,6 +55,7 @@ class Turbo_Guard {
 	 */
 	private function load_dependencies() {
 		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-scanner.php';
+		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-known-files.php';
 		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-cleaner.php';
 		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-firewall.php';
 		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-login-security.php';
@@ -87,6 +88,13 @@ class Turbo_Guard {
 
 		// Add plugin action links.
 		add_filter( 'plugin_action_links_' . TURBO_GUARD_PLUGIN_BASENAME, array( $this, 'add_action_links' ) );
+
+		// Clear the known-good file cache whenever plugins/themes change so the
+		// repository index stays fresh (prevents stale false positives/negatives).
+		add_action( 'upgrader_process_complete', array( 'Turbo_Guard_Known_Files', 'clear_cache' ), 10, 0 );
+		add_action( 'activated_plugin', array( 'Turbo_Guard_Known_Files', 'clear_cache' ) );
+		add_action( 'deactivated_plugin', array( 'Turbo_Guard_Known_Files', 'clear_cache' ) );
+		add_action( 'switch_theme', array( 'Turbo_Guard_Known_Files', 'clear_cache' ) );
 	}
 
 	/**

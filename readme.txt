@@ -28,7 +28,7 @@ Available in Turbo Guard Pro.
 
 * Full-site scan: PHP, JavaScript, HTML files across wp-content, wp-admin, wp-includes, and WordPress root
 * WordPress Core File Manifest check — compares every file in wp-admin and wp-includes against the official WordPress.org checksums API
-* Detects 30+ malware patterns: eval+base64, C99/R57/WSO web shells, hidden iframes, pharma spam, code obfuscation
+* Detects 50+ malware patterns: eval+base64, C99/R57/WSO/b374k/ALFA web shells, hidden iframes, pharma spam, code obfuscation
 * Detects Japanese, Chinese, and Korean SEO spam text inside PHP files
 * Scans the WordPress database (wp_posts, wp_options) for injected content and rogue admin accounts
 * PHP-in-uploads detection, PHP-in-core-asset-dirs detection

@@ -31,6 +31,7 @@
 			$( document ).on( 'click', '.turbo-guard-delete-single', $.proxy( this.deleteSingle, this ) );
 			$( document ).on( 'click', '.turbo-guard-quarantine-single', $.proxy( this.quarantineSingle, this ) );
 			$( document ).on( 'click', '.turbo-guard-ignore-single', $.proxy( this.ignoreSingle, this ) );
+			$( document ).on( 'click', '.turbo-guard-mark-fixed-single', $.proxy( this.markFixed, this ) );
 			$( document ).on( 'click', '.turbo-guard-delete-post', $.proxy( this.deletePost, this ) );
 			$( document ).on( 'change', '.turbo-guard-file-check', $.proxy( this.updateSelectionCount, this ) );
 
@@ -328,6 +329,74 @@
 							.html( '<p>&#10007; Server error: ' + xhr.status + '</p>' )
 							.show();
 						$btn.prop( 'disabled', false ).html( '<span class="dashicons dashicons-hidden" style="font-size:13px;width:13px;height:13px;vertical-align:middle;margin-right:3px;"></span> Ignore' );
+					}
+				}
+			);
+		},
+
+		/**
+		 * Mark a finding as fixed — hides it from active results (Wordfence-style).
+		 */
+		markFixed: function (e) {
+			e.preventDefault();
+			e.stopPropagation();
+
+			var id  = $( e.currentTarget ).data( 'id' );
+			if ( ! id ) {
+				return;
+			}
+
+			if ( ! window.confirm( 'Mark this finding as fixed?\n\nIt will be removed from the active results list. Use this only after you have resolved the issue.' ) ) {
+				return;
+			}
+
+			var self    = this;
+			var $row    = $( '.turbo-guard-result-row[data-id="' + id + '"]' );
+			var $result = $( '#turbo-guard-action-result' );
+			var $btn    = $( e.currentTarget );
+
+			$btn.prop( 'disabled', true ).text( 'Marking...' );
+
+			$.ajax(
+				{
+					url:  turboGuardAdmin.ajaxUrl,
+					type: 'POST',
+					data: {
+						action:    'turbo_guard_mark_fixed',
+						nonce:     turboGuardAdmin.nonce,
+						result_id: id
+					},
+					success: function (response) {
+						if (response.success) {
+							$row.fadeOut(
+								300,
+								function () {
+									$( this ).remove();
+									if ($( '.turbo-guard-result-row' ).length === 0) {
+										location.reload();
+									}
+								}
+							);
+							$result
+								.removeClass( 'notice-error' )
+								.addClass( 'notice notice-success' )
+								.html( '<p>&#10003; Finding marked as fixed.</p>' )
+								.show();
+						} else {
+							$result
+								.removeClass( 'notice-success' )
+								.addClass( 'notice notice-error' )
+								.html( '<p>&#10007; ' + (response.data ? response.data.message : 'Could not mark as fixed.') + '</p>' )
+								.show();
+							$btn.prop( 'disabled', false ).html( '<span class="dashicons dashicons-yes" style="font-size:13px;width:13px;height:13px;vertical-align:middle;margin-right:3px;"></span> Mark as Fixed' );
+						}
+					},
+					error: function (xhr) {
+						$result
+							.addClass( 'notice notice-error' )
+							.html( '<p>&#10007; Server error: ' + xhr.status + '</p>' )
+							.show();
+						$btn.prop( 'disabled', false ).html( '<span class="dashicons dashicons-yes" style="font-size:13px;width:13px;height:13px;vertical-align:middle;margin-right:3px;"></span> Mark as Fixed' );
 					}
 				}
 			);

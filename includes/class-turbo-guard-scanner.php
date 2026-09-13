@@ -44,29 +44,34 @@ class Turbo_Guard_Scanner {
 	private static $malware_patterns = array(
 		// Critical: Web shells & backdoors.
 		'eval_base64'       => array(
-			'pattern'  => '/eval\s*\(\s*base64_decode\s*\(/i',
-			'severity' => 'critical',
-			'name'     => 'Obfuscated Backdoor (eval+base64)',
+			'pattern'      => '/eval\s*\(\s*base64_decode\s*\(/i',
+			'severity'     => 'critical',
+			'name'         => 'Obfuscated Backdoor (eval+base64)',
+			'trusted_skip' => true, // Legit plugins (license/encryption) use eval+base64.
 		),
 		'eval_gzinflate'    => array(
-			'pattern'  => '/eval\s*\(\s*gzinflate\s*\(/i',
-			'severity' => 'critical',
-			'name'     => 'Obfuscated Backdoor (eval+gzinflate)',
+			'pattern'      => '/eval\s*\(\s*gzinflate\s*\(/i',
+			'severity'     => 'critical',
+			'name'         => 'Obfuscated Backdoor (eval+gzinflate)',
+			'trusted_skip' => true,
 		),
 		'eval_gzuncompress' => array(
-			'pattern'  => '/eval\s*\(\s*gzuncompress\s*\(/i',
-			'severity' => 'critical',
-			'name'     => 'Obfuscated Backdoor (eval+gzuncompress)',
+			'pattern'      => '/eval\s*\(\s*gzuncompress\s*\(/i',
+			'severity'     => 'critical',
+			'name'         => 'Obfuscated Backdoor (eval+gzuncompress)',
+			'trusted_skip' => true,
 		),
 		'eval_str_rot13'    => array(
-			'pattern'  => '/eval\s*\(\s*str_rot13\s*\(/i',
-			'severity' => 'critical',
-			'name'     => 'Obfuscated Code (eval+rot13)',
+			'pattern'      => '/eval\s*\(\s*str_rot13\s*\(/i',
+			'severity'     => 'critical',
+			'name'         => 'Obfuscated Code (eval+rot13)',
+			'trusted_skip' => true,
 		),
 		'preg_replace_e'    => array(
-			'pattern'  => '/preg_replace\s*\(\s*["\'].*\/e["\']/',
-			'severity' => 'critical',
-			'name'     => 'Code Execution via preg_replace /e',
+			'pattern'      => '/preg_replace\s*\(\s*["\'].*\/e["\']/',
+			'severity'     => 'critical',
+			'name'         => 'Code Execution via preg_replace /e',
+			'trusted_skip' => true, // Deprecated /e modifier may exist in old plugins.
 		),
 		'assert_post'       => array(
 			'pattern'  => '/assert\s*\(\s*\$_(POST|GET|REQUEST|COOKIE)/i',
@@ -86,9 +91,12 @@ class Turbo_Guard_Scanner {
 		'exec_var'          => array(
 			// Catches nobodycrew-style shells: checks function_exists('exec') then uses exec($cmd).
 			// Requires BOTH the function_exists check AND exec call to avoid false positives.
-			'pattern'  => '/function_exists\s*\(\s*["\']exec["\']\s*\).*exec\s*\(\s*\$/is',
-			'severity' => 'critical',
-			'name'     => 'Backdoor:PHP/nobodycrew — Command Execution Shell',
+			// Still, legitimate plugins (e.g. Rank Math) use this exact safe-exec pattern,
+			// so it is skipped inside trusted plugin/theme directories.
+			'pattern'      => '/function_exists\s*\(\s*["\']exec["\']\s*\).*exec\s*\(\s*\$/is',
+			'severity'     => 'critical',
+			'name'         => 'Backdoor:PHP/nobodycrew — Command Execution Shell',
+			'trusted_skip' => true,
 		),
 		'shell_exec_post'   => array(
 			'pattern'  => '/shell_exec\s*\(\s*\$_(POST|GET|REQUEST|COOKIE)/i',
@@ -278,6 +286,120 @@ class Turbo_Guard_Scanner {
 			'severity'     => 'high',
 			'name'         => 'Luxury Brand / Pharma SEO Spam Keywords',
 			'uploads_only' => true,
+		),
+
+		// =========================================================
+		// Known malware families & web-shell identifiers (v1.3.0).
+		// These are UNIQUE strings that never appear in legitimate code,
+		// so they are safe to flag in ANY location (no trusted_skip).
+		// =========================================================
+		'b374k_shell'        => array(
+			'pattern'  => '/b374k/i',
+			'severity' => 'critical',
+			'name'     => 'b374k Web Shell Backdoor',
+			'php_only' => true,
+		),
+		'wso_filesman'       => array(
+			'pattern'  => '/filesman/i',
+			'severity' => 'critical',
+			'name'     => 'WSO FilesMan Backdoor',
+			'php_only' => true,
+		),
+		'indoxploit_shell'   => array(
+			'pattern'  => '/indoxploit/i',
+			'severity' => 'critical',
+			'name'     => 'Indoxploit Web Shell',
+			'php_only' => true,
+		),
+		'alfa_shell'         => array(
+			'pattern'  => '/alfashell|alfa\s*(shell|team)/i',
+			'severity' => 'critical',
+			'name'     => 'ALFA Web Shell',
+			'php_only' => true,
+		),
+		'n3t_shell'          => array(
+			'pattern'  => '/n3tshell/i',
+			'severity' => 'critical',
+			'name'     => 'N3tShell Backdoor',
+			'php_only' => true,
+		),
+		'madspot_shell'      => array(
+			'pattern'  => '/madspot/i',
+			'severity' => 'critical',
+			'name'     => 'Madspot Web Shell',
+			'php_only' => true,
+		),
+		'simatek_shell'      => array(
+			'pattern'  => '/sima[-_ ]?tek/i',
+			'severity' => 'critical',
+			'name'     => 'Sima-Tek Web Shell',
+			'php_only' => true,
+		),
+		'antichat_shell'     => array(
+			'pattern'  => '/antichat/i',
+			'severity' => 'critical',
+			'name'     => 'Antichat Web Shell',
+			'php_only' => true,
+		),
+		'weevely_backdoor'   => array(
+			'pattern'  => '/weevely/i',
+			'severity' => 'critical',
+			'name'     => 'Weevely Backdoor',
+			'php_only' => true,
+		),
+		'obytemini_shell'    => array(
+			'pattern'  => '/0byt3m1n1|obytemini/i',
+			'severity' => 'critical',
+			'name'     => 'ObyteMini Web Shell',
+			'php_only' => true,
+		),
+		'known_shell_author' => array(
+			'pattern'  => '/By\s*VaLKa|indoushka/i',
+			'severity' => 'critical',
+			'name'     => 'Known Shell Author Signature',
+			'php_only' => true,
+		),
+
+		// ---- Direct code execution / inclusion from user input (never legit). ----
+		'eval_request'       => array(
+			'pattern'  => '/eval\s*\(\s*\$_(POST|REQUEST|GET|COOKIE)/i',
+			'severity' => 'critical',
+			'name'     => 'Direct Code Execution (eval of request input)',
+			'php_only' => true,
+		),
+		'include_request'    => array(
+			'pattern'  => '/\b(include|require)(_once)?\s*\(\s*\$_(POST|REQUEST|GET|COOKIE)/i',
+			'severity' => 'high',
+			'name'     => 'Local File Inclusion (include/require of request)',
+			'php_only' => true,
+		),
+		'globals_backdoor'   => array(
+			'pattern'  => '/\$GLOBALS\s*\[\s*["\']GLOBALS["\']\s*\]/',
+			'severity' => 'critical',
+			'name'     => 'Backdoor:PHP/GLOBALS — Variable Manipulation',
+			'php_only' => true,
+		),
+
+		// ---- Obfuscation patterns that may also exist in premium plugins, so
+		// they are skipped inside trusted plugin/theme directories. ----
+		'base64_request'     => array(
+			'pattern'      => '/base64_decode\s*\(\s*\$_(POST|REQUEST|GET|COOKIE)/i',
+			'severity'     => 'high',
+			'name'         => 'Decoding Request Input (base64_decode)',
+			'php_only'     => true,
+			'trusted_skip' => true,
+		),
+		'gzinflate_base64'   => array(
+			'pattern'      => '/eval\s*\(\s*gzinflate\s*\(\s*base64_decode\s*\(/i',
+			'severity'     => 'critical',
+			'name'         => 'Multi-Layer Obfuscated Backdoor (eval+gzinflate+base64)',
+			'trusted_skip' => true,
+		),
+		'rot13_base64'       => array(
+			'pattern'      => '/str_rot13\s*\(\s*base64_decode\s*\(/i',
+			'severity'     => 'critical',
+			'name'         => 'Obfuscated Backdoor (rot13+base64)',
+			'trusted_skip' => true,
 		),
 	);
 
@@ -671,9 +793,10 @@ class Turbo_Guard_Scanner {
 	 * legitimate reasons to contain CJK characters or luxury-brand keywords
 	 * (translation files, minified bundles that include dictionaries, etc.).
 	 *
-	 * ONLY patterns flagged with 'uploads_only' => true are affected by this
-	 * check. Dangerous execution patterns (eval+base64, web shells, etc.) are
-	 * ALWAYS applied regardless of location.
+	 * Patterns flagged with 'uploads_only' => true OR 'trusted_skip' => true are
+	 * skipped for files in trusted locations. Clear web-shell signatures (c99,
+	 * r57, WSO, polyglot, $_POST command injection, etc.) are ALWAYS applied
+	 * regardless of location.
 	 *
 	 * @since 1.2.1
 	 * @param string $real_path realpath()-resolved absolute file path.
@@ -797,6 +920,35 @@ class Turbo_Guard_Scanner {
 					return false;
 				}
 			}
+		}
+
+		// ------------------------------------------------------------------
+		// KNOWN-GOOD VERIFICATION (Wordfence-style repository check).
+		// A file that matches the official wordpress.org plugin/theme checksums
+		// (path + MD5) is trusted and skipped. A file whose path matches but
+		// hash DIFFERS has been modified — likely injected — so it is flagged.
+		// ------------------------------------------------------------------
+		$known_state = Turbo_Guard_Known_Files::check_file( $real_file_path, $norm_real );
+		if ( 'known_good' === $known_state ) {
+			return false;
+		}
+		if ( 'modified' === $known_state ) {
+			$wpdb->insert(
+				$wpdb->prefix . 'turbo_guard_scan_results',
+				array(
+					'scan_id'        => $this->scan_id,
+					'file_path'      => $file_path,
+					'threat_type'    => 'modified_plugin_file',
+					'severity'       => 'high',
+					'threat_name'    => __( 'Modified Plugin/Theme File', 'turbo-guard' ),
+					'threat_details' => __( 'This file is part of an official wordpress.org plugin or theme, but its content has been modified. This is a strong indicator of an injected backdoor.', 'turbo-guard' ),
+					'status'         => 'pending',
+					'file_size'      => (int) @filesize( $file_path ),
+					'file_hash'      => md5_file( $real_file_path ),
+				),
+				array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
+			);
+			return true;
 		}
 
 		// ------------------------------------------------------------------
@@ -1194,22 +1346,43 @@ class Turbo_Guard_Scanner {
 			$upload_dir      = wp_upload_dir();
 			$real_upload     = str_replace( '\\', '/', (string) realpath( $upload_dir['basedir'] ) );
 			if ( $real_upload && strpos( $norm_real, $real_upload . '/' ) === 0 ) {
-				$wpdb->insert(
-					$wpdb->prefix . 'turbo_guard_scan_results',
-					array(
-						'scan_id'        => $this->scan_id,
-						'file_path'      => $file_path,
-						'threat_type'    => 'php_in_uploads',
-						'severity'       => 'critical',
-						'threat_name'    => __( 'PHP File in Uploads Directory', 'turbo-guard' ),
-						'threat_details' => __( 'PHP files should never exist in the uploads directory. This is a strong indicator of a backdoor or malware.', 'turbo-guard' ),
-						'status'         => 'pending',
-						'file_size'      => $file_size,
-						'file_hash'      => md5( $content ),
-					),
-					array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
+
+				// WHITELIST: known plugin directories that legitimately store PHP
+				// files inside uploads (e.g. Redux Framework writes ace_editor.php,
+				// color.php, etc.). Flagging these produces false positives on
+				// healthy sites. Wordfence applies the same repository-aware logic.
+				$rel_upload_path      = substr( $norm_real, strlen( $real_upload ) + 1 );
+				$php_uploads_allow    = array(
+					'redux/',              // Redux Framework option-panel PHP assets.
+					'woocommerce_uploads/', // WooCommerce custom uploads.
+					'wc-logs/',            // WooCommerce log files.
 				);
-				return true;
+				$is_allowed_upload    = false;
+				foreach ( $php_uploads_allow as $allow_dir ) {
+					if ( 0 === strpos( $rel_upload_path, $allow_dir ) ) {
+						$is_allowed_upload = true;
+						break;
+					}
+				}
+
+				if ( ! $is_allowed_upload ) {
+					$wpdb->insert(
+						$wpdb->prefix . 'turbo_guard_scan_results',
+						array(
+							'scan_id'        => $this->scan_id,
+							'file_path'      => $file_path,
+							'threat_type'    => 'php_in_uploads',
+							'severity'       => 'critical',
+							'threat_name'    => __( 'PHP File in Uploads Directory', 'turbo-guard' ),
+							'threat_details' => __( 'PHP files should never exist in the uploads directory. This is a strong indicator of a backdoor or malware.', 'turbo-guard' ),
+							'status'         => 'pending',
+							'file_size'      => $file_size,
+							'file_hash'      => md5( $content ),
+						),
+						array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
+					);
+					return true;
+				}
 			}
 		}
 
@@ -1370,6 +1543,13 @@ class Turbo_Guard_Scanner {
 				// Google Site Kit vendor libs contain Unicode data → should NOT be flagged.
 				// WP Mail SMTP polyfill → contains mapped.php with Japanese chars → should NOT be flagged.
 				if ( ! empty( $pattern_data['uploads_only'] ) && $is_trusted_path ) {
+					continue;
+				}
+
+				// Skip generic obfuscation patterns (eval+base64, nobodycrew, etc.) for
+				// files inside trusted plugin/theme directories. Legitimate plugins use
+				// these code patterns (Wordfence-style false-positive prevention).
+				if ( ! empty( $pattern_data['trusted_skip'] ) && $is_trusted_path ) {
 					continue;
 				}
 
@@ -1728,6 +1908,53 @@ class Turbo_Guard_Scanner {
 	}
 
 	/**
+	 * Classify a file path by its origin — mirrors Wordfence's file provenance
+	 * check ("Not a core, theme, or plugin file from wordpress.org").
+	 *
+	 * @since 1.3.0
+	 * @param string $file_path Absolute file path.
+	 * @return array { key: string, label: string, known: bool }
+	 */
+	public static function get_file_provenance( $file_path ) {
+		$norm = str_replace( '\\', '/', $file_path );
+
+		if ( false !== strpos( $norm, '/wp-admin/' ) || false !== strpos( $norm, '/wp-includes/' ) ) {
+			return array(
+				'key'   => 'core',
+				'label' => __( 'WordPress core file', 'turbo-guard' ),
+				'known' => true,
+			);
+		}
+		if ( false !== strpos( $norm, '/wp-content/plugins/' ) ) {
+			return array(
+				'key'   => 'plugin',
+				'label' => __( 'Plugin file', 'turbo-guard' ),
+				'known' => true,
+			);
+		}
+		if ( false !== strpos( $norm, '/wp-content/themes/' ) ) {
+			return array(
+				'key'   => 'theme',
+				'label' => __( 'Theme file', 'turbo-guard' ),
+				'known' => true,
+			);
+		}
+		if ( false !== strpos( $norm, '/wp-content/uploads/' ) ) {
+			return array(
+				'key'   => 'upload',
+				'label' => __( 'File in uploads directory', 'turbo-guard' ),
+				'known' => false,
+			);
+		}
+
+		return array(
+			'key'   => 'unknown',
+			'label' => __( 'Not a core, theme, or plugin file from wordpress.org', 'turbo-guard' ),
+			'known' => false,
+		);
+	}
+
+	/**
 	 * Get the most recent scan.
 	 *
 	 * @since 1.0.0
@@ -1781,22 +2008,25 @@ class Turbo_Guard_Scanner {
 				'type'    => 'db_obfuscated_script',
 			),
 			array(
-				'pattern' => 'viagra',
-				'name'    => 'Pharma Spam in Database',
-				'severity'=> 'high',
-				'type'    => 'db_pharma_spam',
+				'pattern'       => 'viagra',
+				'name'          => 'Pharma Spam in Database',
+				'severity'      => 'high',
+				'type'          => 'db_pharma_spam',
+				'word_boundary' => true,
 			),
 			array(
-				'pattern' => 'cialis',
-				'name'    => 'Pharma Spam in Database',
-				'severity'=> 'high',
-				'type'    => 'db_pharma_spam',
+				'pattern'       => 'cialis',
+				'name'          => 'Pharma Spam in Database',
+				'severity'      => 'high',
+				'type'          => 'db_pharma_spam',
+				'word_boundary' => true, // Avoid matching "cialis" inside "specialist".
 			),
 			array(
-				'pattern' => 'casino',
-				'name'    => 'Casino Spam in Database',
-				'severity'=> 'high',
-				'type'    => 'db_casino_spam',
+				'pattern'       => 'casino',
+				'name'          => 'Casino Spam in Database',
+				'severity'      => 'high',
+				'type'          => 'db_casino_spam',
+				'word_boundary' => true,
 			),
 			array(
 				'pattern' => 'display:none',
@@ -1816,9 +2046,15 @@ class Turbo_Guard_Scanner {
 		$reported_post_ids = array(); // dedup tracker.
 
 		foreach ( $db_patterns as $pattern_data ) {
+			$needs_content = ! empty( $pattern_data['word_boundary'] );
+			$select        = $needs_content
+				? 'ID, post_title, post_type, post_status, post_content, post_excerpt'
+				: 'ID, post_title, post_type, post_status';
+
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $select is a fixed allowlist, never user input.
 			$results = $wpdb->get_results(
 				$wpdb->prepare(
-					"SELECT ID, post_title, post_type, post_status
+					"SELECT {$select}
 					 FROM {$wpdb->posts}
 					 WHERE (post_content LIKE %s OR post_excerpt LIKE %s)
 					 AND post_status NOT IN ('auto-draft','trash')
@@ -1833,6 +2069,19 @@ class Turbo_Guard_Scanner {
 				if ( isset( $reported_post_ids[ $post->ID ] ) ) {
 					continue;
 				}
+
+				// Word-boundary validation: confirm the keyword is a standalone word,
+				// not a substring of a longer word (e.g. "cialis" inside "specialist").
+				if ( $needs_content ) {
+					$haystack = ( isset( $post->post_content ) ? $post->post_content : '' )
+						. ' '
+						. ( isset( $post->post_excerpt ) ? $post->post_excerpt : '' );
+					$regex    = '/\b' . preg_quote( $pattern_data['pattern'], '/' ) . '\b/i';
+					if ( ! preg_match( $regex, $haystack ) ) {
+						continue; // Substring match only — false positive.
+					}
+				}
+
 				$reported_post_ids[ $post->ID ] = true;
 
 				$path = 'database://wp_posts#' . $post->ID . ' (' . $post->post_type . ': ' . wp_trim_words( $post->post_title, 8, '...' ) . ')';
@@ -1872,7 +2121,13 @@ class Turbo_Guard_Scanner {
 		foreach ( $suspicious_options as $option_name => $label ) {
 			$value = get_option( $option_name, '' );
 			foreach ( $db_patterns as $pattern_data ) {
-				if ( false !== stripos( $value, $pattern_data['pattern'] ) ) {
+				if ( ! empty( $pattern_data['word_boundary'] ) ) {
+					$is_match = (bool) preg_match( '/\b' . preg_quote( $pattern_data['pattern'], '/' ) . '\b/i', $value );
+				} else {
+					$is_match = ( false !== stripos( $value, $pattern_data['pattern'] ) );
+				}
+
+				if ( $is_match ) {
 					$path = 'database://wp_options#' . $option_name;
 					$wpdb->insert(
 						$wpdb->prefix . 'turbo_guard_scan_results',

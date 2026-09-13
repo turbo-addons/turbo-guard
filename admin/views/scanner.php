@@ -193,6 +193,21 @@ $turbo_guard_site_is_hacked = $turbo_guard_critical_count > 0;
 					</small>
 				<?php endif; ?>
 			</h2>
+			<?php if ( $turbo_guard_latest_scan ) : ?>
+				<p style="font-size:12px;color:#6b7280;margin:2px 0 0;">
+					<?php
+					printf(
+						/* translators: 1: files, 2: plugins, 3: themes, 4: posts, 5: users */
+						esc_html__( 'Scanned %1$s files, %2$s plugins, %3$s themes, %4$s posts and %5$s users.', 'turbo-guard' ),
+						number_format_i18n( $turbo_guard_scan_summary['files'] ),
+						number_format_i18n( $turbo_guard_scan_summary['plugins'] ),
+						number_format_i18n( $turbo_guard_scan_summary['themes'] ),
+						number_format_i18n( $turbo_guard_scan_summary['posts'] ),
+						number_format_i18n( $turbo_guard_scan_summary['users'] )
+					);
+					?>
+				</p>
+			<?php endif; ?>
 			<?php if ( $turbo_guard_total_threats > 0 ) : ?>
 				<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
 					<?php foreach ( array( 'critical', 'high', 'medium', 'info' ) as $turbo_guard_sev ) : ?>
@@ -260,11 +275,14 @@ $turbo_guard_site_is_hacked = $turbo_guard_critical_count > 0;
 						foreach ( $turbo_guard_results as $turbo_guard_result ) :
 						?>
 							<?php
-							$turbo_guard_is_db   = ( strpos( $turbo_guard_result->file_path, 'database://' ) === 0 );
-							$turbo_guard_relpath = $turbo_guard_is_db
+							$turbo_guard_is_db      = ( strpos( $turbo_guard_result->file_path, 'database://' ) === 0 );
+							$turbo_guard_relpath    = $turbo_guard_is_db
 								? $turbo_guard_result->file_path
 								: str_replace( ABSPATH, '', $turbo_guard_result->file_path );
-							$turbo_guard_detail  = $turbo_guard_result->threat_details;
+							$turbo_guard_detail     = $turbo_guard_result->threat_details;
+							$turbo_guard_provenance = $turbo_guard_is_db
+								? null
+								: Turbo_Guard_Scanner::get_file_provenance( $turbo_guard_result->file_path );
 							?>
 							<tr class="turbo-guard-result-row turbo-guard-severity-<?php echo esc_attr( $turbo_guard_result->severity ); ?>"
 								data-id="<?php echo absint( $turbo_guard_result->id ); ?>">
@@ -282,6 +300,11 @@ $turbo_guard_site_is_hacked = $turbo_guard_critical_count > 0;
 										<?php if ( $turbo_guard_is_db ) echo 'style="color:#7c3aed;"'; ?>>
 										<?php echo esc_html( $turbo_guard_relpath ); ?>
 									</code>
+									<?php if ( $turbo_guard_provenance ) : ?>
+										<br><small style="color:<?php echo $turbo_guard_provenance['known'] ? '#6b7280' : '#b45309'; ?>;font-size:11px;">
+											<?php echo esc_html( $turbo_guard_provenance['label'] ); ?>
+										</small>
+									<?php endif; ?>
 								</td>
 								<td>
 									<strong style="font-size:12px;color:#1f2937;"><?php echo esc_html( $turbo_guard_result->threat_name ); ?></strong>
@@ -332,6 +355,13 @@ $turbo_guard_site_is_hacked = $turbo_guard_critical_count > 0;
 												<?php esc_html_e( 'Upgrade to Pro', 'turbo-guard' ); ?>
 											</a>
 										<?php endif; ?>
+										<button class="button turbo-guard-mark-fixed-single" type="button"
+											data-id="<?php echo absint( $turbo_guard_result->id ); ?>"
+											title="<?php esc_attr_e( 'Mark as fixed — you resolved this issue manually', 'turbo-guard' ); ?>"
+											style="color:#16a34a;border-color:#86efac;">
+											<span class="dashicons dashicons-yes" style="font-size:13px;width:13px;height:13px;vertical-align:middle;margin-right:3px;"></span>
+											<?php esc_html_e( 'Mark as Fixed', 'turbo-guard' ); ?>
+										</button>
 										<button class="button turbo-guard-ignore-single" type="button"
 											data-id="<?php echo absint( $turbo_guard_result->id ); ?>"
 											title="<?php esc_attr_e( 'Mark as safe — exclude from all future scans (like Wordfence Ignore)', 'turbo-guard' ); ?>"
