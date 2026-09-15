@@ -12,17 +12,8 @@ WordPress security plugin with malware scanner, firewall, 2FA, vulnerability sca
 
 == Description ==
 
-Turbo Guard is a comprehensive WordPress security plugin built by a team that manages 40+ WordPress sites. It solves real problems: malware removal, Japanese/Chinese SEO spam cleanup, vulnerability alerts, file integrity monitoring, and bot protection. Every scan, detection, and list is 100% free — you can clean up to 3 files for free. Upgrade to Turbo Guard Pro to unlock unlimited cleanup, Live Traffic Monitor, AI Security Advisor, and Geo-Fence.
+Turbo Guard is a comprehensive WordPress security plugin built by a team that manages WordPress sites. It solves real problems: malware removal, Japanese/Chinese SEO spam cleanup, vulnerability alerts, file integrity monitoring, and bot protection. Every scan, detection, and list is 100% free — you can clean up to 3 files for free. Upgrade to Turbo Guard Pro to unlock unlimited cleanup, Live Traffic Monitor, AI Security Advisor, and Geo-Fence.
 
-= AI Security Advisor (Pro) =
-
-Available in Turbo Guard Pro.
-* After every scan, Turbo Guard AI identifies the attack campaign (Japanese SEO spam, web shell, brute force, database injection)
-* Explains in plain English what happened and the business risk
-* Provides numbered, step-by-step fix instructions tailored to your specific threats
-* Optional OpenAI GPT integration for richer analysis (your own API key)
-* Sends email advisory after every scan
-* 30-day security score trend chart
 
 = Malware Scanner =
 
@@ -50,7 +41,6 @@ Available in Turbo Guard Pro.
 * Select All Critical button — delete multiple files at once
 * Automatic ZIP backup before any deletion
 * Quarantine option — moves files to a protected directory
-* Free version cleans up to 3 files — upgrade to Turbo Guard Pro for unlimited cleanup
 
 = Web Application Firewall =
 
@@ -60,9 +50,8 @@ Available in Turbo Guard Pro.
 * Rate limiting (120 requests per minute per IP)
 * Bad bot blocker: blocks 25+ vulnerability scanners and scrapers
 
-= Geo-Fence and Trusted Location (Pro) =
+= Geo-Fence and Trusted Location =
 
-Available in Turbo Guard Pro.
 * Restrict WordPress admin access to specific IP addresses
 * Country-based admin lock: only allow access from your country
 * Block file uploads from untrusted countries
@@ -89,9 +78,8 @@ Available in Turbo Guard Pro.
 * Works without API key (optional WPScan key for higher limits)
 * Email alert when new vulnerabilities are found
 
-= Live Traffic Monitor (Pro) =
+= Live Traffic Monitor =
 
-Available in Turbo Guard Pro.
 * Logs every HTTP request with bot/human detection
 * Identifies 30+ bots including AI crawlers (GPTBot, ClaudeBot, PerplexityBot)
 * 24-hour stats: total requests, humans, bots, blocked, errors
