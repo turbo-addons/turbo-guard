@@ -969,6 +969,51 @@
 	line-height: 1.5;
 }
 
+/* =========================================================
+   SEO Spam — Delete Modal
+   ========================================================= */
+
+.tg-modal-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(0,0,0,.45);
+	z-index: 100000;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.tg-modal {
+	background: #fff;
+	border-radius: 8px;
+	box-shadow: 0 20px 40px rgba(0,0,0,.25);
+	padding: 22px 24px;
+	max-width: 420px;
+	width: calc(100% - 40px);
+}
+
+.tg-modal h3 {
+	margin: 0 0 8px;
+	font-size: 16px;
+	color: var(--tg-gray-800);
+	text-transform: none;
+	letter-spacing: 0;
+}
+
+.tg-modal p {
+	margin: 0 0 18px;
+	font-size: 13px;
+	color: var(--tg-gray-600);
+	line-height: 1.5;
+}
+
+.tg-modal-actions {
+	display: flex;
+	gap: 8px;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+}
+
 /* CTA button sits inline with the message */
 .tg-notice-cta.button {
 	flex-shrink: 0;
@@ -1087,17 +1132,26 @@
 	word-break: break-word;
 }
 
+/* Actions cell: anchor for the View upsell tooltip. */
+.turbo-guard-row-actions {
+	position: relative;
+}
+
 /* Pro upsell tooltip shown near the View button for free users. */
 .turbo-guard-pro-tooltip {
 	position: absolute;
 	z-index: 1000;
 	margin-top: 6px;
+	right: 0;
 	width: 300px;
+	max-width: 320px;
 	background: #1e293b;
 	color: #e2e8f0;
 	border-radius: 8px;
 	padding: 14px 16px;
 	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+	box-sizing: border-box;
+	white-space: normal;
 }
 
 .turbo-guard-pro-tooltip strong {
@@ -1112,6 +1166,8 @@
 	font-size: 12px;
 	line-height: 1.5;
 	color: #cbd5e1;
+	overflow-wrap: break-word;
+	word-wrap: break-word;
 }
 
 .turbo-guard-pro-tooltip a {

@@ -3,7 +3,7 @@ Contributors: turboaddons, siraji2017, sharifok
 Tags: security, malware, scanner, firewall, 2fa
 Requires at least: 5.6
 Tested up to: 7.1
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 Requires PHP: 7.4
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -108,12 +108,13 @@ Available in Turbo Guard Pro.
 
 * Connects to Google Search Console via OAuth
 * Detects indexed SEO spam URLs even when files are deleted from server
-* Bulk removal requests with one click
+* Lists indexed URLs with one-click spam detection (Japanese/Chinese/doorway)
+* Guides you through Google Search Console's Removals tool for de-indexing
 * Sitemap resubmission after cleanup
 
 = Privacy =
 
-Turbo Guard does not send your website files to any external server. Vulnerability checks send only plugin/theme slugs and versions to the WPScan API — and only on manual scans or when scheduled vulnerability scans are enabled in Settings (off by default). Geo-Fence country blocking sends the visitor IP address to ipapi.co when enabled. 2FA is fully local: TOTP secrets are entered manually in your authenticator app and no QR service is used. GSC integration uses your own Google OAuth credentials. AI analysis (optional OpenAI) sends only anonymised threat type data. No telemetry. No tracking. No account required.
+Turbo Guard does not send your website files to any external server. Vulnerability checks send only plugin/theme slugs and versions to the WPScan API — and only on manual scans or when scheduled vulnerability scans are enabled in Settings (off by default). The SEO spam scanner reads your site's own sitemap via a local request to the site itself — no external service is contacted. Geo-Fence country blocking sends the visitor IP address to ipapi.co when enabled. 2FA is fully local: TOTP secrets are entered manually in your authenticator app and no QR service is used. GSC integration uses your own Google OAuth credentials. AI analysis (optional OpenAI) sends only anonymised threat type data. No telemetry. No tracking. No account required.
 
 == Installation ==
 
@@ -136,7 +137,7 @@ No. Scanning runs via AJAX in your browser. The firewall adds negligible overhea
 
 = My site shows Japanese spam in Google but files are gone. What do I do? =
 
-Use the GSC Cleanup page. Connect Google Search Console, fetch indexed URLs, and bulk-remove spam entries in one click.
+Use the GSC Cleanup page. Connect Google Search Console, fetch indexed URLs, identify the spam entries, and submit them for removal in Google Search Console's Removals tool.
 
 = Does the File Integrity checker work without internet? =
 
@@ -212,6 +213,16 @@ Used for Google Search Console integration to detect SEO spam and manage indexed
 * Privacy Policy: https://policies.google.com/privacy
 
 == Changelog ==
+
+= 1.1.2 =
+* SEO Spam Detector: detects spam-looking URLs in the site sitemap
+* SEO Spam Detector: scans all posts/pages (no 500-post cap) and JS files in uploads
+* SEO Spam Detector: recoverable Trash cleanup with permanent delete (Pro)
+* SEO Spam Detector: Scan All plugin, theme and database at free
+* SEO Spam Detector: ignore/mark-safe allowlist for posts and files
+* GSC Cleanup: Search Cosol API connection, sitemap fetch and removal request at free.
+* Added scheduled SEO spam scan option and Pro email alerts
+* Added CJK-content override setting to reduce false positives
 
 = 1.1.1 =
 * Update the plugin Dashboard

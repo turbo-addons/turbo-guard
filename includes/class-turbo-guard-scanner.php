@@ -474,6 +474,9 @@ class Turbo_Guard_Scanner {
 	 * @return int Scan ID.
 	 */
 	public function start_scan() {
+		// Clear the site cache before scanning so results are fresh.
+		turbo_guard_clear_site_cache();
+
 		global $wpdb;
 
 		// Create scan record.
@@ -1365,7 +1368,12 @@ class Turbo_Guard_Scanner {
 					}
 				}
 
-				if ( ! $is_allowed_upload ) {
+				// WHITELIST: WordPress placeholder files ("Silence is golden") that
+				// plugins legitimately drop in their own uploads folders (e.g. Simple
+				// Custom CSS & JS, WP File Manager). These are not malware.
+				$is_silence_placeholder = ( false !== stripos( $content, 'Silence is golden' ) );
+
+				if ( ! $is_allowed_upload && ! $is_silence_placeholder ) {
 					$wpdb->insert(
 						$wpdb->prefix . 'turbo_guard_scan_results',
 						array(
@@ -2051,7 +2059,7 @@ class Turbo_Guard_Scanner {
 				? 'ID, post_title, post_type, post_status, post_content, post_excerpt'
 				: 'ID, post_title, post_type, post_status';
 
-			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $select is a fixed allowlist, never user input.
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $select is a fixed allowlist (column list), never user input.
 			$results = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT {$select}
@@ -2063,6 +2071,7 @@ class Turbo_Guard_Scanner {
 					'%' . $wpdb->esc_like( $pattern_data['pattern'] ) . '%'
 				)
 			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 
 			foreach ( $results as $post ) {
 				// Skip if we already reported this post for a higher-priority pattern.

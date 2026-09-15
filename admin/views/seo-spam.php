@@ -15,7 +15,12 @@ $turbo_guard_seo_results = Turbo_Guard_SEO_Spam_Detector::get_cached_results();
 $turbo_guard_seo_total   = $turbo_guard_seo_results ? (int) $turbo_guard_seo_results['total'] : 0;
 $turbo_guard_domain      = wp_parse_url( home_url(), PHP_URL_HOST );
 $turbo_guard_is_pro      = turbo_guard_is_pro();
-$turbo_guard_free_limit  = turbo_guard_free_cleanup_limit();
+	$turbo_guard_free_limit  = 0;
+	if ( $turbo_guard_seo_results ) {
+		$turbo_guard_free_limit = Turbo_Guard_SEO_Spam_Detector::free_deletable_count(
+			empty( $turbo_guard_seo_results['spam_posts'] ) ? 0 : count( $turbo_guard_seo_results['spam_posts'] )
+		);
+	}
 ?>
 
 <div class="wrap turbo-guard-seo-spam">
@@ -167,26 +172,26 @@ $turbo_guard_free_limit  = turbo_guard_free_cleanup_limit();
 					<span class="dashicons dashicons-trash" style="font-size:14px;width:14px;height:14px;vertical-align:middle;"></span>
 					<?php
 					if ( $turbo_guard_is_pro ) {
-						/* translators: %d: number of spam posts to delete */
-						printf( esc_html__( 'Delete All %d Spam Posts', 'turbo-guard' ), absint( $turbo_guard_spam_total ) );
+						/* translators: %d: number of spam posts to remove */
+						printf( esc_html__( 'Remove All %d Spam Posts', 'turbo-guard' ), absint( $turbo_guard_spam_total ) );
 					} elseif ( $turbo_guard_spam_total > $turbo_guard_free_limit ) {
 						/* translators: %d: free cleanup limit */
-						printf( esc_html__( 'Delete First %d Spam Posts (Free)', 'turbo-guard' ), absint( $turbo_guard_free_limit ) );
+						printf( esc_html__( 'Move First %d to Trash (Free)', 'turbo-guard' ), absint( $turbo_guard_free_limit ) );
 					} else {
-						/* translators: %d: number of spam posts to delete */
-						printf( esc_html__( 'Delete All %d Spam Posts (Free)', 'turbo-guard' ), absint( $turbo_guard_spam_total ) );
+						/* translators: %d: number of spam posts to remove */
+						printf( esc_html__( 'Move All %d to Trash (Free)', 'turbo-guard' ), absint( $turbo_guard_spam_total ) );
 					}
 					?>
 				</button>
 			</div>
 			<p style="font-size:13px;color:#6b7280;margin-bottom:14px;">
-				<?php esc_html_e( 'These posts contain Japanese or Chinese spam content. Delete them here, then use GSC Cleanup to remove them from Google index.', 'turbo-guard' ); ?>
+				<?php esc_html_e( 'These posts contain Japanese or Chinese spam content. Move them to Trash here (recoverable), then use GSC Cleanup to remove them from Google index.', 'turbo-guard' ); ?>
 				<?php if ( ! $turbo_guard_is_pro && $turbo_guard_spam_total > $turbo_guard_free_limit ) : ?>
 					<?php
 					printf(
 						wp_kses(
 							/* translators: %1$d: free cleanup limit, %2$s: pro URL, %3$d: total spam posts */
-							__( 'The free version can delete up to %1$d spam posts. <a href="%2$s" target="_blank" rel="noopener noreferrer">Upgrade to Turbo Guard Pro</a> to remove all %3$d.', 'turbo-guard' ),
+							__( 'The free version can move up to %1$d spam posts to Trash. <a href="%2$s" target="_blank" rel="noopener noreferrer">Upgrade to Turbo Guard Pro</a> to remove all %3$d.', 'turbo-guard' ),
 							array( 'a' => array( 'href' => array(), 'target' => array(), 'rel' => array() ) )
 						),
 						absint( $turbo_guard_free_limit ),
@@ -230,7 +235,7 @@ $turbo_guard_free_limit  = turbo_guard_free_cleanup_limit();
 								style="color:#dc2626;border-color:#fca5a5;"
 								data-id="<?php echo absint( $turbo_guard_spam_post['id'] ); ?>"
 								data-nonce="<?php echo esc_attr( wp_create_nonce( 'turbo_guard_admin' ) ); ?>">
-								<?php esc_html_e( 'Delete', 'turbo-guard' ); ?>
+								<?php esc_html_e( 'Remove', 'turbo-guard' ); ?>
 							</button>
 							<?php else : ?>
 							<button class="button button-small" disabled
@@ -248,6 +253,12 @@ $turbo_guard_free_limit  = turbo_guard_free_cleanup_limit();
 								<?php esc_html_e( 'Edit', 'turbo-guard' ); ?>
 							</a>
 							<?php endif; ?>
+							<button class="button button-small turbo-guard-ignore-seo-spam" type="button"
+								style="margin-left:4px;"
+								data-bucket="posts"
+								data-key="<?php echo absint( $turbo_guard_spam_post['id'] ); ?>">
+								<?php esc_html_e( 'Ignore', 'turbo-guard' ); ?>
+							</button>
 						</td>
 					</tr>
 					<?php endforeach; ?>
@@ -356,6 +367,7 @@ $turbo_guard_free_limit  = turbo_guard_free_cleanup_limit();
 						<th style="width:70px;"><?php esc_html_e( 'Size', 'turbo-guard' ); ?></th>
 						<th style="width:130px;"><?php esc_html_e( 'Modified', 'turbo-guard' ); ?></th>
 						<th><?php esc_html_e( 'Why Suspicious', 'turbo-guard' ); ?></th>
+						<th style="width:90px;"><?php esc_html_e( 'Actions', 'turbo-guard' ); ?></th>
 					</tr>
 				</thead>
 				<tbody>
@@ -365,6 +377,48 @@ $turbo_guard_free_limit  = turbo_guard_free_cleanup_limit();
 						<td style="font-size:12px;color:#9ca3af;"><?php echo esc_html( $turbo_guard_spam_file['size'] ); ?></td>
 						<td style="font-size:12px;color:#9ca3af;"><?php echo esc_html( $turbo_guard_spam_file['modified'] ); ?></td>
 						<td style="font-size:12px;color:#dc2626;"><?php echo esc_html( implode( ', ', $turbo_guard_spam_file['reasons'] ) ); ?></td>
+						<td>
+							<button class="button button-small turbo-guard-ignore-seo-spam" type="button"
+								data-bucket="files"
+								data-key="<?php echo esc_attr( $turbo_guard_spam_file['path'] ); ?>">
+								<?php esc_html_e( 'Ignore', 'turbo-guard' ); ?>
+							</button>
+						</td>
+					</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+		<?php endif; ?>
+
+		<!-- Sitemap Spam Entries -->
+		<?php if ( ! empty( $turbo_guard_seo_results['sitemap_entries'] ) ) : ?>
+		<div class="turbo-guard-card">
+			<h2 style="color:#dc2626;">
+				<span class="dashicons dashicons-admin-links" style="vertical-align:middle;margin-right:6px;"></span>
+				<?php
+				printf(
+					/* translators: %d: number of spam sitemap entries */
+					esc_html__( '%d Spam-Looking Sitemap URL(s)', 'turbo-guard' ),
+					count( $turbo_guard_seo_results['sitemap_entries'] )
+				);
+				?>
+			</h2>
+			<p style="font-size:13px;color:#6b7280;margin-bottom:14px;">
+				<?php esc_html_e( 'These URLs appear in your sitemap and contain Japanese/Chinese text or spam keywords. Review them — they may already be indexed by Google.', 'turbo-guard' ); ?>
+			</p>
+			<table class="widefat">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'URL', 'turbo-guard' ); ?></th>
+						<th><?php esc_html_e( 'Reason', 'turbo-guard' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $turbo_guard_seo_results['sitemap_entries'] as $turbo_guard_sitemap_entry ) : ?>
+					<tr style="background:#fff5f5;">
+						<td><a href="<?php echo esc_url( $turbo_guard_sitemap_entry['url'] ); ?>" target="_blank" rel="noopener noreferrer" style="font-size:12px;word-break:break-all;"><?php echo esc_html( $turbo_guard_sitemap_entry['url'] ); ?></a></td>
+						<td style="font-size:12px;color:#dc2626;"><?php echo esc_html( implode( ', ', $turbo_guard_sitemap_entry['reasons'] ) ); ?></td>
 					</tr>
 					<?php endforeach; ?>
 				</tbody>

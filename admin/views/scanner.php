@@ -199,11 +199,11 @@ $turbo_guard_site_is_hacked = $turbo_guard_critical_count > 0;
 					printf(
 						/* translators: 1: files, 2: plugins, 3: themes, 4: posts, 5: users */
 						esc_html__( 'Scanned %1$s files, %2$s plugins, %3$s themes, %4$s posts and %5$s users.', 'turbo-guard' ),
-						number_format_i18n( $turbo_guard_scan_summary['files'] ),
-						number_format_i18n( $turbo_guard_scan_summary['plugins'] ),
-						number_format_i18n( $turbo_guard_scan_summary['themes'] ),
-						number_format_i18n( $turbo_guard_scan_summary['posts'] ),
-						number_format_i18n( $turbo_guard_scan_summary['users'] )
+						esc_html( number_format_i18n( $turbo_guard_scan_summary['files'] ) ),
+						esc_html( number_format_i18n( $turbo_guard_scan_summary['plugins'] ) ),
+						esc_html( number_format_i18n( $turbo_guard_scan_summary['themes'] ) ),
+						esc_html( number_format_i18n( $turbo_guard_scan_summary['posts'] ) ),
+						esc_html( number_format_i18n( $turbo_guard_scan_summary['users'] ) )
 					);
 					?>
 				</p>
@@ -331,6 +331,7 @@ $turbo_guard_site_is_hacked = $turbo_guard_critical_count > 0;
 										<button class="button turbo-guard-view-single" type="button"
 											data-id="<?php echo absint( $turbo_guard_result->id ); ?>"
 											data-path="<?php echo esc_attr( $turbo_guard_result->file_path ); ?>"
+											data-can-view="<?php echo $turbo_guard_can_clean ? '1' : '0'; ?>"
 											title="<?php esc_attr_e( 'View file contents', 'turbo-guard' ); ?>">
 											<span class="dashicons dashicons-visibility" style="font-size:13px;width:13px;height:13px;vertical-align:middle;margin-right:3px;"></span>
 											<?php esc_html_e( 'View', 'turbo-guard' ); ?>

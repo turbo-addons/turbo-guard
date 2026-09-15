@@ -111,7 +111,7 @@ class Turbo_Guard_GSC {
 	 * @since 1.1.0
 	 */
 	public function handle_oauth_callback() {
-		if ( ! isset( $_GET['oauth_callback'] ) || ! isset( $_GET['code'] ) ) {
+		if ( ! isset( $_GET['oauth_callback'] ) ) {
 			return;
 		}
 
@@ -119,10 +119,24 @@ class Turbo_Guard_GSC {
 			wp_die( esc_html__( 'Unauthorized', 'turbo-guard' ) );
 		}
 
+		$fallback = admin_url( 'admin.php?page=turbo-guard-gsc' );
+
+		// Google redirected back with an error (e.g. access_denied) instead of a code.
+		if ( isset( $_GET['error'] ) ) {
+			$error = sanitize_text_field( wp_unslash( $_GET['error'] ) );
+			wp_safe_redirect( add_query_arg( 'oauth_error', rawurlencode( $error ), $fallback ) );
+			exit;
+		}
+
+		if ( ! isset( $_GET['code'] ) ) {
+			return;
+		}
+
 		// Verify the OAuth state to prevent CSRF (an attacker linking their own Google account to this site).
 		$state = isset( $_GET['state'] ) ? sanitize_text_field( wp_unslash( $_GET['state'] ) ) : '';
 		if ( ! wp_verify_nonce( $state, 'turbo_guard_gsc_oauth' ) ) {
-			wp_die( esc_html__( 'Invalid or expired OAuth request. Please try connecting again.', 'turbo-guard' ) );
+			wp_safe_redirect( add_query_arg( 'oauth_error', rawurlencode( 'invalid_state' ), $fallback ) );
+			exit;
 		}
 
 		$code = sanitize_text_field( wp_unslash( $_GET['code'] ) );
@@ -142,37 +156,25 @@ class Turbo_Guard_GSC {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			wp_die(
-				esc_html(
-					sprintf(
-						/* translators: %s: error message */
-						__( 'OAuth error: %s', 'turbo-guard' ),
-						$response->get_error_message()
-					)
-				)
-			);
+			wp_safe_redirect( add_query_arg( 'oauth_error', rawurlencode( $response->get_error_message() ), $fallback ) );
+			exit;
 		}
 
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( isset( $body['access_token'] ) ) {
 			update_option( 'turbo_guard_gsc_access_token', sanitize_text_field( $body['access_token'] ) );
-			update_option( 'turbo_guard_gsc_refresh_token', sanitize_text_field( $body['refresh_token'] ) );
-			update_option( 'turbo_guard_gsc_token_expires', time() + absint( $body['expires_in'] ) );
+			update_option( 'turbo_guard_gsc_refresh_token', sanitize_text_field( $body['refresh_token'] ?? '' ) );
+			update_option( 'turbo_guard_gsc_token_expires', time() + absint( $body['expires_in'] ?? 3600 ) );
 
-			wp_safe_redirect( admin_url( 'admin.php?page=turbo-guard-gsc&connected=1' ) );
+			wp_safe_redirect( add_query_arg( 'connected', '1', $fallback ) );
 			exit;
-		} else {
-			wp_die(
-				esc_html(
-					sprintf(
-						/* translators: %s: error message */
-						__( 'OAuth error: %s', 'turbo-guard' ),
-						$body['error_description'] ?? __( 'Unknown error', 'turbo-guard' )
-					)
-				)
-			);
 		}
+
+		// Token exchange failed (e.g. invalid_client, invalid_grant).
+		$error = isset( $body['error'] ) ? $body['error'] : 'unknown_error';
+		wp_safe_redirect( add_query_arg( 'oauth_error', rawurlencode( $error ), $fallback ) );
+		exit;
 	}
 
 	/**
@@ -251,7 +253,14 @@ class Turbo_Guard_GSC {
 		$body = json_decode( wp_remote_retrieve_body( $response ), true );
 
 		if ( $code >= 400 ) {
-			return new WP_Error( 'gsc_api_error', $body['error']['message'] ?? 'API error' );
+			$message  = isset( $body['error']['message'] ) ? $body['error']['message'] : 'API error';
+			$err_code = 'gsc_api_error';
+			if ( 403 === (int) $code || false !== strpos( $message, 'sufficient permission' ) || false !== strpos( $message, 'does not have access' ) ) {
+				$err_code = 'gsc_permission_denied';
+			} elseif ( 404 === (int) $code || false !== strpos( $message, 'not found' ) ) {
+				$err_code = 'gsc_not_found';
+			}
+			return new WP_Error( $err_code, $message );
 		}
 
 		return $body;
@@ -265,6 +274,29 @@ class Turbo_Guard_GSC {
 	 * @return array|WP_Error List of URLs or error.
 	 */
 	public function get_indexed_urls( $site_url ) {
+		// Try the URL-prefix property first (e.g. https://example.com/), then fall
+		// back to a Domain property (sc-domain:example.com) which many users
+		// register instead.
+		$result = $this->query_indexed_urls( $site_url );
+
+		if ( is_wp_error( $result ) && in_array( $result->get_error_code(), array( 'gsc_permission_denied', 'gsc_not_found' ), true ) ) {
+			$host = wp_parse_url( $site_url, PHP_URL_HOST );
+			if ( $host ) {
+				$result = $this->query_indexed_urls( 'sc-domain:' . $host );
+			}
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Query the Search Analytics API for a single property.
+	 *
+	 * @since 1.4.0
+	 * @param string $site_url Site property (URL-prefix or sc-domain:).
+	 * @return array|WP_Error List of URLs or error.
+	 */
+	private function query_indexed_urls( $site_url ) {
 		// GSC Search Analytics API endpoint.
 		$endpoint = 'https://www.googleapis.com/webmasters/v3/sites/' . rawurlencode( $site_url ) . '/searchAnalytics/query';
 
@@ -310,7 +342,7 @@ class Turbo_Guard_GSC {
 
 		$result = $this->api_request( $endpoint, 'POST', $body );
 
-		return ! is_wp_error( $result );
+		return is_wp_error( $result ) ? $result : true;
 	}
 
 	/**

@@ -3,7 +3,7 @@
  * Plugin Name: Turbo Guard – Security & Malware Scanner
  * Plugin URI: https://wp-turbo.com/turbo-guard/
  * Description: Advanced WordPress security with AI-powered malware scanning, WordPress core file manifest verification, firewall, 2FA, vulnerability scanner, file integrity checker, bot protection & SEO spam removal. Detects every threat for free — clean up to 3 files free, then upgrade to Turbo Guard Pro.
- * Version: 1.1.1
+ * Version: 1.1.2
  * Author: Turbo Addons
  * Author URI: https://wp-turbo.com
  * License: GPL-3.0-or-later
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'TURBO_GUARD_VERSION', '1.1.1' );
+define( 'TURBO_GUARD_VERSION', '1.1.2' );
 define( 'TURBO_GUARD_PLUGIN_FILE', __FILE__ );
 define( 'TURBO_GUARD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TURBO_GUARD_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -94,6 +94,45 @@ function turbo_guard_pro_url() {
  */
 function turbo_guard_is_pro() {
 	return (bool) apply_filters( 'turbo_guard_is_pro', false );
+}
+
+/**
+ * Clear the site's cache before starting a scan.
+ *
+ * Flushes the WordPress object cache and any known caching plugin's cache so
+ * scans run against the freshest possible site state.
+ *
+ * @since 1.4.0
+ */
+function turbo_guard_clear_site_cache() {
+	// WordPress object cache.
+	wp_cache_flush();
+
+	// Common page-caching plugins.
+	if ( function_exists( 'wp_cache_clear_cache' ) ) {    // WP Super Cache.
+		wp_cache_clear_cache();
+	}
+	if ( function_exists( 'w3tc_flush_all' ) ) {          // W3 Total Cache.
+		w3tc_flush_all();
+	}
+	if ( function_exists( 'rocket_clean_domain' ) ) {     // WP Rocket.
+		rocket_clean_domain();
+	}
+	if ( function_exists( 'wpfc_clear_all_cache' ) ) {    // WP Fastest Cache.
+		wpfc_clear_all_cache( true );
+	}
+	if ( function_exists( 'ce_clear_cache' ) ) {          // Cache Enabler.
+		ce_clear_cache();
+	}
+	if ( function_exists( 'comet_cache_clear' ) ) {       // Comet Cache.
+		comet_cache_clear();
+	}
+
+	// Action-based caches (LiteSpeed Cache and others).
+	do_action( 'litespeed_purge_all' );
+
+	// Let other plugins hook in.
+	do_action( 'turbo_guard_clear_site_cache' );
 }
 
 // Require main plugin class — wrapped so a syntax/load error doesn't crash the site.

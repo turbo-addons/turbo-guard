@@ -601,7 +601,7 @@
 				}
 			);
 
-			$( '#turbo-guard-settings-form input[type="number"], #turbo-guard-settings-form input[type="email"], #turbo-guard-settings-form select:not([multiple])' ).each(
+			$( '#turbo-guard-settings-form input[type="text"], #turbo-guard-settings-form input[type="password"], #turbo-guard-settings-form input[type="number"], #turbo-guard-settings-form input[type="email"], #turbo-guard-settings-form select:not([multiple])' ).each(
 				function () {
 					var val  = $( this ).val();
 					var name = $( this ).attr( 'name' );
@@ -768,6 +768,8 @@ var TurboGuardGSC = {
 		php_in_admin: /\/wp-admin\/(images|css|js)\/.+\.php$/i,
 		// Random hash paths.
 		hash_paths: /\/[a-f0-9]{8,}\//i,
+		// Query-string doorway spam (e.g., /?prizes/194927850).
+		doorway_query: /\?[a-z-]+(\/|%2f)\d{6,}/i,
 	},
 
 	init: function () {
@@ -857,7 +859,8 @@ var TurboGuardGSC = {
 			japanese:         'Japanese Spam',
 			chinese:          'Chinese Spam',
 			php_in_admin:     'PHP in Admin',
-			hash_paths:       'Hash Path Spam'
+			hash_paths:       'Hash Path Spam',
+			doorway_query:    'SEO Spam (Doorway URL)'
 		};
 		return labels[key] || 'Spam';
 	},
@@ -961,77 +964,28 @@ var TurboGuardGSC = {
 		if (urls.length === 0) {
 			alert( 'Select at least one URL.' ); return; }
 
-		if ( ! window.confirm( 'Request removal of ' + urls.length + ' URLs from Google index?\n\nNote: Removal takes 24-72 hours to process.' )) {
-			return;
-		}
-
-		var self    = this;
-		var $btn    = $( '#turbo-guard-remove-selected' );
 		var $notice = $( '#turbo-guard-gsc-notice' );
 
-		$btn.prop( 'disabled', true ).text( 'Submitting...' );
-		$notice.hide().removeClass( 'notice-success notice-error notice' );
-
-		// Build POST data with urls array.
-		var postData = 'action=turbo_guard_gsc_remove_urls&nonce=' + encodeURIComponent( turboGuardAdmin.nonce );
+		// Google deprecated the programmatic URL-removal API, so removals can no
+		// longer be submitted from the dashboard. Show the selected URLs and point
+		// the user to the Search Console "Removals" tool instead.
+		var list = '';
 		urls.forEach(
-			function (url, i) {
-				postData += '&urls%5B%5D=' + encodeURIComponent( url );
+			function (url) {
+				list += '<br>' + $( '<div/>' ).text( url ).html();
 			}
 		);
 
-		$.ajax(
-			{
-				url:         turboGuardAdmin.ajaxUrl,
-				type:        'POST',
-				data:        postData,
-				contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
-				success: function (response) {
-					if (response.success) {
-						var data = response.data;
-
-						// Remove successfully submitted rows.
-						$( '.turbo-guard-gsc-check:checked' ).each(
-							function () {
-								$( this ).closest( 'tr' ).fadeOut(
-									300,
-									function () {
-										$( this ).remove(); }
-								);
-							}
-						);
-
-						$notice
-							.addClass( 'notice notice-success' )
-							.html(
-								'<p>&#10003; Removal requested for <strong>' + (data.submitted || urls.length) + '</strong> URLs. ' +
-								'Google will process removals within 24-72 hours. ' +
-								(data.failed ? '<span style="color:#d63638;">' + data.failed + ' failed.</span>' : '') + '</p>'
-							)
-							.show();
-
-						// Also submit sitemap reindex.
-						self.resubmitSitemap();
-
-					} else {
-						$notice
-						.addClass( 'notice notice-error' )
-						.html( '<p>&#10007; ' + (response.data ? response.data.message : 'Failed to submit removal requests') + '</p>' )
-						.show();
-					}
-				},
-				error: function (xhr) {
-					$notice
-					.addClass( 'notice notice-error' )
-					.html( '<p>&#10007; Server error: ' + xhr.status + '</p>' )
-					.show();
-				},
-				complete: function () {
-					$btn.prop( 'disabled', false ).html( '<span class="dashicons dashicons-trash"></span> Request Removal from Google' );
-					self.updateSelectionCount();
-				}
-			}
-		);
+		$notice
+			.removeClass( 'notice-success notice-error notice' )
+			.addClass( 'notice notice-warning' )
+			.html(
+				'<p><strong>&#9888; Google no longer allows programmatic URL removal.</strong> ' +
+				'Copy the ' + urls.length + ' selected URL(s) and submit them in Google Search Console &rarr; ' +
+				'<a href="https://search.google.com/search-console/removals" target="_blank" rel="noopener noreferrer">Removals</a>.</p>' +
+				'<p style="font-family:monospace;font-size:12px;word-break:break-all;">' + list + '</p>'
+			)
+			.show();
 	},
 
 	/**
@@ -1338,45 +1292,100 @@ jQuery( document ).ready( function( $ ) {
 		} );
 	} );
 
-	$( document ).on( 'click', '.turbo-guard-delete-spam-post', function() {
-		if ( ! window.confirm( strings.confirmDeleteSpamPost || 'Permanently delete this spam post?' ) ) {
-			return;
-		}
-		var $btn  = $( this ).prop( 'disabled', true ).text( strings.deleting || 'Deleting...' );
-		var id    = $( this ).data( 'id' );
-		var nonce = $( this ).data( 'nonce' );
+	var doDeleteSpamPost = function( id, mode, nonce, $btn ) {
+		$btn.prop( 'disabled', true ).text( strings.deleting || 'Deleting...' );
 		$.post(
 			turboGuardAdmin.ajaxUrl,
-			{ action: 'turbo_guard_delete_spam_post', nonce: nonce, post_id: id },
+			{ action: 'turbo_guard_delete_spam_post', nonce: nonce, post_id: id, mode: mode },
 			function( r ) {
 				if ( r.success ) {
 					$btn.closest( 'tr' ).fadeOut( 300, function() { $( this ).remove(); } );
 				} else {
-					$btn.prop( 'disabled', false ).text( strings.deleteFree || 'Delete (Free)' );
+					$btn.prop( 'disabled', false ).text( strings.deleteFree || 'Delete' );
+					if ( r.data && r.data.message ) {
+						alert( String( r.data.message ).replace( /<[^>]*>/g, '' ) );
+					}
 				}
 			}
 		);
+	};
+
+	$( document ).on( 'click', '.turbo-guard-delete-spam-post', function() {
+		var $btn  = $( this );
+		var id    = $btn.data( 'id' );
+		var nonce = $btn.data( 'nonce' ) || turboGuardAdmin.nonce;
+		var isPro = !!turboGuardAdmin.isPro;
+
+		var overlay = $( '<div class="tg-modal-overlay"></div>' );
+		var dialog  = $( '<div class="tg-modal"></div>' ).append(
+			$( '<h3></h3>' ).text( strings.seoDeleteTitle || 'Remove this spam post?' ),
+			$( '<p></p>' ).text( strings.seoDeleteBody || 'Choose how you want to remove this spam post.' ),
+			$( '<div class="tg-modal-actions"></div>' ).append(
+				$( '<button type="button" class="button button-primary tg-seo-trash"></button>' ).text( strings.seoTrashOption || 'Move to Trash (recoverable)' ),
+				$( '<button type="button" class="button tg-seo-permanent" style="color:#b91c1c;border-color:#fca5a5;"></button>' ).text( strings.seoPermanentOption || 'Delete Permanently' ),
+				$( '<button type="button" class="button tg-seo-cancel"></button>' ).text( strings.cancel || 'Cancel' )
+			)
+		);
+		overlay.append( dialog );
+		$( 'body' ).append( overlay );
+
+		var close = function() { overlay.remove(); };
+		dialog.find( '.tg-seo-cancel' ).on( 'click', close );
+		overlay.on( 'click', function( e ) { if ( e.target === overlay[0] ) { close(); } } );
+
+		dialog.find( '.tg-seo-trash' ).on( 'click', function() { close(); doDeleteSpamPost( id, 'trash', nonce, $btn ); } );
+		dialog.find( '.tg-seo-permanent' ).on( 'click', function() {
+			close();
+			if ( ! isPro ) {
+				alert( strings.seoPermanentUpgrade || 'Permanent delete is a Pro feature. Upgrade to Turbo Guard Pro, or move the post to Trash instead.' );
+				return;
+			}
+			doDeleteSpamPost( id, 'delete', nonce, $btn );
+		} );
 	} );
 
 	$( '#turbo-guard-delete-all-spam-posts' ).on( 'click', function() {
-		var ids = $( this ).data( 'ids' ).toString().split( ',' );
-		if ( ! window.confirm( strings.confirmDeleteAllSpamPosts || 'Delete all spam posts? This cannot be undone.' ) ) {
+		var ids = $( this ).data( 'ids' ).toString().split( ',' ).filter( Boolean );
+		if ( ! ids.length ) {
 			return;
 		}
-		var $btn = $( this ).prop( 'disabled', true );
-		var done = 0;
-		ids.forEach( function( id ) {
+		if ( ! window.confirm( strings.confirmDeleteAllSpamPosts || 'Move all selected spam posts to Trash? This can be undone from the Trash.' ) ) {
+			return;
+		}
+		var $btn = $( this ).prop( 'disabled', true ).text( strings.deleting || 'Deleting...' );
+
+		var next = function( idx ) {
+			if ( idx >= ids.length ) {
+				location.reload();
+				return;
+			}
 			$.post(
 				turboGuardAdmin.ajaxUrl,
-				{ action: 'turbo_guard_delete_spam_post', nonce: turboGuardAdmin.nonce, post_id: parseInt( id, 10 ) },
-				function() {
-					done++;
-					if ( done === ids.length ) {
-						location.reload();
-					}
-				}
+				{ action: 'turbo_guard_delete_spam_post', nonce: turboGuardAdmin.nonce, post_id: parseInt( ids[idx], 10 ), mode: 'trash' },
+				function() { next( idx + 1 ); }
 			);
-		} );
+		};
+		next( 0 );
+	} );
+
+	$( document ).on( 'click', '.turbo-guard-ignore-seo-spam', function() {
+		var $btn = $( this );
+		if ( ! window.confirm( strings.confirmIgnoreSeoSpam || 'Mark this item as safe and exclude it from future scans?' ) ) {
+			return;
+		}
+		var bucket = $btn.data( 'bucket' );
+		var key    = $btn.data( 'key' );
+		$.post(
+			turboGuardAdmin.ajaxUrl,
+			{ action: 'turbo_guard_ignore_seo_spam', nonce: turboGuardAdmin.nonce, bucket: bucket, key: key },
+			function( r ) {
+				if ( r.success ) {
+					$btn.closest( 'tr' ).fadeOut( 300, function() { $( this ).remove(); } );
+				} else {
+					alert( ( r.data && r.data.message ? String( r.data.message ) : 'Failed to ignore item.' ).replace( /<[^>]*>/g, '' ) );
+				}
+			}
+		);
 	} );
 } );
 
@@ -1512,10 +1521,11 @@ jQuery( function( $ ) {
 		e.preventDefault();
 		e.stopPropagation();
 
-		var $btn  = $( this );
-		var id    = $btn.data( 'id' );
+		var $btn    = $( this );
+		var id      = $btn.data( 'id' );
+		var canView = $btn.data( 'canView' );
 
-		if ( ! isPro ) {
+		if ( ! isPro && ! canView ) {
 			showProUpsell( $btn );
 			return;
 		}

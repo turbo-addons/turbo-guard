@@ -138,6 +138,9 @@ class Turbo_Guard {
 			Turbo_Guard_Admin::get_instance();
 			// Local admin notice banners (no remote requests).
 			Turbo_Guard_Notices::get_instance();
+			// GSC must be instantiated early so its admin_init OAuth callback
+			// hook is registered before the callback request is handled.
+			new Turbo_Guard_GSC();
 		}
 
 		// Hook scheduled vulnerability scan.
@@ -165,6 +168,11 @@ class Turbo_Guard {
 		// Vulnerability scan is opt-in (Pro): only contact WPScan API when enabled.
 		if ( 'yes' === get_option( 'turbo_guard_enable_scheduled_vuln_scan', 'no' ) && turbo_guard_is_pro() ) {
 			Turbo_Guard_Vuln_Scanner::run_scan();
+		}
+
+		// SEO spam scan is local and opt-in via settings (email alerts are Pro).
+		if ( 'yes' === get_option( 'turbo_guard_enable_scheduled_seo_spam_scan', 'no' ) ) {
+			Turbo_Guard_SEO_Spam_Detector::run_scan();
 		}
 	}
 

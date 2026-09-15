@@ -13,6 +13,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $turbo_guard_is_connected = $turbo_guard_gsc->is_connected();
 $turbo_guard_site_url     = esc_url( home_url( '/' ) );
+
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only OAuth status flag for display; no form processing.
+$turbo_guard_gsc_connected = isset( $_GET['connected'] ) ? sanitize_key( wp_unslash( $_GET['connected'] ) ) : '';
+// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Read-only OAuth status flag for display; no form processing.
+$turbo_guard_gsc_oauth_error = isset( $_GET['oauth_error'] ) ? sanitize_text_field( wp_unslash( $_GET['oauth_error'] ) ) : '';
 ?>
 
 <div class="wrap turbo-guard-gsc">
@@ -30,6 +35,44 @@ $turbo_guard_site_url     = esc_url( home_url( '/' ) );
 		</div>
 		<span class="turbo-guard-header-badge"><?php esc_html_e( 'Unique Feature', 'turbo-guard' ); ?></span>
 	</div>
+
+	<?php if ( '1' === $turbo_guard_gsc_connected ) : ?>
+		<div class="notice notice-success is-dismissible">
+			<p><strong><?php esc_html_e( 'Successfully connected to Google Search Console.', 'turbo-guard' ); ?></strong></p>
+		</div>
+	<?php endif; ?>
+
+	<?php
+	if ( '' !== $turbo_guard_gsc_oauth_error ) :
+		$turbo_guard_oauth_hint = '';
+		switch ( $turbo_guard_gsc_oauth_error ) {
+			case 'access_denied':
+				$turbo_guard_oauth_hint = __( 'You cancelled the permission. Click "Connect to Google Search Console" again and choose Allow.', 'turbo-guard' );
+				break;
+			case 'redirect_uri_mismatch':
+				$turbo_guard_oauth_hint = __( 'The Authorized Redirect URI in Google Cloud Console does not exactly match the URI in Step 3. Copy it exactly (no extra spaces, no trailing slash).', 'turbo-guard' );
+				break;
+			case 'invalid_client':
+				$turbo_guard_oauth_hint = __( 'The Client ID or Client Secret is incorrect. Re-check them in Turbo Guard Settings.', 'turbo-guard' );
+				break;
+			case 'invalid_grant':
+				$turbo_guard_oauth_hint = __( 'The authorization code is invalid or already used. Click "Connect to Google Search Console" again.', 'turbo-guard' );
+				break;
+			case 'invalid_state':
+				$turbo_guard_oauth_hint = __( 'Your session expired. Click "Connect to Google Search Console" again.', 'turbo-guard' );
+				break;
+			default:
+				$turbo_guard_oauth_hint = __( 'If Google shows "Access blocked", your OAuth consent screen is likely in Testing mode — add your email as a Test User in Google Cloud Console, or Publish the app.', 'turbo-guard' );
+		}
+		?>
+		<div class="notice notice-error is-dismissible">
+			<p>
+				<strong><?php esc_html_e( 'Google Search Console connection failed.', 'turbo-guard' ); ?></strong>
+				<code><?php echo esc_html( $turbo_guard_gsc_oauth_error ); ?></code>
+			</p>
+			<p><?php echo esc_html( $turbo_guard_oauth_hint ); ?></p>
+		</div>
+	<?php endif; ?>
 
 	<!-- Connection Status -->
 	<div class="turbo-guard-card">
@@ -198,8 +241,8 @@ $turbo_guard_site_url     = esc_url( home_url( '/' ) );
 						<?php esc_html_e( 'Select Spam Only', 'turbo-guard' ); ?>
 					</button>
 					<button id="turbo-guard-remove-selected" class="button button-primary">
-						<span class="dashicons dashicons-trash"></span>
-						<?php esc_html_e( 'Request Removal from Google', 'turbo-guard' ); ?>
+						<span class="dashicons dashicons-external"></span>
+						<?php esc_html_e( 'Guide: Remove Spam URLs', 'turbo-guard' ); ?>
 					</button>
 					<button id="turbo-guard-generate-htaccess" class="button button-secondary">
 						<span class="dashicons dashicons-media-code"></span>
@@ -207,6 +250,9 @@ $turbo_guard_site_url     = esc_url( home_url( '/' ) );
 					</button>
 					<span id="turbo-guard-gsc-selection-count" class="turbo-guard-count-badge">0 selected</span>
 				</div>
+				<p style="margin:8px 0 0;font-size:12px;color:#6b7280;">
+					<?php esc_html_e( 'Google no longer allows programmatic URL removal. Select the spam URLs, then click the guide button to submit them in Google Search Console.', 'turbo-guard' ); ?>
+				</p>
 
 				<table class="widefat turbo-guard-gsc-table" id="turbo-guard-url-table">
 					<thead>

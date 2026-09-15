@@ -44,6 +44,9 @@ class Turbo_Guard_Vuln_Scanner {
 	 * }
 	 */
 	public static function run_scan() {
+		// Clear the site cache before scanning so results are fresh.
+		turbo_guard_clear_site_cache();
+
 		$results = array(
 			'plugins'    => array(),
 			'themes'     => array(),

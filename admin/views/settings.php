@@ -123,6 +123,39 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</table>
 		</div>
 
+		<!-- SEO Spam Detector Settings -->
+		<div class="turbo-guard-card">
+			<h2><?php esc_html_e( 'SEO Spam Detector', 'turbo-guard' ); ?></h2>
+			<table class="form-table">
+				<tr>
+					<th scope="row">
+						<label for="seo_allow_cjk_content"><?php esc_html_e( 'CJK Content', 'turbo-guard' ); ?></label>
+					</th>
+					<td>
+						<label>
+							<input type="checkbox" id="seo_allow_cjk_content" name="seo_allow_cjk_content" value="yes"
+								<?php checked( $turbo_guard_settings['seo_allow_cjk_content'], 'yes' ); ?> />
+							<?php esc_html_e( 'My site has legitimate Japanese/Chinese/Korean content', 'turbo-guard' ); ?>
+						</label>
+						<p class="description"><?php esc_html_e( 'When enabled, CJK text alone is not flagged as SEO spam (prevents false positives on multilingual sites).', 'turbo-guard' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="enable_scheduled_seo_spam_scan"><?php esc_html_e( 'Scheduled SEO Spam Scan', 'turbo-guard' ); ?></label>
+					</th>
+					<td>
+						<label>
+							<input type="checkbox" id="enable_scheduled_seo_spam_scan" name="enable_scheduled_seo_spam_scan" value="yes"
+								<?php checked( $turbo_guard_settings['enable_scheduled_seo_spam_scan'], 'yes' ); ?> />
+							<?php esc_html_e( 'Run the SEO spam scan on the scheduled scan', 'turbo-guard' ); ?>
+						</label>
+						<p class="description"><?php esc_html_e( 'Runs locally on your server — no external connection. Email alerts are a Pro feature.', 'turbo-guard' ); ?></p>
+					</td>
+				</tr>
+			</table>
+		</div>
+
 		<!-- Firewall Settings -->
 		<div class="turbo-guard-card">
 			<h2><?php esc_html_e( 'Firewall Settings', 'turbo-guard' ); ?></h2>
