@@ -105,12 +105,38 @@ class Turbo_Guard_Integrity {
 		$checksums = self::fetch_checksums( $version, $locale );
 
 		if ( is_wp_error( $checksums ) || empty( $checksums ) ) {
+			$error_message = is_wp_error( $checksums )
+				? $checksums->get_error_message()
+				: __( 'WordPress.org did not return checksums.', 'turbo-guard' );
+			if ( '' === trim( (string) $error_message ) ) {
+				$error_message = __( 'WordPress.org did not return checksums.', 'turbo-guard' );
+			}
+
 			Turbo_Guard_Scanner::log_event(
 				'integrity_check_failed',
 				'warning',
-				'Core integrity check failed: could not fetch checksums from WordPress.org.'
+				'Core integrity check failed: could not fetch checksums from WordPress.org. ' . $error_message
 			);
-			return array( 'modified' => 0, 'missing' => 0, 'results' => array() );
+
+			// Record a failed status so the dashboard does not show a stale
+			// "all core files are intact" result when nothing was verified.
+			set_transient( 'turbo_guard_integrity_results', array(
+				'status'     => 'failed',
+				'modified'   => 0,
+				'missing'    => 0,
+				'results'    => array(),
+				'checked'    => 0,
+				'checked_at' => current_time( 'mysql' ),
+				'wp_version' => $version,
+				'error'      => $error_message,
+			), DAY_IN_SECONDS );
+
+			return array(
+				'modified' => 0,
+				'missing'  => 0,
+				'results'  => array(),
+				'status'   => 'failed',
+			);
 		}
 
 		$modified = 0;
@@ -175,6 +201,7 @@ class Turbo_Guard_Integrity {
 
 		// Cache results for dashboard display.
 		set_transient( 'turbo_guard_integrity_results', array(
+			'status'      => 'success',
 			'modified'    => $modified,
 			'missing'     => $missing,
 			'results'     => array_slice( $results, 0, 50 ), // cap for storage.
@@ -511,6 +538,12 @@ class Turbo_Guard_Integrity {
 		}
 
 		$result = self::run_core_integrity_check();
+
+		if ( isset( $result['status'] ) && 'failed' === $result['status'] ) {
+			wp_send_json_error( array(
+				'message' => __( 'Integrity check failed: could not fetch checksums from WordPress.org.', 'turbo-guard' ),
+			) );
+		}
 
 		wp_send_json_success( array(
 			'modified' => $result['modified'],

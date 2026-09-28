@@ -41,40 +41,50 @@ $turbo_guard_baseline_at     = $turbo_guard_baseline_built_at;
 		<div class="turbo-guard-card turbo-guard-stat-card">
 			<h3><?php esc_html_e( 'Core File Integrity', 'turbo-guard' ); ?></h3>
 			<?php if ( $turbo_guard_ir ) : ?>
-				<div class="turbo-guard-stat-value <?php echo ( $turbo_guard_ir['modified'] + $turbo_guard_ir['missing'] ) > 0 ? 'tg-red' : 'tg-green'; ?>">
-					<?php echo absint( $turbo_guard_ir['modified'] + $turbo_guard_ir['missing'] ); ?>
-				</div>
-				<p class="turbo-guard-stat-label">
-					<?php
-					if ( ( $turbo_guard_ir['modified'] + $turbo_guard_ir['missing'] ) > 0 ) {
+				<?php if ( isset( $turbo_guard_ir['status'] ) && 'failed' === $turbo_guard_ir['status'] ) : ?>
+					<div class="turbo-guard-stat-value tg-red" style="font-size:24px;">
+						<span class="dashicons dashicons-warning"></span>
+					</div>
+					<p class="turbo-guard-stat-label"><?php esc_html_e( 'Check failed', 'turbo-guard' ); ?></p>
+					<p style="font-size:11px;color:#9ca3af;margin:4px 0 8px;">
+						<?php esc_html_e( 'Could not fetch WordPress.org checksums — no files were verified.', 'turbo-guard' ); ?>
+					</p>
+				<?php else : ?>
+					<div class="turbo-guard-stat-value <?php echo ( $turbo_guard_ir['modified'] + $turbo_guard_ir['missing'] ) > 0 ? 'tg-red' : 'tg-green'; ?>">
+						<?php echo absint( $turbo_guard_ir['modified'] + $turbo_guard_ir['missing'] ); ?>
+					</div>
+					<p class="turbo-guard-stat-label">
+						<?php
+						if ( ( $turbo_guard_ir['modified'] + $turbo_guard_ir['missing'] ) > 0 ) {
+							printf(
+								/* translators: 1: number of modified files, 2: number of missing files */
+								esc_html__( '%1$d modified, %2$d missing', 'turbo-guard' ),
+								absint( $turbo_guard_ir['modified'] ),
+								absint( $turbo_guard_ir['missing'] )
+							);
+						} else {
+							esc_html_e( 'All core files verified', 'turbo-guard' );
+						}
+						?>
+					</p>
+					<p style="font-size:11px;color:#9ca3af;margin:4px 0 8px;">
+						<?php
 						printf(
-							/* translators: 1: number of modified files, 2: number of missing files */
-							esc_html__( '%1$d modified, %2$d missing', 'turbo-guard' ),
-							absint( $turbo_guard_ir['modified'] ),
-							absint( $turbo_guard_ir['missing'] )
+							/* translators: 1: WordPress version, 2: number of files checked, 3: date/time of check */
+							esc_html__( 'WP %1$s — %2$d files checked — %3$s', 'turbo-guard' ),
+							esc_html( $turbo_guard_ir['wp_version'] ),
+							absint( $turbo_guard_ir['checked'] ),
+							esc_html( $turbo_guard_ir['checked_at'] )
 						);
-					} else {
-						esc_html_e( 'All core files verified', 'turbo-guard' );
-					}
-					?>
-				</p>
-				<p style="font-size:11px;color:#9ca3af;margin:4px 0 8px;">
-					<?php
-					printf(
-						/* translators: 1: WordPress version, 2: number of files checked, 3: date/time of check */
-						esc_html__( 'WP %1$s — %2$d files checked — %3$s', 'turbo-guard' ),
-						esc_html( $turbo_guard_ir['wp_version'] ),
-						absint( $turbo_guard_ir['checked'] ),
-						esc_html( $turbo_guard_ir['checked_at'] )
-					);
-					?>
-				</p>
+						?>
+					</p>
+				<?php endif; ?>
 			<?php else : ?>
 				<div class="turbo-guard-stat-value" style="font-size:20px;">—</div>
 				<p class="turbo-guard-stat-label"><?php esc_html_e( 'Not run yet', 'turbo-guard' ); ?></p>
 			<?php endif; ?>
 			<button id="tg-run-integrity" class="button button-primary button-small">
-				<?php esc_html_e( 'Checking...', 'turbo-guard' ); ?>
+				<?php esc_html_e( 'Run Check Now', 'turbo-guard' ); ?>
 			</button>
 		</div>
 
@@ -163,6 +173,24 @@ $turbo_guard_baseline_at     = $turbo_guard_baseline_built_at;
 				<?php endforeach; ?>
 			</tbody>
 		</table>
+	</div>
+	<?php elseif ( $turbo_guard_ir && isset( $turbo_guard_ir['status'] ) && 'failed' === $turbo_guard_ir['status'] ) : ?>
+	<div class="turbo-guard-card">
+		<div style="text-align:center;padding:30px;color:#b45309;">
+			<span class="dashicons dashicons-warning" style="font-size:48px;width:48px;height:48px;display:block;margin:0 auto 12px;"></span>
+			<strong style="font-size:16px;"><?php esc_html_e( 'Core files could not be verified', 'turbo-guard' ); ?></strong>
+			<p style="color:#6b7280;margin-top:8px;">
+				<?php
+				$turbo_guard_ir_error = isset( $turbo_guard_ir['error'] ) && '' !== trim( (string) $turbo_guard_ir['error'] )
+					? $turbo_guard_ir['error']
+					: __( 'WordPress.org checksums unavailable.', 'turbo-guard' );
+				echo esc_html( $turbo_guard_ir_error );
+				?>
+			</p>
+			<p style="color:#6b7280;margin-top:4px;">
+				<?php esc_html_e( 'The check could not download the official checksums, so no core files were verified this run. Check your internet connection and try again.', 'turbo-guard' ); ?>
+			</p>
+		</div>
 	</div>
 	<?php elseif ( $turbo_guard_ir ) : ?>
 	<div class="turbo-guard-card">
