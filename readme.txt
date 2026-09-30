@@ -3,7 +3,7 @@ Contributors: turboaddons, siraji2017, sharifok
 Tags: security, malware, scanner, firewall, 2fa
 Requires at least: 5.6
 Tested up to: 7.1
-Stable tag: 1.1.2
+Stable tag: 1.1.3
 Requires PHP: 7.4
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -75,7 +75,7 @@ Turbo Guard is a comprehensive WordPress security plugin built by a team that ma
 
 * Checks all plugins, themes, and WordPress core against WPScan vulnerability database
 * CVSS severity scoring, CVE links, version-aware matching
-* Works without API key (optional WPScan key for higher limits)
+* Requires a free WPScan API key for detailed CVE data; without one it falls back to WordPress.org status (flags removed/closed plugins & themes)
 * Email alert when new vulnerabilities are found
 
 = Live Traffic Monitor =
@@ -201,6 +201,14 @@ Used for Google Search Console integration to detect SEO spam and manage indexed
 * Privacy Policy: https://policies.google.com/privacy
 
 == Changelog ==
+
+= 1.1.3 =
+* Fixed: scanner flagged its own backup copies as C99 shell
+* Fixed: legitimate core file wp-includes/css/dist/registry.php flagged as injected PHP
+* Improved: scanner now detects ANY unknown PHP file in wp-admin/wp-includes/root (Wordfence-style), plus obfuscated include and variable-indirection command shells
+* Improved: database scanner detects unknown tables and unknown wp_options rows
+* Improved: vulnerability scanner shows a clear warning and falls back to WordPress.org when the WPScan key is missing/invalid (no more false "0 vulnerabilities")
+* Fixed: core manifest cache is now version-specific (no stale results after a WordPress update)
 
 = 1.1.2 =
 * SEO Spam Detector: detects spam-looking URLs in the site sitemap

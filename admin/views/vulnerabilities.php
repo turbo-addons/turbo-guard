@@ -64,6 +64,18 @@ $turbo_guard_is_pro  = turbo_guard_is_pro();
 
 	<?php if ( $turbo_guard_results ) : ?>
 
+		<?php
+		$turbo_guard_vuln_status = isset( $turbo_guard_results['status'] ) ? $turbo_guard_results['status'] : 'success';
+		if ( 'success' !== $turbo_guard_vuln_status ) :
+			?>
+			<div class="notice notice-warning inline" style="margin:12px 0 0;">
+				<p>
+					<strong><?php esc_html_e( 'Heads up:', 'turbo-guard' ); ?></strong>
+					<?php echo esc_html( ! empty( $turbo_guard_results['message'] ) ? $turbo_guard_results['message'] : __( 'Detailed vulnerability data could not be retrieved.', 'turbo-guard' ) ); ?>
+				</p>
+			</div>
+		<?php endif; ?>
+
 		<?php if ( ! $turbo_guard_is_pro ) : ?>
 			<div class="notice notice-info inline" style="margin:12px 0 0;">
 				<p>

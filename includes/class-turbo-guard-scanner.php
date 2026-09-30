@@ -617,16 +617,20 @@ class Turbo_Guard_Scanner {
 			return self::$core_manifest;
 		}
 
+		global $wp_version;
+		$locale = get_locale();
+
+		// Cache key is version + locale specific so a WordPress core update
+		// never reuses a stale manifest (which would flag the update's new
+		// core files as "unknown").
+		$cache_key = 'turbo_guard_core_manifest_' . md5( $wp_version . '|' . $locale );
+
 		// Check transient cache first (avoids API call on every scan chunk).
-		$cached = get_transient( 'turbo_guard_core_manifest' );
+		$cached = get_transient( $cache_key );
 		if ( is_array( $cached ) && ! empty( $cached ) ) {
 			self::$core_manifest = $cached;
 			return self::$core_manifest;
 		}
-
-		// Fetch from WordPress.org checksums API.
-		global $wp_version;
-		$locale = get_locale();
 
 		$url = sprintf(
 			'https://api.wordpress.org/core/checksums/1.0/?version=%s&locale=%s',
@@ -656,7 +660,7 @@ class Turbo_Guard_Scanner {
 				// API unavailable — fall back to local wp-includes/version.php file list.
 				self::$core_manifest = self::build_local_core_manifest();
 				if ( ! empty( self::$core_manifest ) ) {
-					set_transient( 'turbo_guard_core_manifest', self::$core_manifest, 12 * HOUR_IN_SECONDS );
+					set_transient( $cache_key, self::$core_manifest, 12 * HOUR_IN_SECONDS );
 				}
 				return self::$core_manifest;
 			}
@@ -667,7 +671,7 @@ class Turbo_Guard_Scanner {
 		if ( ! is_array( $body ) || empty( $body['checksums'] ) ) {
 			self::$core_manifest = self::build_local_core_manifest();
 			if ( ! empty( self::$core_manifest ) ) {
-				set_transient( 'turbo_guard_core_manifest', self::$core_manifest, 12 * HOUR_IN_SECONDS );
+				set_transient( $cache_key, self::$core_manifest, 12 * HOUR_IN_SECONDS );
 			}
 			return self::$core_manifest;
 		}
@@ -675,9 +679,78 @@ class Turbo_Guard_Scanner {
 		self::$core_manifest = $body['checksums'];
 
 		// Cache for 24 hours.
-		set_transient( 'turbo_guard_core_manifest', self::$core_manifest, DAY_IN_SECONDS );
+		set_transient( $cache_key, self::$core_manifest, DAY_IN_SECONDS );
 
 		return self::$core_manifest;
+	}
+
+	/**
+	 * Whether a file (by its normalised realpath) is part of the official
+	 * WordPress core distribution, according to the core checksums manifest.
+	 *
+	 * Used to avoid flagging legitimate core files (e.g. the auto-generated
+	 * wp-includes/css/dist/registry.php that ships with modern WordPress).
+	 *
+	 * @since 1.1.3
+	 * @param string $norm_real Normalised (forward-slash) realpath of the file.
+	 * @return bool True if the file is in the official core manifest.
+	 */
+	private static function is_core_file( $norm_real ) {
+		$manifest = self::get_core_manifest();
+		if ( empty( $manifest ) ) {
+			return false;
+		}
+
+		$abspath = str_replace( '\\', '/', (string) realpath( ABSPATH ) );
+		if ( ! $abspath ) {
+			return false;
+		}
+
+		$rel = str_replace( $abspath . '/', '', $norm_real );
+		return isset( $manifest[ $rel ] );
+	}
+
+	/**
+	 * Whether an uploads-relative path belongs to a known legitimate plugin
+	 * data directory.
+	 *
+	 * Trust is granted only for plugins/themes that were VERIFIED against the
+	 * official wordpress.org checksums. An attacker-injected plugin is not on
+	 * wordpress.org, so its slug is never trusted and its uploads files stay
+	 * scannable. A few well-known data dirs that don't match their plugin slug
+	 * are included as explicit exceptions.
+	 *
+	 * @since 1.1.3
+	 * @param string $rel_upload_path Path relative to the uploads basedir.
+	 * @return bool True if the path is under a trusted plugin data directory.
+	 */
+	public static function is_trusted_upload_path( $rel_upload_path ) {
+		static $trusted_prefixes = null;
+
+		if ( null === $trusted_prefixes ) {
+			$trusted_prefixes = array();
+
+			foreach ( Turbo_Guard_Known_Files::get_known_slugs() as $slug ) {
+				$trusted_prefixes[] = $slug . '/';
+			}
+
+			// Known data dirs that don't match their plugin slug.
+			$trusted_prefixes = array_merge( $trusted_prefixes, array(
+				'redux/',
+				'woocommerce_uploads/',
+				'wc-logs/',
+			) );
+
+			$trusted_prefixes = array_unique( $trusted_prefixes );
+		}
+
+		$rel = ltrim( str_replace( '\\', '/', (string) $rel_upload_path ), '/' );
+		foreach ( $trusted_prefixes as $prefix ) {
+			if ( 0 === strpos( $rel, $prefix ) ) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -770,12 +843,45 @@ class Turbo_Guard_Scanner {
 			);
 		}
 
+		// Command-execution shell with variable indirection: attacker input is
+		// read into a variable, then passed to a command-execution function
+		// (e.g. $c = $_GET['cmd']; shell_exec($c);). The direct $_GET->exec
+		// signature above is trivially dodged with one assignment, so detect
+		// the general shape: command-exec function + superglobal read.
+		if ( preg_match( '/\b(?:shell_exec|passthru|system|proc_open|popen|exec)\s*\(\s*\$/i', $content )
+			&& preg_match( '/\$(?:_GET|_POST|_REQUEST|_COOKIE|_FILES)\b/', $content )
+		) {
+			return array(
+				'type'        => 'backdoor_exec_shell',
+				'name'        => 'Backdoor:PHP/nobodycrew — Command Execution Shell',
+				'description' => 'PHP shell that executes system commands (shell_exec, exec, system, passthru) from attacker-supplied input. Full server control.',
+			);
+		}
+
 		// Generic obfuscated backdoor (eval+base64, gzinflate, etc.).
 		if ( preg_match( '/eval\s*\(\s*(base64_decode|gzinflate|gzuncompress|str_rot13)\s*\(/i', $content ) ) {
 			return array(
 				'type'        => 'backdoor_obfuscated',
 				'name'        => 'Backdoor:PHP/obfuscated — Obfuscated PHP Backdoor',
 				'description' => 'PHP code obfuscated using base64/gzip encoding to hide its purpose. Typically a remote access shell or spam injector.',
+			);
+		}
+
+		// Obfuscated include/require backdoor: the included path is assembled
+		// from concatenated string fragments (and/or a PHP stream wrapper such
+		// as compress.zlib://). Legitimate code never splits a single string
+		// into fragments this way — it's a signature-evasion technique used to
+		// hide the included payload from signature scanners.
+		if ( preg_match( '/(?:include|require)(?:_once)?\b/i', $content )
+			&& (
+				preg_match( '/["\'][^"\']{0,64}["\']\s*\.\s*["\'][^"\']{0,64}["\']/', $content )
+				|| preg_match( '/(?:compress\.zlib|php|data|phar|zip|rar|ogg|expect):\/\//i', $content )
+			)
+		) {
+			return array(
+				'type'        => 'backdoor_obfuscated_include',
+				'name'        => 'Backdoor:PHP/obfuscated-include — Obfuscated Include',
+				'description' => 'Includes a file whose path is assembled from concatenated string fragments or a PHP stream wrapper — a common evasion technique used by backdoors to hide their payload from signature scanners.',
 			);
 		}
 
@@ -960,8 +1066,18 @@ class Turbo_Guard_Scanner {
 		// Strategy: flag PHP files in any /images/ subdirectory inside
 		// wp-admin or wp-includes. WordPress never ships PHP inside an
 		// images directory regardless of nesting depth.
-		// Also flag wp-includes/css/ which never contains PHP.
+		// Also flag PHP in wp-includes/css/ — BUT modern WordPress DOES ship
+		// a few legitimate PHP files there (e.g. css/dist/registry.php), so
+		// any file that exists in the official core manifest is skipped first.
 		// ------------------------------------------------------------------
+
+		// A PHP file in a core asset directory is only suspicious when it is
+		// NOT part of the official WordPress distribution. Consult the core
+		// checksums manifest and skip any genuine core file.
+		if ( $is_php && self::is_core_file( $norm_real ) ) {
+			return false;
+		}
+
 		$core_no_php_dirs = array(
 			ABSPATH . 'wp-admin/images',
 			ABSPATH . 'wp-admin/css',
@@ -1172,88 +1288,105 @@ class Turbo_Guard_Scanner {
 			// ------------------------------------------------------------------
 			// CORE LOCATION FILE CHECK.
 			//
-			// IMPORTANT SAFETY RULE: WordPress core (wp-admin/ and wp-includes/)
-			// contains thousands of legitimate PHP files. We must NEVER flag a
-			// file as malware merely because it is not present in the official
-			// checksums manifest. That approach produces false positives
-			// (especially when the WordPress.org API is unreachable and the
-			// manifest resolves to empty), which let users delete clean core
-			// files and break the site.
+			// WordPress ships a known set of files. When the official checksums
+			// manifest is available, ANY PHP file in wp-admin/ or wp-includes/
+			// that is not in the manifest is suspicious on its own — this is
+			// Wordfence's "Unknown file in WordPress core" detection and does
+			// NOT rely on signature matching (a hacker can trivially obfuscate
+			// a shell to dodge any fixed signature).
 			//
-			// Correct behaviour: a core-located file is only flagged when it
-			// contains a concrete backdoor signature (web shell, eval+base64,
-			// command execution, etc.). Modified/deleted core files are handled
-			// by the separate File Integrity Checker module — the malware
-			// scanner must not guess based on the manifest alone.
+			// When the manifest is UNAVAILABLE (offline), fall back to concrete
+			// signature checks only, to avoid flagging clean files we cannot
+			// verify against the official distribution.
 			// ------------------------------------------------------------------
 
-			// Only proceed if a real manifest is available AND the file is not
-			// part of this WordPress version's distribution.
 			$manifest = self::get_core_manifest();
+			$rel_path = str_replace(
+				str_replace( '\\', '/', (string) realpath( ABSPATH ) ) . '/',
+				'',
+				$norm_real
+			);
 
 			if ( ! empty( $manifest ) ) {
-				// Build relative path from ABSPATH (e.g. "wp-includes/css/index.php").
-				$rel_path = str_replace(
-					str_replace( '\\', '/', (string) realpath( ABSPATH ) ) . '/',
-					'',
-					$norm_real
-				);
-
-				if ( ! isset( $manifest[ $rel_path ] ) ) {
-					// WHITELIST: Common legitimate files in core dirs that aren't in manifest.
-					// error_log / php_errorlog — generated by PHP error logging.
-					// .htaccess — can be placed by hosting or plugins for security.
-					$core_basename    = basename( $rel_path );
-					$core_whitelisted = in_array( $core_basename, array(
-						'error_log', 'php_errorlog', '.htaccess', 'php.ini', '.user.ini',
-					), true );
-
-					if ( $core_whitelisted ) {
-						return false;
-					}
-
-					// File is not in this version's core distribution. Only flag it
-					// if it actually contains a concrete backdoor signature. A clean
-					// or benign file (e.g. added by another plugin or the host) is
-					// NOT malware and must not be flagged or deleted.
-					$snippet      = @file_get_contents( $file_path, false, null, 0, 4096 ); // phpcs:ignore
-					$threat_class = self::classify_backdoor( $snippet ? $snippet : '' );
-
-					// `injected_php_unknown` is the generic fallback that matches
-					// nearly every file — treat it as "no concrete signature".
-					if ( 'injected_php_unknown' !== $threat_class['type'] ) {
-						$wpdb->insert(
-							$wpdb->prefix . 'turbo_guard_scan_results',
-							array(
-								'scan_id'        => $this->scan_id,
-								'file_path'      => $file_path,
-								'threat_type'    => $threat_class['type'],
-								'severity'       => 'high',
-								'threat_name'    => $threat_class['name'],
-								'threat_details' => sprintf(
-									/* translators: 1: file path relative to ABSPATH, 2: threat classification description */
-									__( 'File "%1$s" is in a WordPress core location and matches a known backdoor signature. %2$s', 'turbo-guard' ),
-									$rel_path,
-									$threat_class['description']
-								),
-								'status'         => 'pending',
-								'file_size'      => (int) @filesize( $file_path ),
-								'file_hash'      => md5( $snippet ? $snippet : '' ),
-							),
-							array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
-						);
-						return true;
-					}
-
-					// No concrete signature — this is not malware. Skip it.
-					// (A benign file in a core directory is outside the malware
-					// scanner's scope and should not be flagged/deleted.)
+				if ( isset( $manifest[ $rel_path ] ) ) {
+					// Legitimate core file — skip (handled by File Integrity).
 					return false;
 				}
+
+				// WHITELIST: Common legitimate files in core dirs that aren't in manifest.
+				$core_basename    = basename( $rel_path );
+				$core_whitelisted = in_array( $core_basename, array(
+					'error_log', 'php_errorlog', '.htaccess', 'php.ini', '.user.ini',
+				), true );
+
+				if ( $core_whitelisted ) {
+					return false;
+				}
+
+				// Unknown file in a core directory. Use a concrete backdoor name
+				// when a signature matches, otherwise flag as an unknown file.
+				$snippet      = @file_get_contents( $file_path, false, null, 0, 4096 ); // phpcs:ignore
+				$threat_class = self::classify_backdoor( $snippet ? $snippet : '' );
+				$has_signature = ( 'injected_php_unknown' !== $threat_class['type'] );
+
+				$wpdb->insert(
+					$wpdb->prefix . 'turbo_guard_scan_results',
+					array(
+						'scan_id'        => $this->scan_id,
+						'file_path'      => $file_path,
+						'threat_type'    => $has_signature ? $threat_class['type'] : 'unknown_core_file',
+						'severity'       => $has_signature ? 'critical' : 'high',
+						'threat_name'    => $has_signature ? $threat_class['name'] : __( 'Unknown File in WordPress Core Directory', 'turbo-guard' ),
+						'threat_details' => $has_signature
+							? sprintf(
+								/* translators: 1: file path relative to ABSPATH, 2: threat classification description */
+								__( 'File "%1$s" is in a WordPress core location and matches a known backdoor signature. %2$s', 'turbo-guard' ),
+								$rel_path,
+								$threat_class['description']
+							)
+							: sprintf(
+								/* translators: %s: file path relative to ABSPATH */
+								__( 'File "%s" is not distributed with WordPress and should not exist in a core directory. It may have been planted by an attacker. Verify and delete if not legitimate.', 'turbo-guard' ),
+								$rel_path
+							),
+						'status'         => 'pending',
+						'file_size'      => (int) @filesize( $file_path ),
+						'file_hash'      => md5( $snippet ? $snippet : '' ),
+					),
+					array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
+				);
+				return true;
 			}
 
-			// Legitimate core file (either in the manifest, or the manifest is
-			// unavailable). Skip further pattern checks — integrity is separate.
+			// Manifest unavailable (offline) — only flag concrete signatures to
+			// avoid false positives on files we cannot verify.
+			$snippet      = @file_get_contents( $file_path, false, null, 0, 4096 ); // phpcs:ignore
+			$threat_class = self::classify_backdoor( $snippet ? $snippet : '' );
+			if ( 'injected_php_unknown' !== $threat_class['type'] ) {
+				$wpdb->insert(
+					$wpdb->prefix . 'turbo_guard_scan_results',
+					array(
+						'scan_id'        => $this->scan_id,
+						'file_path'      => $file_path,
+						'threat_type'    => $threat_class['type'],
+						'severity'       => 'critical',
+						'threat_name'    => $threat_class['name'],
+						'threat_details' => sprintf(
+							/* translators: 1: file path relative to ABSPATH, 2: threat classification description */
+							__( 'File "%1$s" is in a WordPress core location and matches a known backdoor signature. %2$s', 'turbo-guard' ),
+							$rel_path,
+							$threat_class['description']
+						),
+						'status'         => 'pending',
+						'file_size'      => (int) @filesize( $file_path ),
+						'file_hash'      => md5( $snippet ? $snippet : '' ),
+					),
+					array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
+				);
+				return true;
+			}
+
+			// Legitimate core file — skip further pattern checks.
 			return false;
 		}
 
@@ -1272,6 +1405,17 @@ class Turbo_Guard_Scanner {
 		// Get file content.
 		$content = file_get_contents( $file_path ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 		if ( false === $content ) {
+			return false;
+		}
+
+		// SKIP: copies of this plugin's own source (e.g. a backup/duplicate
+		// folder). The scanner's pattern definitions contain the literal
+		// signature strings it searches for (c99shell, r57shell, WSO, ...),
+		// so a copy of the plugin would otherwise match its own signatures
+		// and be flagged as malware. We identify self by the package marker
+		// rather than by directory name — a folder named "backup" must NOT
+		// be blindly trusted, an attacker can place malware there.
+		if ( false !== strpos( $content, '@package TurboGuard' ) ) {
 			return false;
 		}
 
@@ -1306,32 +1450,32 @@ class Turbo_Guard_Scanner {
 						|| strpos( $rel_path, 'bv_connector_' ) === 0;  // BlogVault connector (hash in filename).
 
 					if ( ! isset( $manifest[ $rel_path ] ) && ! $is_whitelisted_root ) {
-						// Only flag this root file if it contains a concrete backdoor
-						// signature. A clean file (e.g. wp-config.php, a host config,
-						// or a left-over from another tool) must not be deleted.
+						// Unknown file in the WordPress root. Use a concrete backdoor
+						// name when a signature matches, otherwise flag as unknown.
 						$snippet      = @file_get_contents( $file_path, false, null, 0, 4096 ); // phpcs:ignore
 						$threat_class = self::classify_backdoor( $snippet ? $snippet : '' );
-
-						// `injected_php_unknown` is the generic fallback that matches
-						// nearly every file — it is not a concrete malware signal.
-						if ( 'injected_php_unknown' === $threat_class['type'] ) {
-							return false;
-						}
+						$has_signature = ( 'injected_php_unknown' !== $threat_class['type'] );
 
 						$wpdb->insert(
 							$wpdb->prefix . 'turbo_guard_scan_results',
 							array(
 								'scan_id'        => $this->scan_id,
 								'file_path'      => $file_path,
-								'threat_type'    => $threat_class['type'],
-								'severity'       => 'high',
-								'threat_name'    => $threat_class['name'],
-								'threat_details' => sprintf(
-									/* translators: 1: file name, 2: threat classification */
-									__( 'File "%1$s" is in the WordPress root directory and matches a known backdoor signature. %2$s', 'turbo-guard' ),
-									$rel_path,
-									$threat_class['description']
-								),
+								'threat_type'    => $has_signature ? $threat_class['type'] : 'unknown_root_file',
+								'severity'       => $has_signature ? 'critical' : 'high',
+								'threat_name'    => $has_signature ? $threat_class['name'] : __( 'Unknown File in WordPress Root Directory', 'turbo-guard' ),
+								'threat_details' => $has_signature
+									? sprintf(
+										/* translators: 1: file name, 2: threat classification */
+										__( 'File "%1$s" is in the WordPress root directory and matches a known backdoor signature. %2$s', 'turbo-guard' ),
+										$rel_path,
+										$threat_class['description']
+									)
+									: sprintf(
+										/* translators: %s: file name */
+										__( 'File "%s" is not part of the WordPress distribution and should not exist in the root directory. It may have been planted by an attacker. Verify and delete if not legitimate.', 'turbo-guard' ),
+										$rel_path
+									),
 								'status'         => 'pending',
 								'file_size'      => (int) @filesize( $file_path ),
 								'file_hash'      => md5( $snippet ? $snippet : '' ),
@@ -1354,19 +1498,11 @@ class Turbo_Guard_Scanner {
 				// files inside uploads (e.g. Redux Framework writes ace_editor.php,
 				// color.php, etc.). Flagging these produces false positives on
 				// healthy sites. Wordfence applies the same repository-aware logic.
-				$rel_upload_path      = substr( $norm_real, strlen( $real_upload ) + 1 );
-				$php_uploads_allow    = array(
-					'redux/',              // Redux Framework option-panel PHP assets.
-					'woocommerce_uploads/', // WooCommerce custom uploads.
-					'wc-logs/',            // WooCommerce log files.
-				);
-				$is_allowed_upload    = false;
-				foreach ( $php_uploads_allow as $allow_dir ) {
-					if ( 0 === strpos( $rel_upload_path, $allow_dir ) ) {
-						$is_allowed_upload = true;
-						break;
-					}
-				}
+				$rel_upload_path = substr( $norm_real, strlen( $real_upload ) + 1 );
+
+				// Trusted plugin data directories in uploads — derived dynamically
+				// from installed plugin slugs (see is_trusted_upload_path()).
+				$is_allowed_upload = self::is_trusted_upload_path( $rel_upload_path );
 
 				// WHITELIST: WordPress placeholder files ("Silence is golden") that
 				// plugins legitimately drop in their own uploads folders (e.g. Simple
@@ -1982,9 +2118,9 @@ class Turbo_Guard_Scanner {
 	/**
 	 * Scan the WordPress database for injected content.
 	 *
-	 * Checks wp_posts (content, excerpts), wp_postmeta, wp_options, and wp_comments
-	 * for Japanese/Chinese SEO spam, hidden links, eval injections, and malicious redirects.
-	 * This is the technique MalCare uses to find DB-level infections that file scanners miss.
+	 * Checks wp_posts (content/excerpts), wp_options (siteurl/home/tagline),
+	 * WP-Cron jobs, .htaccess redirects, hidden folders, recent admin users,
+	 * and — via baseline comparison — unknown tables and unknown options.
 	 *
 	 * @since 1.1.0
 	 * @param int $scan_id Current scan ID to log results under.
@@ -2323,7 +2459,164 @@ class Turbo_Guard_Scanner {
 			}
 		}
 
+		// -----------------------------------------------------------
+		// 7. Unknown database tables (hacker-created tables).
+		// -----------------------------------------------------------
+		$threats_found += self::detect_unknown_tables( $scan_id );
+
+		// -----------------------------------------------------------
+		// 8. Unknown wp_options rows (hacker-created options).
+		// -----------------------------------------------------------
+		$threats_found += self::detect_unknown_options( $scan_id );
+
 		return $threats_found;
+	}
+
+	/**
+	 * Detect database tables that were not present when the baseline was
+	 * recorded. Hackers often create helper tables (e.g. wp_xyz_payload) to
+	 * store injected content that file and pattern scans would never see.
+	 *
+	 * Baseline-based on purpose: only NEW tables are flagged, so pre-existing
+	 * tables from legitimate plugins never trigger false positives.
+	 *
+	 * @since 1.1.3
+	 * @param int $scan_id Current scan ID.
+	 * @return int Number of unknown tables flagged.
+	 */
+	private static function detect_unknown_tables( $scan_id ) {
+		global $wpdb;
+
+		$baseline_option = 'turbo_guard_db_tables_baseline';
+		$baseline        = get_option( $baseline_option, array() );
+		if ( ! is_array( $baseline ) ) {
+			$baseline = array();
+		}
+
+		$tables = $wpdb->get_col( 'SHOW TABLES' );
+		if ( empty( $tables ) ) {
+			return 0;
+		}
+
+		// First run: record the current schema as the trusted baseline.
+		if ( empty( $baseline ) ) {
+			update_option( $baseline_option, $tables, false );
+			return 0;
+		}
+
+		$baseline_map = array_fill_keys( $baseline, true );
+		$found        = 0;
+
+		foreach ( $tables as $table ) {
+			if ( isset( $baseline_map[ $table ] ) ) {
+				continue;
+			}
+
+			$wpdb->insert(
+				$wpdb->prefix . 'turbo_guard_scan_results',
+				array(
+					'scan_id'        => $scan_id,
+					'file_path'      => 'database://table:' . $table,
+					'threat_type'    => 'unknown_table',
+					'severity'       => 'high',
+					'threat_name'    => 'Unknown Database Table Detected',
+					'threat_details' => sprintf(
+						/* translators: %s: database table name */
+						__( 'Table "%s" was not present when the database baseline was recorded. It may have been created by an attacker, or by a recently installed/updated plugin. Verify before deleting.', 'turbo-guard' ),
+						$table
+					),
+					'status'         => 'pending',
+					'file_size'      => 0,
+					'file_hash'      => '',
+				),
+				array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
+			);
+			++$found;
+		}
+
+		// Refresh the baseline so each new table is reported once, not every scan.
+		update_option( $baseline_option, $tables, false );
+
+		return $found;
+	}
+
+	/**
+	 * Detect wp_options rows (option names) that were not present when the
+	 * baseline was recorded. Hackers often add hidden options (redirects,
+	 * payloads) that a pattern-based scan would miss.
+	 *
+	 * Transients are ignored — they are created/expired constantly and are
+	 * never a meaningful "unknown row" signal.
+	 *
+	 * @since 1.1.3
+	 * @param int $scan_id Current scan ID.
+	 * @return int Number of unknown options flagged.
+	 */
+	private static function detect_unknown_options( $scan_id ) {
+		global $wpdb;
+
+		$baseline_option = 'turbo_guard_db_options_baseline';
+		$baseline        = get_option( $baseline_option, array() );
+		if ( ! is_array( $baseline ) ) {
+			$baseline = array();
+		}
+
+		$options = $wpdb->get_col( "SELECT option_name FROM {$wpdb->options}" );
+		if ( empty( $options ) ) {
+			return 0;
+		}
+
+		// First run: record the current option names as the trusted baseline.
+		if ( empty( $baseline ) ) {
+			update_option( $baseline_option, $options, false );
+			return 0;
+		}
+
+		$baseline_map = array_fill_keys( $baseline, true );
+		$found        = 0;
+
+		foreach ( $options as $option ) {
+			// Skip the plugin's own baseline keys (they are added during scans
+			// and must never be flagged as "new options").
+			if ( 'turbo_guard_db_tables_baseline' === $option || 'turbo_guard_db_options_baseline' === $option ) {
+				continue;
+			}
+
+			// Skip all transients (regular + network) — high churn, not a signal.
+			if ( 0 === strpos( $option, '_transient' ) || 0 === strpos( $option, '_site_transient' ) ) {
+				continue;
+			}
+
+			if ( isset( $baseline_map[ $option ] ) ) {
+				continue;
+			}
+
+			$wpdb->insert(
+				$wpdb->prefix . 'turbo_guard_scan_results',
+				array(
+					'scan_id'        => $scan_id,
+					'file_path'      => 'database://wp_options#' . $option,
+					'threat_type'    => 'unknown_option',
+					'severity'       => 'medium',
+					'threat_name'    => 'New WordPress Option Detected',
+					'threat_details' => sprintf(
+						/* translators: %s: option name */
+						__( 'Option "%s" was not present when the database baseline was recorded. It may have been added by an attacker, or by a recently installed/updated plugin. Review its value before removing.', 'turbo-guard' ),
+						$option
+					),
+					'status'         => 'pending',
+					'file_size'      => 0,
+					'file_hash'      => '',
+				),
+				array( '%d', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s' )
+			);
+			++$found;
+		}
+
+		// Refresh the baseline so each new option is reported once.
+		update_option( $baseline_option, $options, false );
+
+		return $found;
 	}
 
 	/**

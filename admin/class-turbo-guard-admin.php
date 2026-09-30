@@ -1400,15 +1400,24 @@ function turbo_guard_ajax_run_vuln_scan() {
 
 	$results = Turbo_Guard_Vuln_Scanner::run_scan();
 
+	if ( 'no_api_key' === $results['status'] ) {
+		$message = __( 'Scan complete, but no WPScan API key is configured — showing limited WordPress.org results.', 'turbo-guard' );
+	} elseif ( 'api_error' === $results['status'] ) {
+		$message = $results['message'];
+	} else {
+		$message = sprintf(
+			/* translators: %d: vulnerability count */
+			__( 'Scan complete. %d vulnerabilities found.', 'turbo-guard' ),
+			$results['total']
+		);
+	}
+
 	wp_send_json_success( array(
 		'total'   => $results['total'],
 		'plugins' => count( $results['plugins'] ),
 		'themes'  => count( $results['themes'] ),
-		'message' => sprintf(
-			/* translators: %d: vulnerability count */
-			__( 'Scan complete. %d vulnerabilities found.', 'turbo-guard' ),
-			$results['total']
-		),
+		'status'  => $results['status'],
+		'message' => $message,
 	) );
 }
 

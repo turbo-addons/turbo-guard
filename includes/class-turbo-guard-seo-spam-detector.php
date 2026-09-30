@@ -405,7 +405,15 @@ class Turbo_Guard_SEO_Spam_Detector {
 				}
 
 				++$count;
-				$path    = wp_normalize_path( $file->getPathname() );
+				$path = wp_normalize_path( $file->getPathname() );
+
+				// Skip trusted plugin data directories before reading content
+				// (derived dynamically from installed plugin slugs).
+				$rel_uploads = str_replace( wp_normalize_path( $uploads_dir ) . '/', '', $path );
+				if ( Turbo_Guard_Scanner::is_trusted_upload_path( $rel_uploads ) ) {
+					continue;
+				}
+
 				$content = @file_get_contents( $path, false, null, 0, 4096 ); // phpcs:ignore
 				if ( ! $content ) {
 					continue;

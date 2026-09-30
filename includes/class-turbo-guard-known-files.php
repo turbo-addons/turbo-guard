@@ -77,6 +77,28 @@ class Turbo_Guard_Known_Files {
 	}
 
 	/**
+	 * Get the set of plugin/theme slugs that were successfully verified
+	 * against the official wordpress.org checksums.
+	 *
+	 * Used to decide which uploads subdirectories can be trusted. A plugin
+	 * injected by an attacker is not on wordpress.org, so it is never
+	 * included — its uploads data stays scannable.
+	 *
+	 * @since 1.1.3
+	 * @return array Unique list of verified slugs.
+	 */
+	public static function get_known_slugs() {
+		$index = self::get_index();
+		$slugs = array();
+		foreach ( array_keys( $index ) as $key ) {
+			if ( preg_match( '#^(plugins|themes)/([^/]+)/#', $key, $m ) ) {
+				$slugs[] = $m[2];
+			}
+		}
+		return array_values( array_unique( $slugs ) );
+	}
+
+	/**
 	 * Clear the cached index (e.g. after plugin updates).
 	 *
 	 * @since 1.3.0
@@ -117,8 +139,18 @@ class Turbo_Guard_Known_Files {
 		}
 
 		$actual = md5_file( $file_path );
-		if ( $actual && hash_equals( $index[ $rel ], $actual ) ) {
-			return 'known_good';
+		if ( $actual && isset( $index[ $rel ] ) ) {
+			$known_md5 = $index[ $rel ];
+
+			// A path can map to multiple known hashes (an array) when the
+			// official checksums list several variants of the same file.
+			// Trust the file only if its MD5 matches ANY of them.
+			$known_hashes = is_array( $known_md5 ) ? $known_md5 : array( $known_md5 );
+			foreach ( $known_hashes as $md5 ) {
+				if ( is_string( $md5 ) && '' !== $md5 && hash_equals( $md5, $actual ) ) {
+					return 'known_good';
+				}
+			}
 		}
 
 		return 'modified';
@@ -223,10 +255,21 @@ class Turbo_Guard_Known_Files {
 			return array();
 		}
 
-		// "files" is a map of relative_path => { md5, sha256 }.
+		// "files" is a map of relative_path => hashes. Two known formats:
+		//   - plugin checksums: { "md5": "...", "sha256": "..." }
+		//   - theme checksums:  a plain md5 string
+		// Some paths map to an ARRAY of hashes (a file that differs across
+		// release branches). Keep the value as-is so check_file() can compare
+		// against every known hash instead of crashing.
 		$files = array();
 		foreach ( $json['files'] as $rel => $hashes ) {
-			$files[ $rel ] = isset( $hashes['md5'] ) ? $hashes['md5'] : '';
+			if ( is_array( $hashes ) ) {
+				if ( isset( $hashes['md5'] ) ) {
+					$files[ $rel ] = $hashes['md5'];
+				}
+			} elseif ( is_string( $hashes ) && '' !== $hashes ) {
+				$files[ $rel ] = $hashes;
+			}
 		}
 		return $files;
 	}

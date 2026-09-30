@@ -1143,7 +1143,7 @@ jQuery( document ).ready( function( $ ) {
 
 		$btn.prop( 'disabled', true );
 		$loading.show();
-		$notice.hide().removeClass( 'notice-success notice-error notice' );
+		$notice.hide().removeClass( 'notice-success notice-error notice-warning notice' );
 
 		$.ajax( {
 			url:     turboGuardAdmin.ajaxUrl,
@@ -1155,9 +1155,10 @@ jQuery( document ).ready( function( $ ) {
 			},
 			success: function( response ) {
 				if ( response.success ) {
+					var isLimited = ( response.data.status && 'success' !== response.data.status );
 					$notice
-						.addClass( 'notice notice-success' )
-						.html( '<p>\u2713 ' + response.data.message + ' <a href="' + window.location.href + '">Refresh to see results</a></p>' )
+						.addClass( isLimited ? 'notice notice-warning' : 'notice notice-success' )
+						.html( '<p>' + ( isLimited ? '\u26a0 ' : '\u2713 ' ) + response.data.message + ' <a href="' + window.location.href + '">Refresh to see results</a></p>' )
 						.show();
 
 					// Auto-reload after 2 seconds to show updated results.
