@@ -65,6 +65,8 @@ class Turbo_Guard_Admin {
 		add_action( 'wp_ajax_turbo_guard_gsc_disconnect', array( $this, 'ajax_gsc_disconnect' ) );
 		add_action( 'wp_ajax_turbo_guard_block_ip', array( $this, 'ajax_block_ip' ) );
 		add_action( 'wp_ajax_turbo_guard_unblock_ip', array( $this, 'ajax_unblock_ip' ) );
+		add_action( 'wp_ajax_turbo_guard_save_rate_limits', array( $this, 'ajax_save_rate_limits' ) );
+		add_action( 'wp_ajax_turbo_guard_toggle_rate_limiting', array( $this, 'ajax_toggle_rate_limiting' ) );
 
 		// Vulnerability scanner AJAX (standalone function defined at bottom of this file).
 		add_action( 'wp_ajax_turbo_guard_run_vuln_scan', 'turbo_guard_ajax_run_vuln_scan' );
@@ -359,12 +361,20 @@ class Turbo_Guard_Admin {
 			$blocked_ips = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 				"SELECT * FROM {$wpdb->prefix}turbo_guard_ip_blocklist ORDER BY id DESC"
 			);
-			$turbo_guard_cache_data = array( 'blocks' => $recent_blocks, 'ips' => $blocked_ips );
+			$recent_rate_limits = $wpdb->get_results( // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+				"SELECT * FROM {$wpdb->prefix}turbo_guard_rate_limit_log ORDER BY id DESC LIMIT 50"
+			);
+			$turbo_guard_cache_data = array(
+				'blocks'      => $recent_blocks,
+				'ips'         => $blocked_ips,
+				'rate_limits' => $recent_rate_limits,
+			);
 			wp_cache_set( $cache_key, $turbo_guard_cache_data, 'turbo_guard', 60 );
 		}
 
-		$turbo_guard_recent_blocks = $turbo_guard_cache_data['blocks'];
-		$turbo_guard_blocked_ips   = $turbo_guard_cache_data['ips'];
+		$turbo_guard_recent_blocks       = $turbo_guard_cache_data['blocks'];
+		$turbo_guard_blocked_ips         = $turbo_guard_cache_data['ips'];
+		$turbo_guard_recent_rate_limits  = isset( $turbo_guard_cache_data['rate_limits'] ) ? $turbo_guard_cache_data['rate_limits'] : array();
 
 		include TURBO_GUARD_PLUGIN_DIR . 'admin/views/firewall.php';
 	}
@@ -1118,6 +1128,66 @@ class Turbo_Guard_Admin {
 		} else {
 			wp_send_json_error( array( 'message' => __( 'Failed to unblock IP.', 'turbo-guard' ) ) );
 		}
+	}
+
+	/**
+	 * AJAX: Save firewall rate-limiting settings.
+	 *
+	 * @since 1.1.4
+	 */
+	public function ajax_save_rate_limits() {
+		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
+		}
+
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- verified via check_ajax_referer above.
+		$enabled = isset( $_POST['rate_limiting_enabled'] ) ? sanitize_text_field( wp_unslash( $_POST['rate_limiting_enabled'] ) ) : 'no';
+		$enabled = ( 'yes' === $enabled || '1' === $enabled || 'on' === $enabled ) ? 'yes' : 'no';
+
+		$limit      = isset( $_POST['rate_limit'] ) ? absint( $_POST['rate_limit'] ) : 120;
+		$limit      = min( 10000, max( 10, $limit ) );
+
+		$limit_404  = isset( $_POST['rate_limit_404'] ) ? absint( $_POST['rate_limit_404'] ) : 60;
+		$limit_404  = min( 10000, max( 5, $limit_404 ) );
+
+		$duration   = isset( $_POST['rate_limit_block_duration'] ) ? absint( $_POST['rate_limit_block_duration'] ) : 300;
+		$duration   = min( DAY_IN_SECONDS, max( 60, $duration ) );
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		update_option( 'turbo_guard_rate_limiting_enabled', $enabled );
+		update_option( 'turbo_guard_rate_limit', $limit );
+		update_option( 'turbo_guard_rate_limit_404', $limit_404 );
+		update_option( 'turbo_guard_rate_limit_block_duration', $duration );
+
+		wp_send_json_success( array( 'message' => __( 'Rate limiting settings saved.', 'turbo-guard' ) ) );
+	}
+
+	/**
+	 * AJAX: Toggle rate limiting on/off (persists immediately, no Save needed).
+	 *
+	 * @since 1.1.4
+	 */
+	public function ajax_toggle_rate_limiting() {
+		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified via check_ajax_referer above.
+		$enabled = isset( $_POST['enabled'] ) ? sanitize_text_field( wp_unslash( $_POST['enabled'] ) ) : 'no';
+		$enabled = ( 'yes' === $enabled || '1' === $enabled || 'true' === $enabled || 'on' === $enabled ) ? 'yes' : 'no';
+
+		update_option( 'turbo_guard_rate_limiting_enabled', $enabled );
+
+		wp_send_json_success( array(
+			'enabled' => ( 'yes' === $enabled ),
+			'message' => ( 'yes' === $enabled )
+				? __( 'Rate limiting enabled.', 'turbo-guard' )
+				: __( 'Rate limiting disabled.', 'turbo-guard' ),
+		) );
 	}
 
 	/**

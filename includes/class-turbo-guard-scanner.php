@@ -2650,18 +2650,148 @@ class Turbo_Guard_Scanner {
 	 * @return string IP address.
 	 */
 	public static function get_client_ip() {
-		$ip = '';
+		// ---------------------------------------------------------------------
+		// SECURITY: never trust client-supplied IP headers unconditionally.
+		// `X-Forwarded-For` and `HTTP_CLIENT_IP` are set by the client and can be
+		// spoofed to bypass rate limiting, brute-force lockout and the IP
+		// blocklist. By default only `REMOTE_ADDR` (set by the web server) is
+		// trusted. When WordPress sits behind a known proxy/CDN (Cloudflare,
+		// Sucuri, a reverse proxy, ...) the admin registers that proxy's IP/CIDR
+		// via the `turbo_guard_trusted_proxies` filter; only then are forwarded
+		// headers parsed.
+		// ---------------------------------------------------------------------
 
-		if ( ! empty( $_SERVER['HTTP_CLIENT_IP'] ) ) {
-			$ip = $_SERVER['HTTP_CLIENT_IP']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-		} elseif ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
-			// Could be comma-separated list.
-			$ips = explode( ',', $_SERVER['HTTP_X_FORWARDED_FOR'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
-			$ip  = trim( $ips[0] );
-		} elseif ( ! empty( $_SERVER['REMOTE_ADDR'] ) ) {
-			$ip = $_SERVER['REMOTE_ADDR']; // phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+		$remote_addr = isset( $_SERVER['REMOTE_ADDR'] ) ? wp_unslash( $_SERVER['REMOTE_ADDR'] ) : '';
+		$remote_addr = filter_var( $remote_addr, FILTER_VALIDATE_IP ) ? $remote_addr : '';
+
+		// Direct connection (or an untrusted peer): REMOTE_ADDR is authoritative.
+		if ( $remote_addr && ! self::is_trusted_proxy( $remote_addr ) ) {
+			return $remote_addr;
 		}
 
-		return filter_var( $ip, FILTER_VALIDATE_IP ) ? $ip : '';
+		// Behind a trusted proxy: walk the X-Forwarded-For chain right-to-left
+		// and return the first address that is NOT itself a trusted proxy (the
+		// real client). The rightmost entry is the one appended by the proxy
+		// closest to us; the leftmost is the original, spoofable client value.
+		if ( ! empty( $_SERVER['HTTP_X_FORWARDED_FOR'] ) ) {
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput
+			$chain = explode( ',', wp_unslash( $_SERVER['HTTP_X_FORWARDED_FOR'] ) );
+			for ( $i = count( $chain ) - 1; $i >= 0; $i-- ) {
+				$candidate = filter_var( trim( $chain[ $i ] ), FILTER_VALIDATE_IP );
+				if ( $candidate && ! self::is_trusted_proxy( $candidate ) ) {
+					return $candidate;
+				}
+			}
+		}
+
+		// No usable forwarded address — fall back to the peer address.
+		return $remote_addr;
+	}
+
+	/**
+	 * Whether an IP address belongs to a configured trusted proxy/CDN.
+	 *
+	 * Trusted proxies are registered via the `turbo_guard_trusted_proxies` filter
+	 * as an array of exact IPs or IPv4/IPv6 CIDR blocks, e.g.:
+	 *
+	 *     add_filter( 'turbo_guard_trusted_proxies', function () {
+	 *         return array( '173.245.48.0/20', '103.21.244.0/22' ); // Cloudflare.
+	 *     } );
+	 *
+	 * When empty (the default), only REMOTE_ADDR is trusted and no forwarded
+	 * header is ever honoured.
+	 *
+	 * @since 1.1.4
+	 * @param string $ip Client/peer IP address.
+	 * @return bool True if the IP is a trusted proxy.
+	 */
+	private static function is_trusted_proxy( $ip ) {
+		static $trusted = null;
+
+		if ( null === $trusted ) {
+			$trusted = array();
+			$rules   = (array) apply_filters( 'turbo_guard_trusted_proxies', array() );
+			foreach ( $rules as $rule ) {
+				$rule = trim( (string) $rule );
+				if ( '' !== $rule ) {
+					$trusted[] = $rule;
+				}
+			}
+		}
+
+		foreach ( $trusted as $rule ) {
+			if ( $ip === $rule ) {
+				return true;
+			}
+
+			// CIDR block, e.g. "192.168.0.0/16" or "2001:db8::/32".
+			if ( strpos( $rule, '/' ) !== false && self::ip_in_cidr_network( $ip, $rule ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Match an IP address against an IPv4 or IPv6 CIDR block.
+	 *
+	 * @since 1.1.4
+	 * @param string $ip   IP address.
+	 * @param string $cidr CIDR block, e.g. "10.0.0.0/8".
+	 * @return bool
+	 */
+	private static function ip_in_cidr_network( $ip, $cidr ) {
+		$parts = explode( '/', $cidr, 2 );
+		if ( 2 !== count( $parts ) ) {
+			return false;
+		}
+
+		list( $subnet, $bits ) = $parts;
+		$bits = absint( $bits );
+
+		// IPv4.
+		if ( false !== filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4 ) ) {
+			if ( $bits > 32 ) {
+				return false;
+			}
+			$ip_long  = ip2long( $ip );
+			$sub_long = ip2long( trim( $subnet ) );
+			if ( false === $ip_long || false === $sub_long ) {
+				return false;
+			}
+			$mask = $bits > 0 ? ( ~0 << ( 32 - $bits ) ) : 0;
+			return ( $ip_long & $mask ) === ( $sub_long & $mask );
+		}
+
+		// IPv6.
+		if ( false !== filter_var( $ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6 ) ) {
+			if ( $bits > 128 ) {
+				return false;
+			}
+			$ip_bin  = @inet_pton( $ip );
+			$sub_bin = @inet_pton( trim( $subnet ) );
+			if ( false === $ip_bin || false === $sub_bin ) {
+				return false;
+			}
+
+			$full_bytes = (int) floor( $bits / 8 );
+			$remain     = $bits % 8;
+
+			if ( $full_bytes > 0 && substr( $ip_bin, 0, $full_bytes ) !== substr( $sub_bin, 0, $full_bytes ) ) {
+				return false;
+			}
+			if ( $remain > 0 ) {
+				$mask = 0xff << ( 8 - $remain );
+				if ( ( ord( $ip_bin[ $full_bytes ] ) & $mask ) !== ( ord( $sub_bin[ $full_bytes ] ) & $mask ) ) {
+					return false;
+				}
+			}
+
+			return true;
+		}
+
+		return false;
 	}
 }

@@ -19,6 +19,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Turbo_Guard_Installer {
 
 	/**
+	 * Current database schema version.
+	 *
+	 * Bumped whenever a new table or schema change is introduced so the
+	 * `maybe_upgrade()` routine can migrate existing installs without a
+	 * full deactivate/reactivate.
+	 *
+	 * @since 1.1.4
+	 */
+	const DB_VERSION = '1.1.4';
+
+	/**
 	 * Run on plugin activation.
 	 *
 	 * @since 1.0.0
@@ -38,6 +49,25 @@ class Turbo_Guard_Installer {
 		Turbo_Guard_Hardening::write_uploads_htaccess();
 
 		flush_rewrite_rules();
+	}
+
+	/**
+	 * Migrate an existing install to the current schema when the DB version is
+	 * older than DB_VERSION. Runs on admin_init (idempotent) so new tables and
+	 * default options are applied without requiring a deactivate/reactivate.
+	 *
+	 * @since 1.1.4
+	 */
+	public static function maybe_upgrade() {
+		$installed = get_option( 'turbo_guard_db_version', '0' );
+
+		if ( version_compare( (string) $installed, self::DB_VERSION, '>=' ) ) {
+			return;
+		}
+
+		self::create_tables();
+		self::set_default_options();
+		update_option( 'turbo_guard_db_version', self::DB_VERSION );
 	}
 
 	/**
@@ -144,6 +174,19 @@ class Turbo_Guard_Installer {
 			KEY created_at (created_at)
 		) $charset_collate;";
 
+		// Rate limit log table (firewall throttling activity).
+		$sql_rate_limit = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}turbo_guard_rate_limit_log (
+			id bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+			ip_address varchar(45) NOT NULL,
+			rule_type varchar(20) NOT NULL DEFAULT 'requests',
+			requests int(11) UNSIGNED NOT NULL DEFAULT 0,
+			`limit` int(11) UNSIGNED NOT NULL DEFAULT 0,
+			created_at datetime DEFAULT CURRENT_TIMESTAMP,
+			PRIMARY KEY (id),
+			KEY ip_address (ip_address),
+			KEY created_at (created_at)
+		) $charset_collate;";
+
 		// Execute table creation.
 		dbDelta( $sql_scans );
 		dbDelta( $sql_results );
@@ -151,12 +194,13 @@ class Turbo_Guard_Installer {
 		dbDelta( $sql_blocklist );
 		dbDelta( $sql_events );
 		dbDelta( $sql_logins );
+		dbDelta( $sql_rate_limit );
 
 		// Note: The live traffic table (turbo_guard_traffic) is a Turbo Guard Pro
 		// feature and is created by the Pro add-on's own installer, not here.
 
 		// Update database version.
-		update_option( 'turbo_guard_db_version', '1.1.0' );
+		update_option( 'turbo_guard_db_version', self::DB_VERSION );
 	}
 
 	/**
@@ -191,6 +235,11 @@ class Turbo_Guard_Installer {
 			'turbo_guard_block_php_uploads'        => 'yes',
 			'turbo_guard_file_watcher_enabled'     => 'yes',
 			'turbo_guard_integrity_check_enabled'  => 'yes',
+			// v1.1.4 firewall rate-limiting defaults (recommended values).
+			'turbo_guard_rate_limiting_enabled'     => 'yes',
+			'turbo_guard_rate_limit'                => 120,
+			'turbo_guard_rate_limit_404'            => 60,
+			'turbo_guard_rate_limit_block_duration' => 300,
 		);
 
 		foreach ( $defaults as $key => $value ) {

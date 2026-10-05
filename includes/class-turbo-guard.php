@@ -45,6 +45,7 @@ class Turbo_Guard {
 	 */
 	private function __construct() {
 		$this->load_dependencies();
+		$this->init_security_components();
 		$this->init_hooks();
 	}
 
@@ -75,6 +76,25 @@ class Turbo_Guard {
 	}
 
 	/**
+	 * Initialize the real-time security components as early as possible.
+	 *
+	 * The firewall, bot protection and site hardening register their own hooks on
+	 * the `init` action at priority 1–2 (so they run before WordPress processes
+	 * the request). For those early hooks to actually fire, the components MUST be
+	 * instantiated BEFORE `init` starts — i.e. here, on `plugins_loaded` (the main
+	 * class is bootstrapped from `turbo_guard_init`). Instantiating them inside
+	 * `init_components()` (which itself runs on `init` at priority 10) would
+	 * register their priority-1/2 hooks too late, and they would never run.
+	 *
+	 * @since 1.1.4
+	 */
+	private function init_security_components() {
+		Turbo_Guard_Firewall::get_instance();
+		Turbo_Guard_Bot_Protection::get_instance();
+		Turbo_Guard_Hardening::get_instance();
+	}
+
+	/**
 	 * Initialize WordPress hooks.
 	 *
 	 * @since 1.0.0
@@ -88,6 +108,9 @@ class Turbo_Guard {
 
 		// Add plugin action links.
 		add_filter( 'plugin_action_links_' . TURBO_GUARD_PLUGIN_BASENAME, array( $this, 'add_action_links' ) );
+
+		// Run DB schema/option upgrades for existing installs (idempotent).
+		add_action( 'admin_init', array( $this, 'maybe_run_upgrades' ) );
 
 		// Clear the known-good file cache whenever plugins/themes change so the
 		// repository index stays fresh (prevents stale false positives/negatives).
@@ -112,26 +135,35 @@ class Turbo_Guard {
 	}
 
 	/**
+	 * Run schema/option upgrades for existing installs.
+	 *
+	 * Loads the installer lazily and calls its idempotent migration routine so
+	 * pre-existing installs pick up new tables (e.g. the rate-limit log) and
+	 * default options without a deactivate/reactivate cycle.
+	 *
+	 * @since 1.1.4
+	 */
+	public function maybe_run_upgrades() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			return;
+		}
+
+		require_once TURBO_GUARD_PLUGIN_DIR . 'includes/class-turbo-guard-installer.php';
+		Turbo_Guard_Installer::maybe_upgrade();
+	}
+
+	/**
 	 * Initialize plugin components.
 	 *
 	 * @since 1.0.0
 	 */
 	public function init_components() {
-		// Initialize firewall (must run early).
-		Turbo_Guard_Firewall::get_instance();
-
 		// Initialize login security + 2FA.
 		Turbo_Guard_Login_Security::get_instance();
 		Turbo_Guard_2FA::get_instance();
 
-		// Initialize site hardening.
-		Turbo_Guard_Hardening::get_instance();
-
 		// Initialize file integrity checker + file watcher.
 		Turbo_Guard_Integrity::get_instance();
-
-		// Initialize bot protection.
-		Turbo_Guard_Bot_Protection::get_instance();
 
 		// Initialize admin interface.
 		if ( is_admin() ) {

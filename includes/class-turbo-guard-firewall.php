@@ -30,6 +30,17 @@ class Turbo_Guard_Firewall {
 	private static $instance = null;
 
 	/**
+	 * Cached list of active IP blocklist rules (flat array of rule strings).
+	 *
+	 * Kept in a static so the blocklist is resolved at most once per request,
+	 * and in the object cache (when a persistent cache is installed) so it is
+	 * not re-queried on every page view. Cleared whenever the blocklist changes.
+	 *
+	 * @var array|null
+	 */
+	private static $blocklist_entries = null;
+
+	/**
 	 * Get instance.
 	 *
 	 * @since 1.0.0
@@ -55,6 +66,12 @@ class Turbo_Guard_Firewall {
 
 		add_action( 'init', array( $this, 'check_request' ), 1 );
 		add_action( 'wp_loaded', array( $this, 'cleanup_old_logs' ), 10 );
+
+		// 404 rate limiting — fires after WordPress resolves the request, which
+		// is the earliest point `is_404()` is reliable.
+		if ( $this->rate_limiting_enabled() ) {
+			add_action( 'template_redirect', array( $this, 'check_404_rate_limit' ), 1 );
+		}
 	}
 
 	/**
@@ -72,8 +89,12 @@ class Turbo_Guard_Firewall {
 			return;
 		}
 
-		// Rate limiting check.
-		if ( ! $is_admin && $this->is_rate_limited() ) {
+		// Rate limiting check — exempt ALL logged-in users. Bots and attackers
+		// are anonymous, so throttling is applied only to unauthenticated
+		// visitors. This prevents real, authenticated users (editors, shop
+		// managers, customers) from being locked out by heavy but legitimate
+		// browsing. Brute-force login protection is handled separately.
+		if ( ! is_user_logged_in() && $this->rate_limiting_enabled() && $this->is_rate_limited() ) {
 			$this->block_request( __( 'Too many requests - rate limit exceeded', 'turbo-guard' ) );
 			return;
 		}
@@ -114,30 +135,70 @@ class Turbo_Guard_Firewall {
 	 * @return bool True if blocked.
 	 */
 	private function is_ip_blocked() {
-		global $wpdb;
-
 		$ip = Turbo_Guard_Scanner::get_client_ip();
 		if ( ! $ip ) {
 			return false;
 		}
 
-		// Fetch all active blocklist entries.
-		$entries = $wpdb->get_results(
-			"SELECT ip_address FROM {$wpdb->prefix}turbo_guard_ip_blocklist
-			 WHERE (expires_at IS NULL OR expires_at > NOW())"
-		);
-
-		if ( empty( $entries ) ) {
-			return false;
-		}
-
-		foreach ( $entries as $entry ) {
-			if ( self::ip_matches_rule( $ip, $entry->ip_address ) ) {
+		// Rules are cached (see get_blocklist_entries()) so this loop runs
+		// against an in-memory/object-cached list instead of a fresh DB query.
+		foreach ( $this->get_blocklist_entries() as $ip_address ) {
+			if ( self::ip_matches_rule( $ip, $ip_address ) ) {
 				return true;
 			}
 		}
 
 		return false;
+	}
+
+	/**
+	 * Fetch the active IP blocklist rules, with caching.
+	 *
+	 * Returns a flat array of rule strings (exact IPs, CIDR, ranges, wildcards).
+	 * The result is cached in a static (once per request) and in the object cache
+	 * for 60 seconds when a persistent object cache is installed, so the firewall
+	 * does not perform a full-table scan on every page view. The cache is
+	 * invalidated immediately whenever the blocklist is modified.
+	 *
+	 * @since 1.1.4
+	 * @return string[] Active blocklist rules.
+	 */
+	private function get_blocklist_entries() {
+		if ( null !== self::$blocklist_entries ) {
+			return self::$blocklist_entries;
+		}
+
+		$cache_key = 'turbo_guard_blocklist';
+		$entries   = wp_cache_get( $cache_key, 'turbo_guard' );
+
+		if ( ! is_array( $entries ) ) {
+			global $wpdb;
+
+			$rows = $wpdb->get_col(
+				"SELECT ip_address FROM {$wpdb->prefix}turbo_guard_ip_blocklist
+				 WHERE (expires_at IS NULL OR expires_at > NOW())"
+			);
+
+			$entries = is_array( $rows ) ? $rows : array();
+			wp_cache_set( $cache_key, $entries, 'turbo_guard', 60 );
+		}
+
+		self::$blocklist_entries = $entries;
+
+		return self::$blocklist_entries;
+	}
+
+	/**
+	 * Invalidate the cached blocklist (static + object cache).
+	 *
+	 * Called after any block/unblock/expiry mutation so the next request sees the
+	 * updated list immediately.
+	 *
+	 * @since 1.1.4
+	 */
+	private static function clear_blocklist_cache() {
+		self::$blocklist_entries = null;
+		wp_cache_delete( 'turbo_guard_blocklist', 'turbo_guard' );
 	}
 
 	/**
@@ -237,7 +298,14 @@ class Turbo_Guard_Firewall {
 	}
 
 	/**
-	 * Rate limiting check (max 120 requests per minute per IP).
+	 * Rate limiting check for normal page requests.
+	 *
+	 * The requests-per-minute limit is configured on the Firewall screen
+	 * (default 120). Uses a true fixed 60-second window — not a self-renewing
+	 * sliding window, which under continuous traffic would never expire.
+	 * Prefers the object cache (Redis/Memcached) so a busy site does not pay a
+	 * database write on every request, and falls back to a transient only when
+	 * no persistent object cache is installed. Offenders are auto-blocked.
 	 *
 	 * @since 1.0.0
 	 * @return bool True if rate limit exceeded.
@@ -248,18 +316,159 @@ class Turbo_Guard_Firewall {
 			return false;
 		}
 
-		$transient_key = 'turbo_guard_rate_' . md5( $ip );
-		$requests      = get_transient( $transient_key );
+		$limit  = max( 1, absint( apply_filters( 'turbo_guard_rate_limit', get_option( 'turbo_guard_rate_limit', 120 ) ) ) );
+		$window = MINUTE_IN_SECONDS;
+		$key    = 'turbo_guard_rate_' . md5( $ip );
 
-		if ( false === $requests ) {
-			$requests = 0;
+		$result = $this->check_rate_window( $key, $window, $limit );
+
+		// On the exact request that crosses the limit, auto-block the IP for the
+		// configured duration so the offender stops hitting the WAF entirely.
+		if ( $result['crossed'] ) {
+			self::block_ip(
+				$ip,
+				__( 'Rate limit exceeded — too many requests per minute', 'turbo-guard' ),
+				$this->rate_limit_block_duration()
+			);
+			self::log_rate_limit( $ip, 'requests', $result['count'], $limit );
 		}
 
-		++$requests;
-		set_transient( $transient_key, $requests, MINUTE_IN_SECONDS );
+		return $result['exceeded'];
+	}
 
-		// Allow 120 requests per minute (2 per second average).
-		return $requests > 120;
+	/**
+	 * Whether rate limiting (and 404 throttling) is enabled.
+	 *
+	 * @since 1.1.4
+	 * @return bool
+	 */
+	private function rate_limiting_enabled() {
+		return 'yes' === get_option( 'turbo_guard_rate_limiting_enabled', 'yes' );
+	}
+
+	/**
+	 * How long (in seconds) an IP is auto-blocked when it breaks a rate limit.
+	 *
+	 * @since 1.1.4
+	 * @return int
+	 */
+	private function rate_limit_block_duration() {
+		return max( 60, absint( get_option( 'turbo_guard_rate_limit_block_duration', 300 ) ) );
+	}
+
+	/**
+	 * Advance a fixed-window request counter for the current IP.
+	 *
+	 * Uses a true fixed 60-second window — not a self-renewing sliding window,
+	 * which under continuous traffic would never expire. Prefers the object
+	 * cache (Redis/Memcached) so a busy site does not pay a database write on
+	 * every request, and falls back to a transient only when no persistent
+	 * object cache is installed.
+	 *
+	 * @since 1.1.4
+	 * @param string $key    Cache key for this counter.
+	 * @param int    $window Window size in seconds.
+	 * @param int    $limit  Requests allowed per window.
+	 * @return array { exceeded: bool, crossed: bool, count: int } crossed = this
+	 *               request pushed the counter over the limit; count = the
+	 *               current request count for the window.
+	 */
+	private function check_rate_window( $key, $window, $limit ) {
+		$state = wp_using_ext_object_cache()
+			? wp_cache_get( $key, 'turbo_guard' )
+			: get_transient( $key );
+
+		$now     = time();
+		$crossed = false;
+
+		if ( is_array( $state ) && ( $now - (int) $state['start'] ) < $window ) {
+			$previous = (int) $state['count'];
+			++$state['count'];
+			$crossed = ( $previous <= $limit && (int) $state['count'] > $limit );
+		} else {
+			// New window (or first request) — reset the counter.
+			$state = array(
+				'start' => $now,
+				'count' => 1,
+			);
+		}
+
+		if ( wp_using_ext_object_cache() ) {
+			wp_cache_set( $key, $state, 'turbo_guard', $window );
+		} else {
+			set_transient( $key, $state, $window );
+		}
+
+		return array(
+			'exceeded' => (int) $state['count'] > $limit,
+			'crossed'  => $crossed,
+			'count'    => (int) $state['count'],
+		);
+	}
+
+	/**
+	 * Throttle IPs that trigger an abnormal number of 404s per minute.
+	 *
+	 * Wordfence-style: a burst of requests for non-existent URLs is a hallmark
+	 * of scanners and bots. When an IP crosses the configured 404 limit it is
+	 * blocked for the configured duration.
+	 *
+	 * @since 1.1.4
+	 */
+	public function check_404_rate_limit() {
+		// Only act on genuine 404s from anonymous visitors — never throttle
+		// logged-in users (they are authenticated and trusted).
+		if ( ! is_404() || is_user_logged_in() ) {
+			return;
+		}
+
+		$ip = Turbo_Guard_Scanner::get_client_ip();
+		if ( ! $ip ) {
+			return;
+		}
+
+		$limit  = max( 1, absint( apply_filters( 'turbo_guard_rate_limit_404', get_option( 'turbo_guard_rate_limit_404', 60 ) ) ) );
+		$window = MINUTE_IN_SECONDS;
+		$key    = 'turbo_guard_rate404_' . md5( $ip );
+
+		$result = $this->check_rate_window( $key, $window, $limit );
+
+		if ( $result['crossed'] ) {
+			self::block_ip(
+				$ip,
+				__( 'Too many 404 requests — possible scanner', 'turbo-guard' ),
+				$this->rate_limit_block_duration()
+			);
+			self::log_rate_limit( $ip, '404', $result['count'], $limit );
+		}
+
+		if ( $result['exceeded'] ) {
+			$this->block_request( __( 'Too many 404 requests - rate limit exceeded', 'turbo-guard' ) );
+		}
+	}
+
+	/**
+	 * Record a rate-limit violation for the Firewall activity log.
+	 *
+	 * @since 1.1.4
+	 * @param string $ip       Client IP.
+	 * @param string $rule     'requests' or '404'.
+	 * @param int    $requests Number of requests made in the window.
+	 * @param int    $limit    Configured limit.
+	 */
+	private static function log_rate_limit( $ip, $rule, $requests, $limit ) {
+		global $wpdb;
+
+		$wpdb->insert(
+			$wpdb->prefix . 'turbo_guard_rate_limit_log',
+			array(
+				'ip_address' => $ip,
+				'rule_type'  => sanitize_key( $rule ),
+				'requests'   => absint( $requests ),
+				'limit'      => absint( $limit ),
+			),
+			array( '%s', '%s', '%d', '%d' )
+		);
 	}
 
 	/**
@@ -485,6 +694,9 @@ class Turbo_Guard_Firewall {
 			array( '%s', '%s', '%s' )
 		);
 
+		// Reflect the change immediately for the current and future requests.
+		self::clear_blocklist_cache();
+
 		if ( $inserted ) {
 			Turbo_Guard_Scanner::log_event(
 				'ip_blocked',
@@ -521,15 +733,27 @@ class Turbo_Guard_Firewall {
 			array( '%s' )
 		);
 
+		if ( $deleted ) {
+			self::clear_blocklist_cache();
+		}
+
 		return (bool) $deleted;
 	}
 
 	/**
 	 * Cleanup old firewall logs (keep last 30 days).
 	 *
+	 * Gated by a 24-hour transient so the two DELETE statements run at most once
+	 * per day, instead of on every single page view.
+	 *
 	 * @since 1.0.0
 	 */
 	public function cleanup_old_logs() {
+		if ( get_transient( 'turbo_guard_cleanup_lock' ) ) {
+			return;
+		}
+		set_transient( 'turbo_guard_cleanup_lock', 1, DAY_IN_SECONDS );
+
 		global $wpdb;
 
 		$wpdb->query(
@@ -542,5 +766,8 @@ class Turbo_Guard_Firewall {
 			"DELETE FROM {$wpdb->prefix}turbo_guard_ip_blocklist
 			 WHERE expires_at IS NOT NULL AND expires_at < NOW()"
 		);
+
+		// Expired entries are gone — refresh the cached list on the next read.
+		self::clear_blocklist_cache();
 	}
 }

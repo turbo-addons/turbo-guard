@@ -41,6 +41,13 @@
 			// Firewall: block IP from form.
 			$( '#turbo-guard-block-ip-form' ).on( 'submit', $.proxy( this.blockIp, this ) );
 
+			// Firewall: rate limiting settings.
+			$( '#turbo-guard-rate-limit-form' ).on( 'submit', $.proxy( this.saveRateLimits, this ) );
+
+			// Firewall: rate limiting toggle show/hide the limit fields.
+			this.toggleRateLimitFields();
+			$( '#turbo-guard-rate-limit-enabled' ).on( 'change', $.proxy( this.onRateLimitToggle, this ) );
+
 			// Firewall: unblock IP button.
 			$( document ).on( 'click', '.turbo-guard-unblock-ip', $.proxy( this.unblockIp, this ) );
 
@@ -728,6 +735,94 @@
 						} else {
 							alert( 'Error: ' + (response.data ? response.data.message : 'Could not unblock IP') );
 						}
+					}
+				}
+			);
+		},
+
+		/**
+		 * Show/hide the rate-limit fields based on the master toggle.
+		 */
+		toggleRateLimitFields: function () {
+			var enabled = $( '#turbo-guard-rate-limit-enabled' ).is( ':checked' );
+			$( '.turbo-guard-rate-limit-field' ).toggle( enabled );
+		},
+
+		/**
+		 * Handle the master toggle: update field visibility and persist the
+		 * on/off state immediately (no Save click required).
+		 */
+		onRateLimitToggle: function () {
+			var self    = this;
+			var enabled = $( '#turbo-guard-rate-limit-enabled' ).is( ':checked' );
+			var $status = $( '#turbo-guard-rate-limit-toggle-status' );
+
+			this.toggleRateLimitFields();
+			$status.text( 'Saving...' );
+
+			$.ajax(
+				{
+					url:  turboGuardAdmin.ajaxUrl,
+					type: 'POST',
+					data: {
+						action:  'turbo_guard_toggle_rate_limiting',
+						nonce:   turboGuardAdmin.nonce,
+						enabled: enabled ? 'yes' : 'no'
+					},
+					success: function (response) {
+						if (response.success) {
+							$status.text( response.data.message );
+							setTimeout( function () { $status.text( '' ); }, 2500 );
+						} else {
+							$status.text( (response.data ? response.data.message : 'Save failed.') );
+							$( '#turbo-guard-rate-limit-enabled' ).prop( 'checked', ! enabled );
+							self.toggleRateLimitFields();
+						}
+					},
+					error: function () {
+						$status.text( 'Save failed.' );
+						$( '#turbo-guard-rate-limit-enabled' ).prop( 'checked', ! enabled );
+						self.toggleRateLimitFields();
+					}
+				}
+			);
+		},
+
+		/**
+		 * Save firewall rate-limiting settings.
+		 */
+		saveRateLimits: function (e) {
+			e.preventDefault();
+
+			var $btn    = $( '#turbo-guard-rate-limit-form button[type="submit"]' );
+			var $result = $( '#turbo-guard-rate-limit-result' );
+
+			$btn.prop( 'disabled', true ).text( 'Saving...' );
+			$result.removeClass( 'notice notice-success notice-error' ).text( '' );
+
+			$.ajax(
+				{
+					url:  turboGuardAdmin.ajaxUrl,
+					type: 'POST',
+					data: {
+						action:                    'turbo_guard_save_rate_limits',
+						nonce:                     turboGuardAdmin.nonce,
+						rate_limiting_enabled:     $( '#turbo-guard-rate-limit-form input[name="rate_limiting_enabled"]' ).is( ':checked' ) ? 'yes' : 'no',
+						rate_limit:                $( '#turbo-guard-rate-limit' ).val(),
+						rate_limit_404:            $( '#turbo-guard-rate-limit-404' ).val(),
+						rate_limit_block_duration: $( '#turbo-guard-rate-limit-duration' ).val()
+					},
+					success: function (response) {
+						$btn.prop( 'disabled', false ).text( 'Save Rate Limiting' );
+						if (response.success) {
+							$result.addClass( 'notice notice-success' ).text( response.data.message );
+						} else {
+							$result.addClass( 'notice notice-error' ).text( (response.data ? response.data.message : 'Could not save rate limiting settings.') );
+						}
+					},
+					error: function () {
+						$btn.prop( 'disabled', false ).text( 'Save Rate Limiting' );
+						$result.addClass( 'notice notice-error' ).text( 'Request failed.' );
 					}
 				}
 			);

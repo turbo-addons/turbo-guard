@@ -44,6 +44,64 @@ if ( ! defined( 'ABSPATH' ) ) {
 		</div>
 	</div>
 
+	<!-- Rate Limiting Settings -->
+	<div class="turbo-guard-card">
+		<div class="turbo-guard-card-header">
+			<h2><?php esc_html_e( 'Rate Limiting', 'turbo-guard' ); ?></h2>
+		</div>
+		<?php
+		$turbo_guard_rl_enabled  = 'yes' === get_option( 'turbo_guard_rate_limiting_enabled', 'yes' );
+		$turbo_guard_rl_limit    = absint( get_option( 'turbo_guard_rate_limit', 120 ) );
+		$turbo_guard_rl_404      = absint( get_option( 'turbo_guard_rate_limit_404', 60 ) );
+		$turbo_guard_rl_duration = absint( get_option( 'turbo_guard_rate_limit_block_duration', 300 ) );
+		?>
+		<p class="description">
+			<?php esc_html_e( 'Throttle IPs that make an abnormally high number of requests, then auto-block them for the duration below. Recommended values are shown next to each field.', 'turbo-guard' ); ?>
+		</p>
+
+		<form id="turbo-guard-rate-limit-form">
+			<table class="form-table" role="presentation">
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Rate Limiting', 'turbo-guard' ); ?></th>
+					<td>
+						<label class="turbo-guard-toggle">
+							<input type="checkbox" id="turbo-guard-rate-limit-enabled" name="rate_limiting_enabled" value="yes" <?php checked( $turbo_guard_rl_enabled ); ?> />
+							<span class="turbo-guard-toggle-slider" aria-hidden="true"></span>
+							<span class="turbo-guard-toggle-label"><?php esc_html_e( 'Block IPs that exceed the limits below', 'turbo-guard' ); ?></span>
+						</label>
+						<span id="turbo-guard-rate-limit-toggle-status" class="description" style="margin-left:8px;"></span>
+					</td>
+				</tr>
+				<tr class="turbo-guard-rate-limit-field">
+					<th scope="row"><label for="turbo-guard-rate-limit"><?php esc_html_e( 'Requests per minute', 'turbo-guard' ); ?></label></th>
+					<td>
+						<input type="number" id="turbo-guard-rate-limit" name="rate_limit" value="<?php echo esc_attr( $turbo_guard_rl_limit ); ?>" min="10" max="10000" class="small-text" />
+						<p class="description"><?php esc_html_e( 'Recommended: 120. A normal visitor rarely exceeds this.', 'turbo-guard' ); ?></p>
+					</td>
+				</tr>
+				<tr class="turbo-guard-rate-limit-field">
+					<th scope="row"><label for="turbo-guard-rate-limit-404"><?php esc_html_e( '404s per minute', 'turbo-guard' ); ?></label></th>
+					<td>
+						<input type="number" id="turbo-guard-rate-limit-404" name="rate_limit_404" value="<?php echo esc_attr( $turbo_guard_rl_404 ); ?>" min="5" max="10000" class="small-text" />
+						<p class="description"><?php esc_html_e( 'Recommended: 60. Scanners hit many missing URLs in bursts.', 'turbo-guard' ); ?></p>
+					</td>
+				</tr>
+				<tr class="turbo-guard-rate-limit-field">
+					<th scope="row"><label for="turbo-guard-rate-limit-duration"><?php esc_html_e( 'Block duration (seconds)', 'turbo-guard' ); ?></label></th>
+					<td>
+						<input type="number" id="turbo-guard-rate-limit-duration" name="rate_limit_block_duration" value="<?php echo esc_attr( $turbo_guard_rl_duration ); ?>" min="60" max="<?php echo esc_attr( DAY_IN_SECONDS ); ?>" class="small-text" />
+						<p class="description"><?php esc_html_e( 'Recommended: 300 (5 minutes). How long a violator stays blocked.', 'turbo-guard' ); ?></p>
+					</td>
+				</tr>
+			</table>
+			<p class="turbo-guard-rate-limit-field">
+				<input type="hidden" name="nonce" value="<?php echo esc_attr( wp_create_nonce( 'turbo_guard_admin' ) ); ?>" />
+				<button type="submit" class="button button-primary"><?php esc_html_e( 'Save Rate Limiting', 'turbo-guard' ); ?></button>
+				<span id="turbo-guard-rate-limit-result" style="margin-left:10px;"></span>
+			</p>
+		</form>
+	</div>
+
 	<!-- Blocked IPs -->
 	<div class="turbo-guard-card">
 		<div class="turbo-guard-card-header">
@@ -134,6 +192,60 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</table>
 		<?php else : ?>
 			<p><?php esc_html_e( 'No blocked requests logged yet.', 'turbo-guard' ); ?></p>
+		<?php endif; ?>
+	</div>
+
+	<!-- Recent Rate Limiting Activity -->
+	<div class="turbo-guard-card">
+		<h2><?php esc_html_e( 'Recent Rate Limiting', 'turbo-guard' ); ?></h2>
+		<?php if ( ! empty( $turbo_guard_recent_rate_limits ) ) : ?>
+			<table class="widefat striped">
+				<thead>
+					<tr>
+						<th><?php esc_html_e( 'Time', 'turbo-guard' ); ?></th>
+						<th><?php esc_html_e( 'IP Address', 'turbo-guard' ); ?></th>
+						<th><?php esc_html_e( 'Rule', 'turbo-guard' ); ?></th>
+						<th><?php esc_html_e( 'Requests', 'turbo-guard' ); ?></th>
+						<th><?php esc_html_e( 'Actions', 'turbo-guard' ); ?></th>
+					</tr>
+				</thead>
+				<tbody>
+					<?php foreach ( $turbo_guard_recent_rate_limits as $turbo_guard_rate_limit_row ) : ?>
+						<tr>
+							<td><?php echo esc_html( human_time_diff( strtotime( $turbo_guard_rate_limit_row->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?></td>
+							<td><code><?php echo esc_html( $turbo_guard_rate_limit_row->ip_address ); ?></code></td>
+							<td>
+								<?php
+								if ( '404' === $turbo_guard_rate_limit_row->rule_type ) {
+									esc_html_e( '404s per minute', 'turbo-guard' );
+								} else {
+									esc_html_e( 'Requests per minute', 'turbo-guard' );
+								}
+								?>
+							</td>
+							<td>
+								<?php
+								printf(
+									/* translators: 1: requests made, 2: configured limit */
+									esc_html__( '%1$d / %2$d', 'turbo-guard' ),
+									(int) $turbo_guard_rate_limit_row->requests,
+									(int) $turbo_guard_rate_limit_row->limit
+								);
+								?>
+							</td>
+							<td>
+								<button class="button button-small turbo-guard-block-from-log"
+									data-ip="<?php echo esc_attr( $turbo_guard_rate_limit_row->ip_address ); ?>"
+									data-nonce="<?php echo esc_attr( wp_create_nonce( 'turbo_guard_admin' ) ); ?>">
+									<?php esc_html_e( 'Block IP', 'turbo-guard' ); ?>
+								</button>
+							</td>
+						</tr>
+					<?php endforeach; ?>
+				</tbody>
+			</table>
+		<?php else : ?>
+			<p><?php esc_html_e( 'No rate-limiting events yet. IPs that exceed the limits will appear here and be auto-blocked.', 'turbo-guard' ); ?></p>
 		<?php endif; ?>
 	</div>
 </div>

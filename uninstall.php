@@ -25,6 +25,7 @@ if ( $turbo_guard_remove_data ) {
 		$wpdb->prefix . 'turbo_guard_ip_blocklist',
 		$wpdb->prefix . 'turbo_guard_events',
 		$wpdb->prefix . 'turbo_guard_login_attempts',
+		$wpdb->prefix . 'turbo_guard_rate_limit_log',
 	);
 
 	foreach ( $turbo_guard_tables as $turbo_guard_table ) {
