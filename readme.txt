@@ -3,7 +3,7 @@ Contributors: turboaddons, siraji2017, sharifok
 Tags: security, malware, scanner, firewall, 2fa
 Requires at least: 5.6
 Tested up to: 7.1
-Stable tag: 1.1.3
+Stable tag: 1.1.4
 Requires PHP: 7.4
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -201,6 +201,11 @@ Used for Google Search Console integration to detect SEO spam and manage indexed
 * Privacy Policy: https://policies.google.com/privacy
 
 == Changelog ==
+
+= 1.1.4 =
+* Firewall: inspect raw JSON/XML request bodies and cookies, so REST API and headless payloads are no longer a blind spot
+* Firewall: reduced false positives on the SQL-injection and XSS signatures (hex-colour and "1=1" prose no longer trigger blocks)
+
 
 = 1.1.3 =
 * Fixed: scanner flagged its own backup copies as C99 shell

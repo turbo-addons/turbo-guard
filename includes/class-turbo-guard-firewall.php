@@ -41,6 +41,13 @@ class Turbo_Guard_Firewall {
 	private static $blocklist_entries = null;
 
 	/**
+	 * Cached raw request body (read at most once per request).
+	 *
+	 * @var string|null
+	 */
+	private static $raw_body = null;
+
+	/**
 	 * Get instance.
 	 *
 	 * @since 1.0.0
@@ -472,6 +479,113 @@ class Turbo_Guard_Firewall {
 	}
 
 	/**
+	 * Build the flat list of request values inspected by the WAF.
+	 *
+	 * Covers $_GET, $_POST, $_COOKIE, and the raw request body (JSON, XML and
+	 * other unparsed payloads). Headers are excluded by default because they are
+	 * far more prone to false positives (user-agent, referer, etc.); a Pro
+	 * add-on can opt specific headers in via the `turbo_guard_inspect_headers`
+	 * filter.
+	 *
+	 * @since 1.1.5
+	 * @return string[] Flat list of scalar string values to inspect.
+	 */
+	private function get_inspection_values() {
+		// phpcs:disable WordPress.Security.NonceVerification, WordPress.Security.ValidatedSanitizedInput -- WAF inspects raw request data for attack patterns; not a state-changing form action.
+		$values = array();
+
+		foreach ( array( $_GET, $_POST, $_COOKIE ) as $source ) {
+			$this->flatten_values( $source, $values );
+		}
+
+		$raw = $this->get_raw_body();
+		if ( '' !== $raw ) {
+			$values[] = $raw;
+
+			// Inspect the decoded JSON structure too, so nested strings are seen
+			// individually and not just as one serialized blob.
+			$decoded = json_decode( $raw, true );
+			if ( is_array( $decoded ) ) {
+				$this->flatten_values( $decoded, $values );
+			}
+		}
+
+		foreach ( (array) apply_filters( 'turbo_guard_inspect_headers', array() ) as $header ) {
+			$key = 'HTTP_' . strtoupper( str_replace( '-', '_', (string) $header ) );
+			if ( isset( $_SERVER[ $key ] ) ) {
+				$values[] = wp_unslash( $_SERVER[ $key ] );
+			}
+		}
+		// phpcs:enable
+
+		return $values;
+	}
+
+	/**
+	 * Recursively collect scalar string values from a mixed structure.
+	 *
+	 * @since 1.1.5
+	 * @param mixed $value Array, object or scalar to flatten.
+	 * @param array $out   Accumulator (passed by reference).
+	 */
+	private function flatten_values( $value, &$out ) {
+		if ( is_string( $value ) ) {
+			$out[] = $value;
+			return;
+		}
+
+		if ( is_array( $value ) || is_object( $value ) ) {
+			foreach ( (array) $value as $child ) {
+				$this->flatten_values( $child, $out );
+			}
+		}
+	}
+
+	/**
+	 * Fetch the raw request body once per request.
+	 *
+	 * WordPress does not mirror application/json (REST/headless) or XML bodies
+	 * into $_POST, so those requests would otherwise bypass every signature
+	 * below. The body is read once, cached in a static, and capped to a sane
+	 * size so an attacker cannot exhaust memory with an oversized payload.
+	 *
+	 * @since 1.1.5
+	 * @return string Raw request body (empty when there is nothing to inspect).
+	 */
+	private function get_raw_body() {
+		if ( null !== self::$raw_body ) {
+			return self::$raw_body;
+		}
+
+		self::$raw_body = '';
+
+		// Skip immediately when there is no body, so we never read php://input
+		// on ordinary GET page views.
+		if ( empty( $_SERVER['CONTENT_LENGTH'] ) || absint( $_SERVER['CONTENT_LENGTH'] ) <= 0 ) {
+			return self::$raw_body;
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput -- WAF inspects raw request data.
+		$content_type = isset( $_SERVER['CONTENT_TYPE'] )
+			? strtolower( sanitize_text_field( wp_unslash( $_SERVER['CONTENT_TYPE'] ) ) )
+			: '';
+
+		// Form-encoded and multipart bodies are already parsed into $_POST (and
+		// multipart is not readable via php://input), so only raw bodies need
+		// explicit reading.
+		if ( false !== strpos( $content_type, 'multipart/' )
+			|| false !== strpos( $content_type, 'application/x-www-form-urlencoded' ) ) {
+			return self::$raw_body;
+		}
+
+		$max_bytes = (int) apply_filters( 'turbo_guard_max_body_inspect_bytes', 1048576 );
+		$body      = @file_get_contents( 'php://input', false, null, 0, $max_bytes ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+		self::$raw_body = is_string( $body ) ? $body : '';
+
+		return self::$raw_body;
+	}
+
+	/**
 	 * Detect SQL injection patterns in request.
 	 *
 	 * @since 1.0.0
@@ -479,28 +593,23 @@ class Turbo_Guard_Firewall {
 	 */
 	private function detect_sql_injection() {
 		$patterns = array(
-			'/(\bUNION\b.*\bSELECT\b)/i',
-			'/(\bSELECT\b.*\bFROM\b.*\bWHERE\b)/i',
-			'/(\bINSERT\b.*\bINTO\b.*\bVALUES\b)/i',
-			'/(\bUPDATE\b.*\bSET\b)/i',
-			'/(\bDELETE\b.*\bFROM\b)/i',
-			'/(\bDROP\b.*\bTABLE\b)/i',
-			'/(\bSHOW\b.*\bTABLES\b)/i',
-			'/(\bOR\b.*1\s*=\s*1)/i',
-			'/(\bAND\b.*1\s*=\s*1)/i',
+			'/(\bUNION\b[\s\S]*\bSELECT\b)/i',
+			'/(\bSELECT\b[\s\S]*\bFROM\b[\s\S]*\bWHERE\b)/i',
+			'/(\bINSERT\b[\s\S]*\bINTO\b[\s\S]*\bVALUES\b)/i',
+			'/(\bUPDATE\b[\s\S]*\bSET\b)/i',
+			'/(\bDELETE\b[\s\S]*\bFROM\b)/i',
+			'/(\bDROP\b[\s\S]*\bTABLE\b)/i',
+			'/(\bSHOW\b[\s\S]*\bTABLES\b)/i',
+			"/(\bor\b\s*['\"]?\d+['\"]?\s*=\s*['\"]?\d+)/i",
+			"/(\band\b\s*['\"]?\d+['\"]?\s*=\s*['\"]?\d+)/i",
 			'/(\bEXEC\b\s*\()/i',
-			'/(CONCAT\s*\(.*CHAR)/i',
-			'/0x[0-9a-f]{2,}/i', // Hex encoding.
+			'/(\bCONCAT\s*\([\s\S]*\bCHAR\s*\()/i',
+			"/(['\"`])\s*0x[0-9a-f]{2,}/i",
+			'/(\bCHAR\s*\(\s*0x[0-9a-f]{2,})/i',
+			'/\b0x[0-9a-f]{10,}\b/i',
 		);
 
-		// phpcs:ignore WordPress.Security.NonceVerification -- WAF inspects raw request data for attack patterns; not a state-changing form action.
-		$check_vars = array_merge( $_GET, $_POST );
-
-		foreach ( $check_vars as $value ) {
-			if ( ! is_string( $value ) ) {
-				continue;
-			}
-
+		foreach ( $this->get_inspection_values() as $value ) {
 			foreach ( $patterns as $pattern ) {
 				if ( preg_match( $pattern, $value ) ) {
 					return true;
@@ -527,14 +636,9 @@ class Turbo_Guard_Firewall {
 			'/<object[^>]*>/i',
 		);
 
-		// phpcs:ignore WordPress.Security.NonceVerification -- WAF inspects raw request data for attack patterns; not a state-changing form action.
-		$check_vars = array_merge( $_GET, $_POST );
-
-		foreach ( $check_vars as $value ) {
-			if ( ! is_string( $value ) ) {
-				continue;
-			}
-
+		foreach ( $this->get_inspection_values() as $value ) {
+			// Normalize a single round of URL encoding so percent-encoded
+			// payloads are still seen, then match against the signatures.
 			$decoded = urldecode( $value );
 			foreach ( $patterns as $pattern ) {
 				if ( preg_match( $pattern, $decoded ) ) {
@@ -560,9 +664,8 @@ class Turbo_Guard_Firewall {
 		}
 
 		// phpcs:ignore WordPress.Security.NonceVerification -- WAF inspects raw request data for attack patterns; not a state-changing form action.
-		$check_vars = array_merge( $_GET, $_POST );
-		foreach ( $check_vars as $value ) {
-			if ( is_string( $value ) && preg_match( '/(\.\.[\/\\\\]){2,}/', $value ) ) {
+		foreach ( $this->get_inspection_values() as $value ) {
+			if ( preg_match( '/(\.\.[\/\\\\]){2,}/', $value ) ) {
 				return true;
 			}
 		}
