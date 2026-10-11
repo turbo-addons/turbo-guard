@@ -27,7 +27,7 @@ class Turbo_Guard_Installer {
 	 *
 	 * @since 1.1.4
 	 */
-	const DB_VERSION = '1.1.4';
+	const DB_VERSION = '1.1.5';
 
 	/**
 	 * Run on plugin activation.
@@ -67,6 +67,16 @@ class Turbo_Guard_Installer {
 
 		self::create_tables();
 		self::set_default_options();
+
+		// v1.1.5 migration: "weekly" was never a valid WordPress cron interval,
+		// so any site that selected it ended up with no scheduled scan at all.
+		// Normalize it back to "daily" and re-schedule so automatic scans fire.
+		if ( 'weekly' === get_option( 'turbo_guard_scan_schedule', 'daily' ) ) {
+			update_option( 'turbo_guard_scan_schedule', 'daily' );
+			wp_clear_scheduled_hook( 'turbo_guard_scheduled_scan' );
+			wp_schedule_event( time(), 'daily', 'turbo_guard_scheduled_scan' );
+		}
+
 		update_option( 'turbo_guard_db_version', self::DB_VERSION );
 	}
 
@@ -212,6 +222,8 @@ class Turbo_Guard_Installer {
 		$defaults = array(
 			'turbo_guard_scan_enabled'             => 'yes',
 			'turbo_guard_scan_schedule'            => 'daily',
+			'turbo_guard_scan_images'              => 'no',
+			'turbo_guard_scan_outside_wp'          => 'no',
 			'turbo_guard_firewall_enabled'         => 'yes',
 			'turbo_guard_login_security_enabled'   => 'yes',
 			'turbo_guard_brute_force_protection'   => 'yes',
@@ -220,7 +232,6 @@ class Turbo_Guard_Installer {
 			'turbo_guard_notify_admin_email'       => get_option( 'admin_email' ),
 			'turbo_guard_notify_on_threats'        => 'yes',
 			'turbo_guard_notify_on_scan_complete'  => 'no',
-			'turbo_guard_quarantine_malware'       => 'yes',
 			'turbo_guard_remove_data_on_uninstall' => 'no',
 			// v1.1.0 defaults.
 			'turbo_guard_2fa_enabled_global'       => 'yes',

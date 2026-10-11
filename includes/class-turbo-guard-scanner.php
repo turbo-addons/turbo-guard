@@ -514,21 +514,10 @@ class Turbo_Guard_Scanner {
 
 		$this->scan_id = absint( $scan_id );
 
-		// Get all files — include parent directory if "scan outside WP" is enabled.
-		$all_files = $this->get_all_files( ABSPATH );
-
-		// Scan outside WordPress root (like Wordfence's "Scan files outside your
-		// WordPress installation" option). Catches cPanel-level injected files
-		// that are above the public_html/WordPress directory.
-		if ( get_option( 'turbo_guard_scan_outside_wp', false ) ) {
-			$parent = dirname( ABSPATH );
-			if ( $parent && $parent !== ABSPATH && is_readable( $parent ) ) {
-				// Only scan PHP/image files in the parent dir (not recursive
-				// into sibling sites) — just the immediate parent level.
-				$parent_files = $this->get_parent_dir_files( $parent );
-				$all_files    = array_merge( $all_files, $parent_files );
-			}
-		}
+		// Get the (cached) list of files to scan. Building this list walks the
+		// whole filesystem tree, so it is computed once per scan and cached in a
+		// transient — without this every AJAX chunk would re-walk the entire tree.
+		$all_files = $this->get_file_list_for_scan( $this->scan_id );
 
 		$total     = count( $all_files );
 		$chunk     = array_slice( $all_files, $offset, $chunk_size );
@@ -585,7 +574,13 @@ class Turbo_Guard_Scanner {
 			);
 
 			delete_transient( 'turbo_guard_running_scan_id' );
+			delete_transient( self::get_file_list_cache_key( $this->scan_id ) );
 			self::log_event( 'scan_completed', 'info', __( 'Malware scan completed (files + database).', 'turbo-guard' ) );
+			self::send_scan_notifications( $this->scan_id );
+
+			// Notify the Pro add-on (AI analysis, etc.) — fired once per completed
+			// scan, from both the manual AJAX path and the scheduled cron path.
+			do_action( 'turbo_guard_scan_completed', $this->scan_id );
 		}
 
 		return array(
@@ -1732,6 +1727,56 @@ class Turbo_Guard_Scanner {
 	}
 
 	/**
+	 * Transient key used to cache the file list for a scan.
+	 *
+	 * @since 1.1.5
+	 * @param int $scan_id Scan ID.
+	 * @return string Transient key.
+	 */
+	private static function get_file_list_cache_key( $scan_id ) {
+		return 'turbo_guard_scan_files_' . absint( $scan_id );
+	}
+
+	/**
+	 * Get the full list of files to scan, cached per scan.
+	 *
+	 * Walking the entire filesystem tree is expensive, so the result is computed
+	 * once per scan and stored in a transient. Every chunk of the same scan
+	 * (AJAX or cron) then reuses the cached list instead of re-walking the tree.
+	 *
+	 * @since 1.1.5
+	 * @param int $scan_id Scan ID.
+	 * @return array List of file paths.
+	 */
+	private function get_file_list_for_scan( $scan_id ) {
+		$cache_key = self::get_file_list_cache_key( $scan_id );
+		$all_files = get_transient( $cache_key );
+
+		if ( is_array( $all_files ) ) {
+			return $all_files;
+		}
+
+		$all_files = $this->get_all_files( ABSPATH );
+
+		// Scan outside WordPress root (like Wordfence's "Scan files outside your
+		// WordPress installation" option). Catches cPanel-level injected files
+		// that are above the public_html/WordPress directory.
+		if ( 'yes' === get_option( 'turbo_guard_scan_outside_wp', 'no' ) ) {
+			$parent = dirname( ABSPATH );
+			if ( $parent && $parent !== ABSPATH && is_readable( $parent ) ) {
+				// Only scan PHP/image files in the parent dir (not recursive
+				// into sibling sites) — just the immediate parent level.
+				$parent_files = $this->get_parent_dir_files( $parent );
+				$all_files    = array_merge( $all_files, $parent_files );
+			}
+		}
+
+		set_transient( $cache_key, $all_files, HOUR_IN_SECONDS );
+
+		return $all_files;
+	}
+
+	/**
 	 * Get all files to scan recursively.
 	 *
 	 * @since 1.0.0
@@ -1821,7 +1866,7 @@ class Turbo_Guard_Scanner {
 					         || ( $wp_inc_real && strpos( $img_norm, $wp_inc_real . '/' ) === 0 );
 
 					// Scan setting check: scan all images if option enabled.
-					$scan_all_images = get_option( 'turbo_guard_scan_images', false );
+					$scan_all_images = ( 'yes' === get_option( 'turbo_guard_scan_images', 'no' ) );
 
 					if ( ! $skip_image && ( $in_uploads || $in_maintenance || $in_core || $scan_all_images ) ) {
 						$files[] = $file->getPathname();
@@ -2113,6 +2158,103 @@ class Turbo_Guard_Scanner {
 			 ORDER BY id DESC
 			 LIMIT 1"
 		);
+	}
+
+	/**
+	 * Get the current status of a scan.
+	 *
+	 * @since 1.1.5
+	 * @param int $scan_id Scan ID.
+	 * @return string Status ('running', 'completed', ...) or empty string if not found.
+	 */
+	public static function get_scan_status( $scan_id ) {
+		global $wpdb;
+
+		$status = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT status FROM {$wpdb->prefix}turbo_guard_scans WHERE id = %d",
+				absint( $scan_id )
+			)
+		);
+
+		return (string) $status;
+	}
+
+	/**
+	 * Send email notifications after a scan completes.
+	 *
+	 * Two independent alerts, each gated by its own setting:
+	 *   - "Threat Alerts" (notify_on_threats): sent only when critical/high
+	 *     findings exist — medium/info findings are usually benign unknowns and
+	 *     would otherwise flood inboxes with low-confidence noise.
+	 *   - "Scan Complete Alerts" (notify_on_scan_complete): sent after every scan.
+	 *
+	 * @since 1.1.5
+	 * @param int $scan_id Completed scan ID.
+	 */
+	private static function send_scan_notifications( $scan_id ) {
+		$email = get_option( 'turbo_guard_notify_admin_email', get_option( 'admin_email' ) );
+		if ( empty( $email ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+		$threats = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT file_path, threat_name, severity FROM {$wpdb->prefix}turbo_guard_scan_results
+				 WHERE scan_id = %d AND status = 'pending'
+				 ORDER BY FIELD(severity, 'critical', 'high', 'medium', 'info') ASC, id ASC",
+				$scan_id
+			)
+		);
+
+		$total   = 0;
+		$serious = array();
+
+		if ( is_array( $threats ) ) {
+			foreach ( $threats as $threat ) {
+				++$total;
+				if ( in_array( $threat->severity, array( 'critical', 'high' ), true ) ) {
+					$serious[] = $threat;
+				}
+			}
+		}
+
+		$serious_count = count( $serious );
+		$site          = get_bloginfo( 'name' );
+		$view_url      = admin_url( 'admin.php?page=turbo-guard-scanner' );
+
+		// Threat alert — only when real (critical/high) malware was detected.
+		if ( $serious_count > 0 && 'yes' === get_option( 'turbo_guard_notify_on_threats', 'yes' ) ) {
+			$subject = '[' . $site . '] Turbo Guard: ' . $serious_count . ' serious threat(s) detected';
+
+			$body  = sprintf( "Turbo Guard found %d serious threat(s) during a malware scan.\n\n", $serious_count );
+			foreach ( array_slice( $serious, 0, 20 ) as $threat ) {
+				$path = str_replace( ABSPATH, '', $threat->file_path );
+				$body .= '  [' . strtoupper( $threat->severity ) . '] ' . $path . ' — ' . $threat->threat_name . "\n";
+			}
+			if ( $serious_count > 20 ) {
+				$body .= '  ... and ' . ( $serious_count - 20 ) . " more.\n";
+			}
+			$body .= "\n" . sprintf( 'Review and clean threats: %s', $view_url );
+
+			wp_mail( $email, $subject, $body ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_mail_wp_mail
+		}
+
+		// Scan-complete alert — opt-in, after every completed scan.
+		if ( 'yes' === get_option( 'turbo_guard_notify_on_scan_complete', 'no' ) ) {
+			$subject = '[' . $site . '] Turbo Guard scan complete';
+
+			$body  = "Your Turbo Guard malware scan has completed.\n\n";
+			$body .= ( $total > 0 )
+				? sprintf( "%d finding(s) are awaiting review.\n\n", $total )
+				: "No threats were found.\n\n";
+			$body .= sprintf( 'View results: %s', $view_url );
+
+			wp_mail( $email, $subject, $body ); // phpcs:ignore WordPressVIPMinimum.Functions.RestrictedFunctions.wp_mail_wp_mail
+		}
 	}
 
 	/**

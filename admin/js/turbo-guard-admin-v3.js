@@ -1584,6 +1584,35 @@ jQuery( function( $ ) {
 			}
 		).always( function() { $btn.prop( 'disabled', false ).text( strings.rebuildBaseline || 'Rebuild Baseline' ); } );
 	} );
+
+	// Toggle automatic integrity features (file watcher / daily core check).
+	$( document ).on( 'change', '.tg-integrity-auto-toggle', function() {
+		var $toggle = $( this );
+		var key     = $toggle.data( 'key' );
+		var enabled = $toggle.is( ':checked' ) ? 'yes' : 'no';
+
+		$toggle.prop( 'disabled', true );
+
+		$.post(
+			turboGuardAdmin.ajaxUrl,
+			{ action: 'turbo_guard_toggle_integrity_setting', nonce: turboGuardAdmin.nonce, key: key, enabled: enabled },
+			function( r ) {
+				$toggle.prop( 'disabled', false );
+				if ( r.success ) {
+					showNotice( '\u2713 ' + ( r.data.message || 'Updated.' ), 'success' );
+					// Reload so the card's schedule label reflects the new state.
+					setTimeout( function() { location.reload(); }, 800 );
+				} else {
+					showNotice( '\u2717 ' + ( r.data && r.data.message ? r.data.message : 'Update failed.' ), 'error' );
+					$toggle.prop( 'checked', ! $toggle.is( ':checked' ) );
+				}
+			}
+		).fail( function() {
+			$toggle.prop( 'disabled', false );
+			$toggle.prop( 'checked', ! $toggle.is( ':checked' ) );
+			showNotice( '\u2717 Server error while updating.', 'error' );
+		} );
+	} );
 } );
 
 

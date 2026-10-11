@@ -71,10 +71,8 @@ class Turbo_Guard_Admin {
 		// Vulnerability scanner AJAX (standalone function defined at bottom of this file).
 		add_action( 'wp_ajax_turbo_guard_run_vuln_scan', 'turbo_guard_ajax_run_vuln_scan' );
 
-		// Integrity + file watcher AJAX.
-		add_action( 'wp_ajax_turbo_guard_run_integrity_check', array( $this, 'ajax_run_integrity_check' ) );
-		add_action( 'wp_ajax_turbo_guard_rebuild_baseline', array( $this, 'ajax_rebuild_baseline' ) );
-		add_action( 'wp_ajax_turbo_guard_run_file_watcher', array( $this, 'ajax_run_file_watcher' ) );
+		// Integrity + file watcher AJAX are registered by Turbo_Guard_Integrity,
+		// which owns that feature (single registration — avoid double handlers).
 
 		// SEO Spam Detector AJAX.
 		add_action( 'wp_ajax_turbo_guard_run_seo_spam_scan', array( $this, 'ajax_run_seo_spam_scan' ) );
@@ -440,61 +438,6 @@ class Turbo_Guard_Admin {
 	}
 
 	/**
-	 * AJAX: Run core integrity check.
-	 *
-	 * @since 1.2.0
-	 */
-	public function ajax_run_integrity_check() {
-		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => 'Permission denied.' ) );
-		}
-		$result = Turbo_Guard_Integrity::run_core_integrity_check();
-		wp_send_json_success( array(
-			'modified' => $result['modified'],
-			'missing'  => $result['missing'],
-			'message'  => sprintf( 'Done. %d modified, %d missing core files.', $result['modified'], $result['missing'] ),
-		) );
-	}
-
-	/**
-	 * AJAX: Rebuild file baseline.
-	 *
-	 * @since 1.2.0
-	 */
-	public function ajax_rebuild_baseline() {
-		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => 'Permission denied.' ) );
-		}
-		$count = Turbo_Guard_Integrity::build_baseline();
-		wp_send_json_success( array(
-			'count'   => $count,
-			'message' => sprintf( 'Baseline rebuilt. %d files are now tracked.', $count ),
-		) );
-	}
-
-	/**
-	 * AJAX: Run file watcher manually.
-	 *
-	 * @since 1.2.0
-	 */
-	public function ajax_run_file_watcher() {
-		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_send_json_error( array( 'message' => 'Permission denied.' ) );
-		}
-		$instance = Turbo_Guard_Integrity::get_instance();
-		$result   = $instance->run_file_watcher();
-		wp_send_json_success( array(
-			'new'      => $result['new'],
-			'modified' => $result['modified'],
-			'deleted'  => $result['deleted'],
-			'message'  => sprintf( 'Done. %d new, %d modified, %d deleted files.', $result['new'], $result['modified'], $result['deleted'] ),
-		) );
-	}
-
-	/**
 	 * AJAX: Start a new scan.
 	 *
 	 * @since 1.0.0
@@ -539,10 +482,9 @@ class Turbo_Guard_Admin {
 		$scanner = new Turbo_Guard_Scanner();
 		$result  = $scanner->scan_chunk( $scan_id, $offset, 100 );
 
-		// Notify the Pro add-on when a scan completes (for AI analysis etc.).
-		if ( ! empty( $result['done'] ) ) {
-			do_action( 'turbo_guard_scan_completed', $scan_id );
-		}
+		// Note: the `turbo_guard_scan_completed` action (which notifies the Pro
+		// add-on) is fired inside Turbo_Guard_Scanner::scan_chunk() when the scan
+		// completes, so it also runs for the scheduled cron path.
 
 		wp_send_json_success( $result );
 	}

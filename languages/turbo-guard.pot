@@ -2,14 +2,2688 @@
 # This file is distributed under the GPL-3.0-or-later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Turbo Guard 1.2.0\n"
-"Report-Msgid-Bugs-To: https://turbo-addons.com/support\n"
-"POT-Creation-Date: 2026-07-27\n"
+"Project-Id-Version: Turbo Guard – Security & Malware Scanner 1.1.5\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/turbo-guard\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2026-10-11T13:07:00+02:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"X-Generator: Turbo Guard\n"
+"X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: turbo-guard\n"
+
+#. Plugin Name of the plugin
+#: turbo-guard.php
+msgid "Turbo Guard – Security & Malware Scanner"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: turbo-guard.php
+msgid "https://wp-turbo.com/turbo-guard/"
+msgstr ""
+
+#. Description of the plugin
+#: turbo-guard.php
+msgid "Advanced WordPress security with AI-powered malware scanning, WordPress core file manifest verification, firewall, 2FA, vulnerability scanner, file integrity checker, bot protection & SEO spam removal. Detects every threat for free — clean up to 3 files free, then upgrade to Turbo Guard Pro."
+msgstr ""
+
+#. Author of the plugin
+#: turbo-guard.php
+msgid "Turbo Addons"
+msgstr ""
+
+#. Author URI of the plugin
+#: turbo-guard.php
+msgid "https://wp-turbo.com"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:107
+#: admin/class-turbo-guard-admin.php:287
+#: admin/views/dashboard.php:22
+msgid "Turbo Guard Pro"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:108
+#: admin/class-turbo-guard-admin.php:111
+#: admin/views/dashboard.php:22
+msgid "Turbo Guard"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:122
+#: admin/class-turbo-guard-admin.php:123
+#: includes/class-turbo-guard.php:265
+msgid "Dashboard"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:131
+#: admin/class-turbo-guard-admin.php:132
+msgid "Scanner"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:140
+#: admin/class-turbo-guard-admin.php:141
+#: admin/views/firewall.php:24
+msgid "Firewall"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:149
+#: admin/class-turbo-guard-admin.php:150
+#: admin/views/settings.php:24
+msgid "Settings"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:158
+#: admin/class-turbo-guard-admin.php:159
+#: admin/views/seo-spam.php:84
+msgid "GSC Cleanup"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:167
+#: admin/class-turbo-guard-admin.php:168
+msgid "Vulnerabilities"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:176
+#: admin/class-turbo-guard-admin.php:177
+msgid "File Integrity"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:185
+#: admin/views/seo-spam.php:34
+#: admin/views/settings.php:140
+msgid "SEO Spam Detector"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:186
+msgid "SEO Spam"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:196
+msgid "Live Traffic (Pro)"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:197
+msgid "Live Traffic"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:205
+msgid "AI Advisor (Pro)"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:206
+msgid "AI Advisor"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:253
+msgid "Scanning..."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:254
+msgid "Scan Complete!"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:255
+msgid "Are you sure you want to delete these files? A backup will be created automatically."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:256
+msgid "Files deleted successfully!"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:257
+msgid "Failed to delete some files."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:258
+msgid "Please select at least one file."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:259
+msgid "Saving..."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:260
+msgid "Settings saved successfully!"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:263
+msgid "spam indicator(s) found."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:264
+msgid "No SEO spam found."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:265
+msgid "Scan failed."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:266
+msgid "Deleting..."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:267
+#: admin/views/scanner.php:349
+#: admin/views/seo-spam.php:245
+msgid "Delete"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:268
+msgid "Cancel"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:269
+msgid "Remove this spam post?"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:270
+msgid "Choose how you want to remove this spam post."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:271
+msgid "Move to Trash (recoverable)"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:272
+msgid "Delete Permanently"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:273
+msgid "Permanent delete is a Pro feature. Upgrade to Turbo Guard Pro, or move the post to Trash instead."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:274
+msgid "Move all selected spam posts to Trash? This can be undone from the Trash."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:275
+msgid "Mark this item as safe and exclude it from future scans?"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:278
+msgid "Checking..."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:279
+#: admin/views/integrity.php:89
+msgid "Run Check Now"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:280
+#: admin/views/integrity.php:121
+msgid "Run Now"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:281
+msgid "Building..."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:282
+#: admin/views/integrity.php:151
+msgid "Rebuild Baseline"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:283
+msgid "Rebuild baseline? This marks all current files as trusted. Only do this on a clean site."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:286
+#: admin/views/scanner.php:337
+msgid "View"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:288
+msgid "Viewing file contents is a Pro feature. Upgrade to inspect every threat in detail and clean unlimited files."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:289
+msgid "Upgrade Now"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:506
+#: admin/class-turbo-guard-admin.php:529
+#: admin/class-turbo-guard-admin.php:558
+#: admin/class-turbo-guard-admin.php:582
+#: admin/class-turbo-guard-admin.php:639
+#: admin/class-turbo-guard-admin.php:709
+#: admin/class-turbo-guard-admin.php:810
+#: admin/class-turbo-guard-admin.php:872
+#: admin/class-turbo-guard-admin.php:893
+#: admin/class-turbo-guard-admin.php:932
+#: admin/class-turbo-guard-admin.php:1004
+#: admin/class-turbo-guard-admin.php:1056
+#: admin/class-turbo-guard-admin.php:1077
+#: admin/class-turbo-guard-admin.php:1109
+#: admin/class-turbo-guard-admin.php:1141
+#: admin/class-turbo-guard-admin.php:1175
+#: admin/class-turbo-guard-admin.php:1200
+#: admin/class-turbo-guard-admin.php:1222
+#: admin/class-turbo-guard-admin.php:1298
+#: admin/class-turbo-guard-admin.php:1334
+#: admin/class-turbo-guard-admin.php:1385
+#: admin/class-turbo-guard-admin.php:1422
+#: admin/class-turbo-guard-admin.php:1465
+msgid "Permission denied."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:515
+msgid "Scan started successfully."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:536
+#: admin/class-turbo-guard-admin.php:565
+msgid "Invalid scan ID."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:588
+#: admin/class-turbo-guard-admin.php:645
+msgid "No files selected."
+msgstr ""
+
+#. translators: %s: pro URL
+#: admin/class-turbo-guard-admin.php:599
+#: admin/class-turbo-guard-admin.php:656
+#, php-format
+msgid "You have reached the free cleanup limit. <a href=\"%s\">Upgrade to Turbo Guard Pro</a> for unlimited cleanup."
+msgstr ""
+
+#. translators: 1: remaining count, 2: pro URL
+#: admin/class-turbo-guard-admin.php:611
+#: admin/class-turbo-guard-admin.php:668
+#, php-format
+msgid "The free version can only clean %1$d more file(s). <a href=\"%2$s\">Upgrade to Turbo Guard Pro</a> for unlimited cleanup."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:715
+msgid "Invalid file."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:729
+#: includes/class-turbo-guard-cleaner.php:59
+msgid "File not found."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:735
+msgid "Viewing file contents is a Turbo Guard Pro feature."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:740
+msgid "This is a database entry and cannot be viewed as a file."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:745
+msgid "The file is no longer available on disk."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:751
+msgid "Could not read the file."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:860
+msgid "Settings saved successfully."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:899
+msgid "Google Search Console is not connected."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:908
+msgid "Your Google account does not have access to this Search Console property. Open search.google.com with the SAME Google account, make sure the site is added as a property, and that you are a verified owner (or have been added as a user)."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:910
+msgid "No Search Console property was found for this site. Go to search.google.com, add your site as a property, and verify ownership."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:938
+msgid "No URLs provided."
+msgstr ""
+
+#. translators: 1: submitted count, 2: failed count
+#: admin/class-turbo-guard-admin.php:975
+#, php-format
+msgid "GSC removal requested: %1$d submitted, %2$d failed."
+msgstr ""
+
+#. translators: 1: submitted count
+#: admin/class-turbo-guard-admin.php:988
+#, php-format
+msgid "Removal requested for %d URLs. Google will process within 24-72 hours."
+msgstr ""
+
+#. translators: %s: sitemap URL
+#: admin/class-turbo-guard-admin.php:1036
+#, php-format
+msgid "Sitemap submitted: %s"
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1043
+msgid "Could not find or submit sitemap. Please submit manually from Google Search Console."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1061
+msgid "Disconnected from Google Search Console."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1083
+#: admin/class-turbo-guard-admin.php:1115
+msgid "Invalid IP address."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1086
+msgid "Manually blocked by admin"
+msgstr ""
+
+#. translators: %s: IP address
+#: admin/class-turbo-guard-admin.php:1092
+#, php-format
+msgid "IP %s blocked."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1096
+msgid "Failed to block IP."
+msgstr ""
+
+#. translators: %s: IP address
+#: admin/class-turbo-guard-admin.php:1124
+#, php-format
+msgid "IP %s unblocked."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1128
+msgid "Failed to unblock IP."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1163
+msgid "Rate limiting settings saved."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1187
+msgid "Rate limiting enabled."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1188
+msgid "Rate limiting disabled."
+msgstr ""
+
+#. translators: %d: number of spam indicators found
+#: admin/class-turbo-guard-admin.php:1208
+#, php-format
+msgid "Scan complete. %d spam indicator(s) found."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1232
+msgid "Invalid post ID."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1242
+msgid "This post is not in the current SEO spam scan results. Re-run the scan first."
+msgstr ""
+
+#. translators: %s: pro URL
+#: admin/class-turbo-guard-admin.php:1253
+#, php-format
+msgid "Permanent delete is a Pro feature. <a href=\"%s\">Upgrade to Turbo Guard Pro</a>, or move the post to Trash instead."
+msgstr ""
+
+#. translators: 1: deletable count, 2: pro URL
+#: admin/class-turbo-guard-admin.php:1268
+#, php-format
+msgid "The free version can only move the first %1$d spam posts to Trash. <a href=\"%2$s\">Upgrade to Turbo Guard Pro</a> to remove all spam."
+msgstr ""
+
+#. translators: %d: post ID that was removed
+#: admin/class-turbo-guard-admin.php:1282
+#, php-format
+msgid "Post %d removed."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1286
+msgid "Failed to remove post."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1309
+msgid "Invalid item."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1315
+msgid "Item marked as safe and excluded from future scans."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1318
+msgid "Failed to ignore item."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1339
+#: admin/class-turbo-guard-admin.php:1390
+msgid "Invalid result ID."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1352
+msgid "Scan result not found."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1368
+msgid "File marked as safe and will be excluded from future scans."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1405
+msgid "Failed to update the result."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1409
+msgid "Finding marked as fixed."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1427
+msgid "No file path provided."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1432
+msgid "File removed from ignore list."
+msgstr ""
+
+#: admin/class-turbo-guard-admin.php:1473
+msgid "Scan complete, but no WPScan API key is configured — showing limited WordPress.org results."
+msgstr ""
+
+#. translators: %d: vulnerability count
+#: admin/class-turbo-guard-admin.php:1479
+#, php-format
+msgid "Scan complete. %d vulnerabilities found."
+msgstr ""
+
+#: admin/views/dashboard.php:23
+#: admin/views/pro-upsell.php:35
+#: admin/views/vulnerabilities.php:247
+#: admin/views/vulnerabilities.php:266
+msgid "Pro"
+msgstr ""
+
+#: admin/views/dashboard.php:23
+msgid "Free"
+msgstr ""
+
+#: admin/views/dashboard.php:36
+msgid "Security Dashboard — All systems overview"
+msgstr ""
+
+#: admin/views/dashboard.php:57
+msgid "Security Score"
+msgstr ""
+
+#: admin/views/dashboard.php:77
+msgid "Excellent protection"
+msgstr ""
+
+#: admin/views/dashboard.php:79
+msgid "Good — can improve"
+msgstr ""
+
+#: admin/views/dashboard.php:81
+msgid "Action required"
+msgstr ""
+
+#: admin/views/dashboard.php:89
+msgid "Active Threats"
+msgstr ""
+
+#. translators: %d: threat count
+#: admin/views/dashboard.php:99
+#, php-format
+msgid "%d malware file found"
+msgid_plural "%d malware files found"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/views/dashboard.php:104
+msgid "No threats detected"
+msgstr ""
+
+#: admin/views/dashboard.php:110
+msgid "Clean Now →"
+msgstr ""
+
+#: admin/views/dashboard.php:114
+msgid "Run Scan"
+msgstr ""
+
+#: admin/views/dashboard.php:122
+msgid "Blocked Today"
+msgstr ""
+
+#: admin/views/dashboard.php:127
+msgid "Firewall blocks today"
+msgstr ""
+
+#: admin/views/dashboard.php:130
+msgid "View Logs"
+msgstr ""
+
+#: admin/views/dashboard.php:137
+msgid "Last Scan"
+msgstr ""
+
+#: admin/views/dashboard.php:142
+#: admin/views/dashboard.php:192
+#: admin/views/firewall.php:135
+#: admin/views/firewall.php:178
+#: admin/views/firewall.php:215
+msgid "ago"
+msgstr ""
+
+#: admin/views/dashboard.php:144
+msgid "Never"
+msgstr ""
+
+#. translators: %d: files scanned
+#: admin/views/dashboard.php:154
+#, php-format
+msgid "%d files scanned"
+msgstr ""
+
+#: admin/views/dashboard.php:159
+msgid "No scans yet"
+msgstr ""
+
+#: admin/views/dashboard.php:164
+msgid "Scan Now"
+msgstr ""
+
+#: admin/views/dashboard.php:174
+msgid "Recent Security Events"
+msgstr ""
+
+#: admin/views/dashboard.php:175
+msgid "View all →"
+msgstr ""
+
+#: admin/views/dashboard.php:182
+#: admin/views/firewall.php:168
+#: admin/views/firewall.php:205
+msgid "Time"
+msgstr ""
+
+#: admin/views/dashboard.php:183
+msgid "Event"
+msgstr ""
+
+#: admin/views/dashboard.php:184
+#: admin/views/scanner.php:267
+#: admin/views/vulnerabilities.php:221
+msgid "Severity"
+msgstr ""
+
+#: admin/views/dashboard.php:185
+#: admin/views/firewall.php:123
+#: admin/views/firewall.php:169
+#: admin/views/firewall.php:206
+msgid "IP Address"
+msgstr ""
+
+#: admin/views/dashboard.php:210
+msgid "No security events recorded yet. Your site is quiet!"
+msgstr ""
+
+#: admin/views/dashboard.php:217
+msgid "Quick Actions"
+msgstr ""
+
+#: admin/views/dashboard.php:222
+msgid "Run Full Scan"
+msgstr ""
+
+#: admin/views/dashboard.php:223
+msgid "Scan for malware &amp; backdoors"
+msgstr ""
+
+#: admin/views/dashboard.php:229
+msgid "Firewall &amp; IP Blocks"
+msgstr ""
+
+#: admin/views/dashboard.php:230
+msgid "View logs, block IPs"
+msgstr ""
+
+#: admin/views/dashboard.php:236
+msgid "GSC Spam Cleanup"
+msgstr ""
+
+#: admin/views/dashboard.php:237
+msgid "Remove indexed SEO spam"
+msgstr ""
+
+#: admin/views/firewall.php:25
+msgid "WAF logs, IP blocklist &amp; attack monitoring"
+msgstr ""
+
+#: admin/views/firewall.php:32
+msgid "Firewall Status"
+msgstr ""
+
+#: admin/views/firewall.php:39
+msgid "Firewall is Active"
+msgstr ""
+
+#: admin/views/firewall.php:39
+msgid "Firewall is Disabled"
+msgstr ""
+
+#: admin/views/firewall.php:42
+msgid "Configure"
+msgstr ""
+
+#: admin/views/firewall.php:50
+#: admin/views/firewall.php:65
+msgid "Rate Limiting"
+msgstr ""
+
+#: admin/views/firewall.php:59
+msgid "Throttle IPs that make an abnormally high number of requests, then auto-block them for the duration below. Recommended values are shown next to each field."
+msgstr ""
+
+#: admin/views/firewall.php:70
+msgid "Block IPs that exceed the limits below"
+msgstr ""
+
+#: admin/views/firewall.php:76
+#: admin/views/firewall.php:222
+msgid "Requests per minute"
+msgstr ""
+
+#: admin/views/firewall.php:79
+msgid "Recommended: 120. A normal visitor rarely exceeds this."
+msgstr ""
+
+#: admin/views/firewall.php:83
+#: admin/views/firewall.php:220
+msgid "404s per minute"
+msgstr ""
+
+#: admin/views/firewall.php:86
+msgid "Recommended: 60. Scanners hit many missing URLs in bursts."
+msgstr ""
+
+#: admin/views/firewall.php:90
+msgid "Block duration (seconds)"
+msgstr ""
+
+#: admin/views/firewall.php:93
+msgid "Recommended: 300 (5 minutes). How long a violator stays blocked."
+msgstr ""
+
+#: admin/views/firewall.php:99
+msgid "Save Rate Limiting"
+msgstr ""
+
+#: admin/views/firewall.php:108
+msgid "Blocked IP Addresses"
+msgstr ""
+
+#: admin/views/firewall.php:111
+msgid "Enter IP address..."
+msgstr ""
+
+#: admin/views/firewall.php:114
+#: admin/views/firewall.php:186
+#: admin/views/firewall.php:240
+msgid "Block IP"
+msgstr ""
+
+#: admin/views/firewall.php:124
+#: admin/views/seo-spam.php:210
+#: admin/views/seo-spam.php:292
+#: admin/views/seo-spam.php:329
+#: admin/views/seo-spam.php:414
+msgid "Reason"
+msgstr ""
+
+#: admin/views/firewall.php:125
+msgid "Blocked"
+msgstr ""
+
+#: admin/views/firewall.php:126
+msgid "Expires"
+msgstr ""
+
+#: admin/views/firewall.php:127
+#: admin/views/firewall.php:172
+#: admin/views/firewall.php:209
+#: admin/views/scanner.php:269
+#: admin/views/seo-spam.php:211
+#: admin/views/seo-spam.php:370
+msgid "Actions"
+msgstr ""
+
+#: admin/views/firewall.php:141
+msgid "Permanent"
+msgstr ""
+
+#: admin/views/firewall.php:149
+msgid "Unblock"
+msgstr ""
+
+#: admin/views/firewall.php:157
+msgid "No IPs are currently blocked."
+msgstr ""
+
+#: admin/views/firewall.php:163
+msgid "Recent Blocked Requests"
+msgstr ""
+
+#: admin/views/firewall.php:170
+#: admin/views/gsc-cleanup.php:261
+#: admin/views/seo-spam.php:413
+msgid "URL"
+msgstr ""
+
+#: admin/views/firewall.php:171
+msgid "Block Reason"
+msgstr ""
+
+#: admin/views/firewall.php:194
+msgid "No blocked requests logged yet."
+msgstr ""
+
+#: admin/views/firewall.php:200
+msgid "Recent Rate Limiting"
+msgstr ""
+
+#: admin/views/firewall.php:207
+#: admin/views/seo-spam.php:328
+msgid "Rule"
+msgstr ""
+
+#: admin/views/firewall.php:208
+msgid "Requests"
+msgstr ""
+
+#. translators: 1: requests made, 2: configured limit
+#: admin/views/firewall.php:230
+#, php-format
+msgid "%1$d / %2$d"
+msgstr ""
+
+#: admin/views/firewall.php:248
+msgid "No rate-limiting events yet. IPs that exceed the limits will appear here and be auto-blocked."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:32
+msgid "Google Search Console Cleanup"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:33
+msgid "Remove SEO spam URLs from Google index — even when files no longer exist"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:36
+msgid "Unique Feature"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:41
+msgid "Successfully connected to Google Search Console."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:50
+msgid "You cancelled the permission. Click \"Connect to Google Search Console\" again and choose Allow."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:53
+msgid "The Authorized Redirect URI in Google Cloud Console does not exactly match the URI in Step 3. Copy it exactly (no extra spaces, no trailing slash)."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:56
+msgid "The Client ID or Client Secret is incorrect. Re-check them in Turbo Guard Settings."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:59
+msgid "The authorization code is invalid or already used. Click \"Connect to Google Search Console\" again."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:62
+msgid "Your session expired. Click \"Connect to Google Search Console\" again."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:65
+msgid "If Google shows \"Access blocked\", your OAuth consent screen is likely in Testing mode — add your email as a Test User in Google Cloud Console, or Publish the app."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:70
+msgid "Google Search Console connection failed."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:79
+msgid "Connection Status"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:84
+msgid "Connected to Google Search Console"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:86
+msgid "Disconnect"
+msgstr ""
+
+#. translators: %s: site URL
+#: admin/views/gsc-cleanup.php:93
+#, php-format
+msgid "Managing property: %s"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:101
+msgid "Not Connected to Google Search Console"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:108
+msgid "Why connect?"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:111
+msgid "When your site gets hacked with Japanese/Chinese SEO spam, Google indexes those fake URLs. Even after you delete the files, those URLs stay in Google for months — harming your SEO and reputation. This tool removes them in bulk with one click."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:118
+msgid "4-Step Setup Guide"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:125
+msgid "Create a Google Cloud Project"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:126
+msgid "Go to Google Cloud Console and create a free project."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:128
+msgid "Open Google Cloud Console →"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:137
+msgid "Enable the Search Console API"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:138
+msgid "In your project, go to APIs & Services → Library → search for \"Google Search Console API\" → Enable."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:140
+msgid "Enable API →"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:149
+msgid "Create OAuth 2.0 Credentials"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:150
+msgid "Go to APIs & Services → Credentials → Create Credentials → OAuth client ID → Web application."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:151
+msgid "Add this Authorized Redirect URI exactly:"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:158
+msgid "Copy"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:162
+msgid "Create Credentials →"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:171
+msgid "Paste Credentials in Settings"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:172
+msgid "Copy your Client ID and Client Secret from Google Cloud Console, then save them in Turbo Guard Settings."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:174
+msgid "Go to Settings → GSC →"
+msgstr ""
+
+#. translators: %s: settings page link
+#: admin/views/gsc-cleanup.php:187
+#, php-format
+msgid "Step 4 incomplete — %s to enter your OAuth Client ID and Secret."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:188
+msgid "click here"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:197
+msgid "Connect to Google Search Console"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:208
+msgid "Indexed URLs"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:213
+msgid "Fetch Indexed URLs from Google"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:218
+msgid "Show only suspected spam URLs"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:225
+msgid "Fetching URLs from Google Search Console..."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:231
+msgid "URLs found"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:238
+#: admin/views/scanner.php:230
+msgid "Select All"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:241
+msgid "Select Spam Only"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:245
+msgid "Guide: Remove Spam URLs"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:249
+msgid "Generate .htaccess Redirects"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:254
+msgid "Google no longer allows programmatic URL removal. Select the spam URLs, then click the guide button to submit them in Google Search Console."
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:262
+#: admin/views/integrity.php:176
+#: admin/views/seo-spam.php:209
+msgid "Status"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:263
+#: admin/views/seo-spam.php:208
+#: admin/views/vulnerabilities.php:220
+msgid "Type"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:275
+msgid ".htaccess Redirect Code"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:276
+msgid "Add this code to your .htaccess file to redirect spam URLs to your homepage:"
+msgstr ""
+
+#: admin/views/gsc-cleanup.php:280
+msgid "Copy to Clipboard"
+msgstr ""
+
+#: admin/views/integrity.php:31
+msgid "File Integrity & Change Detection"
+msgstr ""
+
+#: admin/views/integrity.php:32
+msgid "Core file verification against WordPress.org checksums + real-time file watcher"
+msgstr ""
+
+#: admin/views/integrity.php:44
+msgid "Core File Integrity"
+msgstr ""
+
+#: admin/views/integrity.php:50
+msgid "Check failed"
+msgstr ""
+
+#: admin/views/integrity.php:52
+msgid "Could not fetch WordPress.org checksums — no files were verified."
+msgstr ""
+
+#. translators: 1: number of modified files, 2: number of missing files
+#: admin/views/integrity.php:63
+#, php-format
+msgid "%1$d modified, %2$d missing"
+msgstr ""
+
+#: admin/views/integrity.php:68
+msgid "All core files verified"
+msgstr ""
+
+#. translators: 1: WordPress version, 2: number of files checked, 3: date/time of check
+#: admin/views/integrity.php:76
+#, php-format
+msgid "WP %1$s — %2$d files checked — %3$s"
+msgstr ""
+
+#: admin/views/integrity.php:86
+msgid "Not run yet"
+msgstr ""
+
+#: admin/views/integrity.php:95
+msgid "Automatic daily check"
+msgstr ""
+
+#: admin/views/integrity.php:102
+msgid "File Watcher"
+msgstr ""
+
+#: admin/views/integrity.php:107
+msgid "Runs every 12 hours via WP-Cron"
+msgstr ""
+
+#: admin/views/integrity.php:107
+msgid "Automatic monitoring is off"
+msgstr ""
+
+#. translators: %s: date/time of last watcher run
+#: admin/views/integrity.php:114
+#, php-format
+msgid "Last run: %s"
+msgstr ""
+
+#: admin/views/integrity.php:127
+msgid "Automatic monitoring"
+msgstr ""
+
+#: admin/views/integrity.php:134
+msgid "File Baseline"
+msgstr ""
+
+#: admin/views/integrity.php:138
+msgid "Files tracked"
+msgstr ""
+
+#. translators: %s: date/time the baseline was built
+#: admin/views/integrity.php:144
+#, php-format
+msgid "Built: %s"
+msgstr ""
+
+#. translators: %d: number of core file issues found
+#: admin/views/integrity.php:164
+#, php-format
+msgid "%d Core File Issue(s) Found"
+msgstr ""
+
+#: admin/views/integrity.php:170
+msgid "These WordPress core files do not match the official WordPress.org checksums. This is a strong indicator of a hack."
+msgstr ""
+
+#: admin/views/integrity.php:175
+msgid "File"
+msgstr ""
+
+#: admin/views/integrity.php:177
+msgid "Detail"
+msgstr ""
+
+#: admin/views/integrity.php:199
+msgid "Core files could not be verified"
+msgstr ""
+
+#: admin/views/integrity.php:204
+msgid "WordPress.org checksums unavailable."
+msgstr ""
+
+#: admin/views/integrity.php:209
+msgid "The check could not download the official checksums, so no core files were verified this run. Check your internet connection and try again."
+msgstr ""
+
+#: admin/views/integrity.php:217
+msgid "All core files are intact!"
+msgstr ""
+
+#. translators: %d: number of WordPress core files verified
+#: admin/views/integrity.php:222
+#, php-format
+msgid "%d WordPress core files verified against WordPress.org checksums."
+msgstr ""
+
+#: admin/views/integrity.php:233
+msgid "How It Works"
+msgstr ""
+
+#: admin/views/integrity.php:236
+msgid "Core File Integrity Check"
+msgstr ""
+
+#: admin/views/integrity.php:238
+msgid "Downloads the official MD5 checksums for your WordPress version from WordPress.org and compares every core file. Any file that has been modified or deleted is flagged — this catches hackers who inject code into wp-login.php, wp-settings.php, or other core files."
+msgstr ""
+
+#: admin/views/integrity.php:242
+msgid "File Watcher (Change Detection)"
+msgstr ""
+
+#: admin/views/integrity.php:244
+msgid "Takes a snapshot (baseline) of all PHP/JS files in your themes, plugins, and uploads. Every 12 hours it compares the current files against the baseline using MD5 hashes. New files, modified files, and deleted plugin/theme files are all detected and logged."
+msgstr ""
+
+#: admin/views/pro-upsell.php:17
+msgid "Live Traffic Monitor"
+msgstr ""
+
+#: admin/views/pro-upsell.php:18
+msgid "AI Security Advisor"
+msgstr ""
+
+#: admin/views/pro-upsell.php:21
+msgid "this Turbo Guard Pro feature"
+msgstr ""
+
+#: admin/views/pro-upsell.php:32
+msgid "This is a Turbo Guard Pro feature."
+msgstr ""
+
+#: admin/views/pro-upsell.php:39
+msgid "Unlock the full security suite"
+msgstr ""
+
+#: admin/views/pro-upsell.php:40
+msgid "Upgrade to Turbo Guard Pro to get every feature below — on top of everything you already have for free."
+msgstr ""
+
+#: admin/views/pro-upsell.php:43
+msgid "✅ Live Traffic Monitor — log every request, detect bots & AI crawlers"
+msgstr ""
+
+#: admin/views/pro-upsell.php:44
+msgid "✅ AI Security Advisor — plain-English attack analysis & fix guides"
+msgstr ""
+
+#: admin/views/pro-upsell.php:45
+msgid "✅ Geo-Fence — restrict wp-admin to trusted IPs & countries"
+msgstr ""
+
+#: admin/views/pro-upsell.php:46
+msgid "✅ Unlimited malware cleanup — no per-action file limit"
+msgstr ""
+
+#: admin/views/pro-upsell.php:47
+msgid "✅ Complete bot protection — 25+ scrapers, scanners & harvesters"
+msgstr ""
+
+#: admin/views/pro-upsell.php:48
+msgid "✅ SEO spam removal — delete spam posts & fix hacked pages"
+msgstr ""
+
+#: admin/views/pro-upsell.php:53
+msgid "Upgrade to Turbo Guard Pro"
+msgstr ""
+
+#: admin/views/scanner.php:36
+msgid "Malware Scanner"
+msgstr ""
+
+#: admin/views/scanner.php:37
+msgid "Scan for backdoors, web shells, SEO spam &amp; injected code"
+msgstr ""
+
+#. translators: %s: human-readable time difference
+#. translators: %s: human-readable time since last scan
+#. translators: %s: time ago
+#: admin/views/scanner.php:45
+#: admin/views/seo-spam.php:43
+#: admin/views/vulnerabilities.php:36
+#, php-format
+msgid "Last scan: %s ago"
+msgstr ""
+
+#: admin/views/scanner.php:59
+msgid "Your Site Has Been Hacked!"
+msgstr ""
+
+#. translators: 1: number of critical malware files, 2: total number of threats
+#: admin/views/scanner.php:65
+#, php-format
+msgid "Turbo Guard found %1$d critical malware file(s) out of %2$d total threats. Select files below and click \"Delete Selected\" — a backup is created automatically."
+msgstr ""
+
+#. translators: %d: number of critical files
+#: admin/views/scanner.php:87
+#, php-format
+msgid "Delete All %d Critical Files Now"
+msgstr ""
+
+#. translators: %d: number of critical files
+#: admin/views/scanner.php:93
+#, php-format
+msgid "Delete All %d Critical Files Now (Free)"
+msgstr ""
+
+#. translators: %d: number of files the free version can clean
+#: admin/views/scanner.php:99
+#, php-format
+msgid "Delete First %d Critical Files (Free)"
+msgstr ""
+
+#. translators: %d: number of critical files
+#: admin/views/scanner.php:113
+#, php-format
+msgid "Upgrade to Pro to Delete All %d Critical Files"
+msgstr ""
+
+#: admin/views/scanner.php:121
+msgid "Upgrade to Pro for AI Analysis"
+msgstr ""
+
+#: admin/views/scanner.php:128
+msgid "Critical"
+msgstr ""
+
+#. translators: %d: number of suspicious files found
+#: admin/views/scanner.php:139
+#, php-format
+msgid "%d suspicious file(s) found — review and clean below."
+msgstr ""
+
+#: admin/views/scanner.php:144
+msgid "Select files and click \"Delete Selected\". Backup is created automatically. This is 100% free."
+msgstr ""
+
+#: admin/views/scanner.php:150
+msgid "Your site is clean — no malware found!"
+msgstr ""
+
+#: admin/views/scanner.php:158
+msgid "Full Site Scan"
+msgstr ""
+
+#: admin/views/scanner.php:159
+msgid "Scans all PHP and JavaScript files for malware, backdoors, SEO spam and suspicious code. WordPress core is checked against the official file manifest to detect injected files. Database scanning included. 100% free."
+msgstr ""
+
+#: admin/views/scanner.php:163
+msgid "Start Full Scan"
+msgstr ""
+
+#: admin/views/scanner.php:168
+msgid "Initialising scan..."
+msgstr ""
+
+#: admin/views/scanner.php:182
+msgid "Scan Results"
+msgstr ""
+
+#. translators: %d: number of files scanned
+#: admin/views/scanner.php:189
+#, php-format
+msgid "%d files checked"
+msgstr ""
+
+#. translators: 1: files, 2: plugins, 3: themes, 4: posts, 5: users
+#: admin/views/scanner.php:201
+#, php-format
+msgid "Scanned %1$s files, %2$s plugins, %3$s themes, %4$s posts and %5$s users."
+msgstr ""
+
+#: admin/views/scanner.php:234
+msgid "Critical Only"
+msgstr ""
+
+#: admin/views/scanner.php:239
+#: admin/views/scanner.php:343
+msgid "Quarantine"
+msgstr ""
+
+#: admin/views/scanner.php:244
+msgid "Delete Selected"
+msgstr ""
+
+#: admin/views/scanner.php:247
+msgid "selected"
+msgstr ""
+
+#. translators: %d: total number of threats
+#: admin/views/scanner.php:253
+#, php-format
+msgid "%d threat(s) total"
+msgstr ""
+
+#: admin/views/scanner.php:264
+msgid "Select"
+msgstr ""
+
+#: admin/views/scanner.php:265
+#: admin/views/seo-spam.php:366
+msgid "File Path"
+msgstr ""
+
+#: admin/views/scanner.php:266
+msgid "Threat Detected"
+msgstr ""
+
+#: admin/views/scanner.php:268
+#: admin/views/seo-spam.php:367
+msgid "Size"
+msgstr ""
+
+#: admin/views/scanner.php:295
+msgid "Database entry — use phpMyAdmin to fix"
+msgstr ""
+
+#: admin/views/scanner.php:335
+msgid "View file contents"
+msgstr ""
+
+#: admin/views/scanner.php:342
+msgid "Move to quarantine folder"
+msgstr ""
+
+#: admin/views/scanner.php:347
+msgid "Permanently delete — backup created automatically"
+msgstr ""
+
+#: admin/views/scanner.php:354
+msgid "Free version can clean a limited number of files. Upgrade to clean this file and unlock unlimited cleanup."
+msgstr ""
+
+#: admin/views/scanner.php:356
+#: admin/views/scanner.php:402
+msgid "Upgrade to Pro"
+msgstr ""
+
+#: admin/views/scanner.php:361
+msgid "Mark as fixed — you resolved this issue manually"
+msgstr ""
+
+#: admin/views/scanner.php:364
+msgid "Mark as Fixed"
+msgstr ""
+
+#: admin/views/scanner.php:368
+msgid "Mark as safe — exclude from all future scans (like Wordfence Ignore)"
+msgstr ""
+
+#: admin/views/scanner.php:371
+#: admin/views/seo-spam.php:260
+#: admin/views/seo-spam.php:384
+msgid "Ignore"
+msgstr ""
+
+#: admin/views/scanner.php:386
+msgid "View and edit this post in WordPress"
+msgstr ""
+
+#: admin/views/scanner.php:387
+msgid "View Post"
+msgstr ""
+
+#: admin/views/scanner.php:394
+msgid "Permanently delete this spam post from the database"
+msgstr ""
+
+#: admin/views/scanner.php:395
+msgid "Delete Post"
+msgstr ""
+
+#: admin/views/scanner.php:400
+msgid "Free version can clean a limited number of items. Upgrade to clean this post and unlock unlimited cleanup."
+msgstr ""
+
+#: admin/views/scanner.php:408
+msgid "Pro Fix Guide"
+msgstr ""
+
+#: admin/views/scanner.php:414
+msgid "Fix Guide"
+msgstr ""
+
+#. translators: %d: total number of threats
+#: admin/views/scanner.php:428
+#, php-format
+msgid "Showing %d threat(s). ZIP backup is created automatically before any deletion."
+msgstr ""
+
+#. translators: 1: total threats, 2: remaining free cleanups
+#: admin/views/scanner.php:434
+#, php-format
+msgid "Showing %1$d threat(s). Free version can clean %2$d more file(s) — upgrade to Turbo Guard Pro for unlimited cleanup."
+msgstr ""
+
+#: admin/views/scanner.php:445
+msgid "No malware found — your site is clean!"
+msgstr ""
+
+#. translators: %d: number of files scanned
+#: admin/views/scanner.php:450
+#, php-format
+msgid "%d files were checked."
+msgstr ""
+
+#: admin/views/scanner.php:459
+msgid "No scans run yet. Click \"Start Full Scan\" above."
+msgstr ""
+
+#: admin/views/scanner.php:470
+msgid "Close"
+msgstr ""
+
+#: admin/views/seo-spam.php:35
+msgid "Find Japanese/Chinese spam pages on your site — no Google setup required"
+msgstr ""
+
+#: admin/views/seo-spam.php:53
+msgid "How This Works (No Google Login Needed!)"
+msgstr ""
+
+#: admin/views/seo-spam.php:57
+msgid "When hackers inject Japanese/Chinese SEO spam they leave traces on your server BEFORE Google indexes them. Turbo Guard scans for these traces locally:"
+msgstr ""
+
+#: admin/views/seo-spam.php:60
+msgid "Posts/pages with Japanese or Chinese titles in your database"
+msgstr ""
+
+#: admin/views/seo-spam.php:61
+msgid "PHP files in uploads folder containing CJK text"
+msgstr ""
+
+#: admin/views/seo-spam.php:62
+msgid ".htaccess redirect rules pointing to spam domains"
+msgstr ""
+
+#: admin/views/seo-spam.php:63
+msgid "Contaminated WordPress options (siteurl, blogname)"
+msgstr ""
+
+#: admin/views/seo-spam.php:68
+msgid "Already indexed in Google?"
+msgstr ""
+
+#: admin/views/seo-spam.php:71
+msgid "If spam pages are already in Google, connect Google Search Console in GSC Cleanup to remove them. First — clean the source files here."
+msgstr ""
+
+#. translators: %s: domain name
+#: admin/views/seo-spam.php:78
+#, php-format
+msgid "Check site:%s on Google"
+msgstr ""
+
+#: admin/views/seo-spam.php:94
+#: admin/views/seo-spam.php:99
+msgid "Scan for SEO Spam"
+msgstr ""
+
+#: admin/views/seo-spam.php:95
+msgid "Scans your database, uploads folder, and .htaccess for Japanese/Chinese spam content. Instant — no external connection needed."
+msgstr ""
+
+#: admin/views/seo-spam.php:104
+msgid "Scanning database, uploads, and .htaccess..."
+msgstr ""
+
+#: admin/views/seo-spam.php:115
+msgid "Total Found"
+msgstr ""
+
+#: admin/views/seo-spam.php:115
+msgid "spam indicators"
+msgstr ""
+
+#: admin/views/seo-spam.php:116
+msgid "Spam Posts"
+msgstr ""
+
+#: admin/views/seo-spam.php:116
+msgid "in database"
+msgstr ""
+
+#: admin/views/seo-spam.php:117
+msgid "Spam Files"
+msgstr ""
+
+#: admin/views/seo-spam.php:117
+msgid "on disk"
+msgstr ""
+
+#: admin/views/seo-spam.php:118
+msgid "Options"
+msgstr ""
+
+#: admin/views/seo-spam.php:118
+msgid "contaminated"
+msgstr ""
+
+#: admin/views/seo-spam.php:119
+msgid ".htaccess Hacks"
+msgstr ""
+
+#: admin/views/seo-spam.php:119
+msgid "redirect rules"
+msgstr ""
+
+#: admin/views/seo-spam.php:136
+msgid "No SEO spam found on this site!"
+msgstr ""
+
+#. translators: %s: Google site search URL
+#: admin/views/seo-spam.php:141
+#, php-format
+msgid "Tip: Also check Google manually: %s"
+msgstr ""
+
+#. translators: %d: number of spam posts found
+#: admin/views/seo-spam.php:164
+#, php-format
+msgid "%d Spam Posts/Pages Found in Database"
+msgstr ""
+
+#. translators: %d: number of spam posts to remove
+#: admin/views/seo-spam.php:176
+#, php-format
+msgid "Remove All %d Spam Posts"
+msgstr ""
+
+#. translators: %d: free cleanup limit
+#: admin/views/seo-spam.php:179
+#, php-format
+msgid "Move First %d to Trash (Free)"
+msgstr ""
+
+#. translators: %d: number of spam posts to remove
+#: admin/views/seo-spam.php:182
+#, php-format
+msgid "Move All %d to Trash (Free)"
+msgstr ""
+
+#: admin/views/seo-spam.php:188
+msgid "These posts contain Japanese or Chinese spam content. Move them to Trash here (recoverable), then use GSC Cleanup to remove them from Google index."
+msgstr ""
+
+#. translators: %1$d: free cleanup limit, %2$s: pro URL, %3$d: total spam posts
+#: admin/views/seo-spam.php:194
+#, php-format
+msgid "The free version can move up to %1$d spam posts to Trash. <a href=\"%2$s\" target=\"_blank\" rel=\"noopener noreferrer\">Upgrade to Turbo Guard Pro</a> to remove all %3$d."
+msgstr ""
+
+#: admin/views/seo-spam.php:207
+msgid "Title"
+msgstr ""
+
+#: admin/views/seo-spam.php:218
+msgid "(no title)"
+msgstr ""
+
+#: admin/views/seo-spam.php:238
+msgid "Remove"
+msgstr ""
+
+#: admin/views/seo-spam.php:243
+msgid "Upgrade to Turbo Guard Pro to remove all spam posts"
+msgstr ""
+
+#: admin/views/seo-spam.php:248
+msgid "Upgrade"
+msgstr ""
+
+#: admin/views/seo-spam.php:253
+msgid "Edit"
+msgstr ""
+
+#. translators: %d: number of contaminated options
+#: admin/views/seo-spam.php:278
+#, php-format
+msgid "%d Contaminated WordPress Option(s)"
+msgstr ""
+
+#: admin/views/seo-spam.php:284
+msgid "These WordPress settings contain spam text. Review and correct them under Settings, or contact your host if you are unsure."
+msgstr ""
+
+#: admin/views/seo-spam.php:289
+msgid "Setting"
+msgstr ""
+
+#: admin/views/seo-spam.php:290
+msgid "Option"
+msgstr ""
+
+#: admin/views/seo-spam.php:291
+msgid "Current Value"
+msgstr ""
+
+#. translators: %d: number of suspicious htaccess rules
+#: admin/views/seo-spam.php:316
+#, php-format
+msgid "%d Suspicious .htaccess Rules"
+msgstr ""
+
+#: admin/views/seo-spam.php:322
+msgid "These .htaccess rules look suspicious. Review carefully and remove any you did not add."
+msgstr ""
+
+#: admin/views/seo-spam.php:327
+msgid "Line"
+msgstr ""
+
+#. translators: %d: number of spam files found on disk
+#: admin/views/seo-spam.php:352
+#, php-format
+msgid "%d Spam Files Found on Disk"
+msgstr ""
+
+#: admin/views/seo-spam.php:358
+msgid "Go to Turbo Guard Scanner to select and delete these files in bulk. A backup ZIP is created automatically."
+msgstr ""
+
+#: admin/views/seo-spam.php:360
+msgid "Go to Scanner to Delete"
+msgstr ""
+
+#: admin/views/seo-spam.php:368
+msgid "Modified"
+msgstr ""
+
+#: admin/views/seo-spam.php:369
+msgid "Why Suspicious"
+msgstr ""
+
+#. translators: %d: number of spam sitemap entries
+#: admin/views/seo-spam.php:402
+#, php-format
+msgid "%d Spam-Looking Sitemap URL(s)"
+msgstr ""
+
+#: admin/views/seo-spam.php:408
+msgid "These URLs appear in your sitemap and contain Japanese/Chinese text or spam keywords. Review them — they may already be indexed by Google."
+msgstr ""
+
+#: admin/views/seo-spam.php:431
+msgid "Check What Google Has Indexed"
+msgstr ""
+
+#: admin/views/seo-spam.php:433
+msgid "After cleaning files and spam posts, check if Google has already indexed any spam pages. Look for any pages with Japanese, Chinese, or spam product titles."
+msgstr ""
+
+#. translators: %s: domain name
+#: admin/views/seo-spam.php:440
+#, php-format
+msgid "View site:%s on Google"
+msgstr ""
+
+#: admin/views/seo-spam.php:446
+msgid "Connect GSC to Remove from Google"
+msgstr ""
+
+#: admin/views/seo-spam.php:455
+msgid "No scan run yet."
+msgstr ""
+
+#: admin/views/seo-spam.php:456
+msgid "Click \"Scan for SEO Spam\" above to check your site instantly."
+msgstr ""
+
+#: admin/views/settings.php:25
+msgid "Configure scanner, firewall, login security, hardening &amp; notifications"
+msgstr ""
+
+#: admin/views/settings.php:35
+msgid "Scanner Settings"
+msgstr ""
+
+#: admin/views/settings.php:40
+msgid "Enable Scanner"
+msgstr ""
+
+#: admin/views/settings.php:46
+msgid "Enable automatic malware scanning"
+msgstr ""
+
+#: admin/views/settings.php:52
+msgid "Scan Schedule"
+msgstr ""
+
+#: admin/views/settings.php:56
+msgid "Every Hour"
+msgstr ""
+
+#: admin/views/settings.php:57
+msgid "Twice Daily"
+msgstr ""
+
+#: admin/views/settings.php:58
+msgid "Daily"
+msgstr ""
+
+#: admin/views/settings.php:60
+msgid "How often should automatic scans run?"
+msgstr ""
+
+#: admin/views/settings.php:65
+msgid "Scan All Images"
+msgstr ""
+
+#: admin/views/settings.php:71
+msgid "Include all image files in the scan"
+msgstr ""
+
+#: admin/views/settings.php:73
+msgid "Detects PHP backdoors disguised as .jpg/.png/.ico files. Slightly slower scans."
+msgstr ""
+
+#: admin/views/settings.php:78
+msgid "Scan Outside WordPress"
+msgstr ""
+
+#: admin/views/settings.php:84
+msgid "Also scan the parent directory (above public_html)"
+msgstr ""
+
+#: admin/views/settings.php:86
+msgid "Catches cPanel-level injected files above the WordPress installation."
+msgstr ""
+
+#: admin/views/settings.php:91
+msgid "Scheduled Vulnerability Scan"
+msgstr ""
+
+#: admin/views/settings.php:98
+#: admin/views/settings.php:105
+msgid "Enable scheduled vulnerability scans"
+msgstr ""
+
+#: admin/views/settings.php:100
+msgid "Automatically re-checks plugin/theme versions against the WPScan API on the scheduled scan."
+msgstr ""
+
+#. translators: %s: pro URL
+#: admin/views/settings.php:112
+#, php-format
+msgid "Scheduled vulnerability scans are a Pro feature. <a href=\"%s\" target=\"_blank\" rel=\"noopener noreferrer\">Upgrade to Turbo Guard Pro</a> to enable."
+msgstr ""
+
+#: admin/views/settings.php:124
+msgid "WPScan API Key"
+msgstr ""
+
+#: admin/views/settings.php:129
+msgid "Free key from wpscan.com"
+msgstr ""
+
+#: admin/views/settings.php:131
+msgid "Optional. A free WPScan API key unlocks detailed vulnerability results. Get one at wpscan.com."
+msgstr ""
+
+#: admin/views/settings.php:144
+msgid "CJK Content"
+msgstr ""
+
+#: admin/views/settings.php:150
+msgid "My site has legitimate Japanese/Chinese/Korean content"
+msgstr ""
+
+#: admin/views/settings.php:152
+msgid "When enabled, CJK text alone is not flagged as SEO spam (prevents false positives on multilingual sites)."
+msgstr ""
+
+#: admin/views/settings.php:157
+msgid "Scheduled SEO Spam Scan"
+msgstr ""
+
+#: admin/views/settings.php:163
+msgid "Run the SEO spam scan on the scheduled scan"
+msgstr ""
+
+#: admin/views/settings.php:165
+msgid "Runs locally on your server — no external connection. Email alerts are a Pro feature."
+msgstr ""
+
+#: admin/views/settings.php:173
+msgid "Firewall Settings"
+msgstr ""
+
+#: admin/views/settings.php:178
+msgid "Enable Firewall"
+msgstr ""
+
+#: admin/views/settings.php:184
+msgid "Enable Web Application Firewall (WAF)"
+msgstr ""
+
+#: admin/views/settings.php:186
+msgid "Protects against SQL injection, XSS, and other attacks."
+msgstr ""
+
+#: admin/views/settings.php:194
+msgid "Login Security Settings"
+msgstr ""
+
+#: admin/views/settings.php:199
+msgid "Enable Login Security"
+msgstr ""
+
+#: admin/views/settings.php:205
+msgid "Enable login security features"
+msgstr ""
+
+#: admin/views/settings.php:211
+msgid "Brute Force Protection"
+msgstr ""
+
+#: admin/views/settings.php:217
+msgid "Protect against brute force login attacks"
+msgstr ""
+
+#: admin/views/settings.php:223
+msgid "Max Login Attempts"
+msgstr ""
+
+#: admin/views/settings.php:229
+msgid "Failed login attempts allowed before lockout (1-20)."
+msgstr ""
+
+#: admin/views/settings.php:234
+msgid "Lockout Duration"
+msgstr ""
+
+#: admin/views/settings.php:240
+msgid "minutes"
+msgstr ""
+
+#: admin/views/settings.php:241
+msgid "How long to lock out an IP after max attempts (in minutes)."
+msgstr ""
+
+#: admin/views/settings.php:249
+msgid "Email Notifications"
+msgstr ""
+
+#: admin/views/settings.php:254
+msgid "Notification Email"
+msgstr ""
+
+#: admin/views/settings.php:260
+msgid "Email address for security alerts."
+msgstr ""
+
+#: admin/views/settings.php:265
+msgid "Threat Alerts"
+msgstr ""
+
+#: admin/views/settings.php:271
+msgid "Send email when malware is detected"
+msgstr ""
+
+#: admin/views/settings.php:277
+msgid "Scan Complete Alerts"
+msgstr ""
+
+#: admin/views/settings.php:283
+msgid "Send email after each scan completes"
+msgstr ""
+
+#: admin/views/settings.php:292
+msgid "Advanced Settings"
+msgstr ""
+
+#: admin/views/settings.php:297
+msgid "Remove Data on Uninstall"
+msgstr ""
+
+#: admin/views/settings.php:303
+msgid "Delete all plugin data when uninstalling"
+msgstr ""
+
+#: admin/views/settings.php:305
+msgid "WARNING: This will permanently delete all scans, logs, and settings."
+msgstr ""
+
+#: admin/views/settings.php:315
+msgid "Site Hardening"
+msgstr ""
+
+#: admin/views/settings.php:318
+msgid "Reduce your attack surface. These settings follow security best practices used by Wordfence, MalCare, and Patchstack."
+msgstr ""
+
+#: admin/views/settings.php:325
+msgid "HTTP Security Headers"
+msgstr ""
+
+#: admin/views/settings.php:329
+msgid "Add X-Frame-Options, X-Content-Type-Options, HSTS, Referrer-Policy headers"
+msgstr ""
+
+#: admin/views/settings.php:331
+msgid "Protects against clickjacking, MIME sniffing, and browser XSS attacks."
+msgstr ""
+
+#: admin/views/settings.php:335
+msgid "Hide WordPress Version"
+msgstr ""
+
+#: admin/views/settings.php:339
+msgid "Remove WordPress version from page source and RSS feeds"
+msgstr ""
+
+#: admin/views/settings.php:341
+msgid "Prevents attackers from targeting your specific WordPress version."
+msgstr ""
+
+#: admin/views/settings.php:345
+msgid "Block User Enumeration"
+msgstr ""
+
+#: admin/views/settings.php:349
+msgid "Block ?author=1 and /wp-json/wp/v2/users for guests"
+msgstr ""
+
+#: admin/views/settings.php:351
+msgid "Prevents attackers from discovering valid admin usernames."
+msgstr ""
+
+#: admin/views/settings.php:355
+msgid "Remove RSD/WLW Links"
+msgstr ""
+
+#: admin/views/settings.php:359
+msgid "Remove RSD and Windows Live Writer manifest links from &lt;head&gt;"
+msgstr ""
+
+#: admin/views/settings.php:364
+msgid "Disable XML-RPC"
+msgstr ""
+
+#: admin/views/settings.php:368
+msgid "Completely disable XML-RPC (used for brute force amplification attacks)"
+msgstr ""
+
+#: admin/views/settings.php:370
+msgid "Only enable if you do not use Jetpack, mobile WordPress app, or remote publishing."
+msgstr ""
+
+#: admin/views/settings.php:374
+msgid "Protect REST API"
+msgstr ""
+
+#: admin/views/settings.php:378
+msgid "Require login for REST API access (allows CF7, WooCommerce, and Gutenberg routes)"
+msgstr ""
+
+#: admin/views/settings.php:380
+msgid "Use with caution — some themes and plugins need public REST API access."
+msgstr ""
+
+#: admin/views/settings.php:384
+msgid "Disable Theme/Plugin Editor"
+msgstr ""
+
+#: admin/views/settings.php:388
+msgid "Disable the WordPress file editor (Appearance → Editor, Plugins → Editor)"
+msgstr ""
+
+#: admin/views/settings.php:390
+msgid "Prevents attackers who gain admin access from editing PHP files directly."
+msgstr ""
+
+#: admin/views/settings.php:394
+msgid "Block PHP in Uploads Folder"
+msgstr ""
+
+#: admin/views/settings.php:398
+msgid "Add .htaccess rule to block PHP execution in wp-content/uploads/"
+msgstr ""
+
+#: admin/views/settings.php:400
+msgid "Strongest protection against upload-based backdoors. Even if a hacker uploads a PHP shell, the server will refuse to run it. Recommended: ON."
+msgstr ""
+
+#: admin/views/settings.php:413
+msgid "Geo-Fence &amp; Trusted Location"
+msgstr ""
+
+#: admin/views/settings.php:417
+msgid "Restrict wp-admin and file uploads to trusted IPs and countries."
+msgstr ""
+
+#: admin/views/settings.php:421
+#: admin/views/settings.php:437
+msgid "Upgrade to Pro to enable"
+msgstr ""
+
+#: admin/views/settings.php:429
+msgid "AI Advisor — OpenAI Integration"
+msgstr ""
+
+#: admin/views/settings.php:433
+msgid "GPT-powered security analysis after every scan."
+msgstr ""
+
+#: admin/views/settings.php:447
+msgid "Google Search Console (GSC)"
+msgstr ""
+
+#. translators: %s: GSC cleanup page URL
+#: admin/views/settings.php:453
+#, php-format
+msgid "Connect to Google Search Console to detect and remove SEO spam URLs from Google index. %s"
+msgstr ""
+
+#: admin/views/settings.php:454
+msgid "Go to GSC Cleanup →"
+msgstr ""
+
+#: admin/views/settings.php:462
+msgid "OAuth Client ID"
+msgstr ""
+
+#: admin/views/settings.php:470
+msgid "Paste your Google OAuth Client ID here"
+msgstr ""
+
+#. translators: %s: Google Cloud Console URL
+#: admin/views/settings.php:476
+#, php-format
+msgid "Get this from %s → APIs & Services → Credentials."
+msgstr ""
+
+#: admin/views/settings.php:485
+msgid "OAuth Client Secret"
+msgstr ""
+
+#: admin/views/settings.php:495
+msgid "Your Google OAuth Client Secret (kept private)."
+msgstr ""
+
+#: admin/views/settings.php:504
+msgid "Save Settings"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:27
+msgid "Vulnerability Scanner"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:28
+msgid "Check plugins, themes &amp; WordPress core for known CVEs"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:48
+msgid "Vulnerability Check"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:50
+msgid "Checks all installed plugins and themes against the WPScan vulnerability database. Add a free WPScan API key in Settings for more detailed results."
+msgstr ""
+
+#: admin/views/vulnerabilities.php:55
+msgid "Run Vulnerability Scan"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:60
+msgid "Scanning installed plugins and themes…"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:73
+msgid "Heads up:"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:74
+msgid "Detailed vulnerability data could not be retrieved."
+msgstr ""
+
+#. translators: %s: pro URL
+#: admin/views/vulnerabilities.php:86
+#, php-format
+msgid "You're viewing basic vulnerability results. <a href=\"%s\" target=\"_blank\" rel=\"noopener noreferrer\">Upgrade to Turbo Guard Pro</a> to unlock CVE IDs, fix versions, detailed advisories, auto-scheduled scans and email alerts."
+msgstr ""
+
+#: admin/views/vulnerabilities.php:99
+msgid "Total Vulnerabilities"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:103
+msgid "Across plugins, themes &amp; core"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:106
+msgid "Vulnerable Plugins"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:110
+msgid "Plugins with known CVEs"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:113
+msgid "Vulnerable Themes"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:117
+msgid "Themes with known CVEs"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:126
+msgid "WordPress Core Vulnerabilities"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:128
+msgid "Update WordPress immediately to resolve these issues."
+msgstr ""
+
+#: admin/views/vulnerabilities.php:135
+msgid "Plugin Vulnerabilities"
+msgstr ""
+
+#. translators: %d: count
+#: admin/views/vulnerabilities.php:145
+#: admin/views/vulnerabilities.php:169
+#, php-format
+msgid "%d issue"
+msgid_plural "%d issues"
+msgstr[0] ""
+msgstr[1] ""
+
+#: admin/views/vulnerabilities.php:159
+msgid "Theme Vulnerabilities"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:185
+msgid "No known vulnerabilities found — all plugins and themes are clean!"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:195
+msgid "No vulnerability scan has been run yet. Click \"Run Vulnerability Scan\" to start."
+msgstr ""
+
+#: admin/views/vulnerabilities.php:219
+msgid "Vulnerability"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:222
+msgid "Fixed In"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:223
+msgid "CVE"
+msgstr ""
+
+#: admin/views/vulnerabilities.php:233
+msgid "Details →"
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:133
+msgid "Please enter your two-factor authentication code to log in."
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:156
+msgid "Invalid two-factor authentication code. Please try again."
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:169
+msgid "2FA Code (if enabled)"
+msgstr ""
+
+#. translators: %d: user ID
+#: includes/class-turbo-guard-2fa.php:406
+#, php-format
+msgid "2FA enabled for user ID: %d"
+msgstr ""
+
+#. translators: %d: user ID
+#: includes/class-turbo-guard-2fa.php:430
+#, php-format
+msgid "2FA disabled for user ID: %d"
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:459
+msgid "Two-Factor Authentication (Turbo Guard)"
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:462
+msgid "2FA Status"
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:465
+msgid "Enabled"
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:467
+msgid "Disabled"
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:473
+msgid "Manual Setup"
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:476
+msgid "Enter this key manually in Google Authenticator, Authy, or any TOTP app."
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:486
+msgid "Verify code to activate:"
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:500
+msgid "Enable Two-Factor Authentication for my account"
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:507
+msgid "Recovery Codes"
+msgstr ""
+
+#. translators: %d: remaining code count
+#: includes/class-turbo-guard-2fa.php:514
+#, php-format
+msgid "%d recovery codes remaining. Store them safely — each can only be used once."
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:520
+msgid "No recovery codes remaining. Disable and re-enable 2FA to generate new codes."
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:525
+msgid "Disable Two-Factor Authentication"
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:570
+msgid "Turbo Guard: Two-Factor Authentication enabled! Save your recovery codes now."
+msgstr ""
+
+#: includes/class-turbo-guard-2fa.php:574
+msgid "Turbo Guard: Invalid verification code — 2FA was NOT enabled. Please try again."
+msgstr ""
+
+#. translators: %s: quarantine file path
+#: includes/class-turbo-guard-cleaner.php:79
+#, php-format
+msgid "Quarantined to: %s"
+msgstr ""
+
+#. translators: %s: file path
+#: includes/class-turbo-guard-cleaner.php:93
+#, php-format
+msgid "File quarantined: %s"
+msgstr ""
+
+#: includes/class-turbo-guard-cleaner.php:101
+msgid "File quarantined successfully."
+msgstr ""
+
+#: includes/class-turbo-guard-cleaner.php:107
+msgid "Failed to quarantine file."
+msgstr ""
+
+#: includes/class-turbo-guard-cleaner.php:164
+msgid "Record not found."
+msgstr ""
+
+#: includes/class-turbo-guard-cleaner.php:182
+msgid "File already removed."
+msgstr ""
+
+#. translators: %s: file path
+#: includes/class-turbo-guard-cleaner.php:205
+#, php-format
+msgid "Malware file deleted: %s"
+msgstr ""
+
+#: includes/class-turbo-guard-cleaner.php:213
+msgid "File deleted."
+msgstr ""
+
+#: includes/class-turbo-guard-cleaner.php:221
+msgid "Permission denied. Cannot delete file."
+msgstr ""
+
+#: includes/class-turbo-guard-firewall.php:95
+msgid "IP address is blocked"
+msgstr ""
+
+#: includes/class-turbo-guard-firewall.php:105
+msgid "Too many requests - rate limit exceeded"
+msgstr ""
+
+#: includes/class-turbo-guard-firewall.php:111
+msgid "SQL injection attempt detected"
+msgstr ""
+
+#: includes/class-turbo-guard-firewall.php:117
+msgid "Cross-site scripting (XSS) attempt detected"
+msgstr ""
+
+#: includes/class-turbo-guard-firewall.php:123
+msgid "Directory traversal attempt detected"
+msgstr ""
+
+#: includes/class-turbo-guard-firewall.php:130
+msgid "Malicious file upload attempt detected"
+msgstr ""
+
+#: includes/class-turbo-guard-firewall.php:337
+msgid "Rate limit exceeded — too many requests per minute"
+msgstr ""
+
+#: includes/class-turbo-guard-firewall.php:446
+msgid "Too many 404 requests — possible scanner"
+msgstr ""
+
+#: includes/class-turbo-guard-firewall.php:453
+msgid "Too many 404 requests - rate limit exceeded"
+msgstr ""
+
+#: includes/class-turbo-guard-firewall.php:753
+msgid "Access Denied"
+msgstr ""
+
+#: includes/class-turbo-guard-firewall.php:754
+msgid "Turbo Guard Firewall"
+msgstr ""
+
+#. translators: %s: IP/rule
+#: includes/class-turbo-guard-firewall.php:809
+#, php-format
+msgid "IP/rule blocked: %s"
+msgstr ""
+
+#: includes/class-turbo-guard-gsc.php:119
+msgid "Unauthorized"
+msgstr ""
+
+#: includes/class-turbo-guard-hardening.php:174
+msgid "REST API access requires authentication."
+msgstr ""
+
+#: includes/class-turbo-guard-hardening.php:195
+msgid "User enumeration is not allowed."
+msgstr ""
+
+#: includes/class-turbo-guard-integrity.php:136
+#: includes/class-turbo-guard-integrity.php:138
+msgid "WordPress.org did not return checksums."
+msgstr ""
+
+#: includes/class-turbo-guard-integrity.php:570
+msgid "Integrity check failed: could not fetch checksums from WordPress.org."
+msgstr ""
+
+#: includes/class-turbo-guard-integrity.php:620
+msgid "Invalid setting."
+msgstr ""
+
+#: includes/class-turbo-guard-integrity.php:632
+msgid "Automatic check enabled."
+msgstr ""
+
+#: includes/class-turbo-guard-integrity.php:633
+msgid "Automatic check disabled."
+msgstr ""
+
+#. translators: %d: minutes remaining
+#. translators: %d: minutes
+#: includes/class-turbo-guard-login-security.php:95
+#: includes/class-turbo-guard-login-security.php:131
+#, php-format
+msgid "Too many failed login attempts. Please try again in %d minutes."
+msgstr ""
+
+#: includes/class-turbo-guard-login-security.php:113
+msgid "Too many failed login attempts"
+msgstr ""
+
+#. translators: %s: IP address
+#: includes/class-turbo-guard-login-security.php:122
+#, php-format
+msgid "Brute force attack detected from IP: %s"
+msgstr ""
+
+#. translators: %s: Site name
+#: includes/class-turbo-guard-login-security.php:222
+#, php-format
+msgid "[%s] New Administrator Login from Unknown IP"
+msgstr ""
+
+#. translators: 1: Username, 2: IP address, 3: Date/time
+#: includes/class-turbo-guard-login-security.php:228
+#, php-format
+msgid ""
+"Hello,\n"
+"\n"
+"A new administrator login was detected:\n"
+"\n"
+"Username: %1$s\n"
+"IP Address: %2$s\n"
+"Time: %3$s\n"
+"\n"
+"If this wasn't you, please secure your account immediately.\n"
+"\n"
+"-- Turbo Guard Security"
+msgstr ""
+
+#. translators: 1: Username, 2: IP address
+#: includes/class-turbo-guard-login-security.php:242
+#, php-format
+msgid "New admin login: %1$s from IP %2$s"
+msgstr ""
+
+#: includes/class-turbo-guard-scanner.php:498
+msgid "Malware scan started."
+msgstr ""
+
+#: includes/class-turbo-guard-scanner.php:578
+msgid "Malware scan completed (files + database)."
+msgstr ""
+
+#: includes/class-turbo-guard-scanner.php:1047
+msgid "Modified Plugin/Theme File"
+msgstr ""
+
+#: includes/class-turbo-guard-scanner.php:1048
+msgid "This file is part of an official wordpress.org plugin or theme, but its content has been modified. This is a strong indicator of an injected backdoor."
+msgstr ""
+
+#. translators: 1: directory path, 2: threat description
+#: includes/class-turbo-guard-scanner.php:1101
+#: includes/class-turbo-guard-scanner.php:1131
+#, php-format
+msgid "PHP files must never exist in %1$s. %2$s DELETE IMMEDIATELY."
+msgstr ""
+
+#. translators: 1: relative path, 2: threat description
+#: includes/class-turbo-guard-scanner.php:1206
+#, php-format
+msgid "PHP file found in asset directory %1$s — this should never contain PHP. %2$s"
+msgstr ""
+
+#: includes/class-turbo-guard-scanner.php:1261
+#: includes/class-turbo-guard-scanner.php:1334
+msgid "Unknown File in WordPress Core Directory"
+msgstr ""
+
+#. translators: %s: file path relative to ABSPATH
+#: includes/class-turbo-guard-scanner.php:1264
+#, php-format
+msgid "This file (%s) is not distributed with WordPress and should not exist in a core directory. It may have been planted by an attacker or left by a failed update. Verify and delete if not legitimate."
+msgstr ""
+
+#. translators: 1: file path relative to ABSPATH, 2: threat classification description
+#: includes/class-turbo-guard-scanner.php:1338
+#: includes/class-turbo-guard-scanner.php:1371
+#, php-format
+msgid "File \"%1$s\" is in a WordPress core location and matches a known backdoor signature. %2$s"
+msgstr ""
+
+#. translators: %s: file path relative to ABSPATH
+#: includes/class-turbo-guard-scanner.php:1344
+#, php-format
+msgid "File \"%s\" is not distributed with WordPress and should not exist in a core directory. It may have been planted by an attacker. Verify and delete if not legitimate."
+msgstr ""
+
+#: includes/class-turbo-guard-scanner.php:1461
+msgid "Unknown File in WordPress Root Directory"
+msgstr ""
+
+#. translators: 1: file name, 2: threat classification
+#: includes/class-turbo-guard-scanner.php:1465
+#, php-format
+msgid "File \"%1$s\" is in the WordPress root directory and matches a known backdoor signature. %2$s"
+msgstr ""
+
+#. translators: %s: file name
+#: includes/class-turbo-guard-scanner.php:1471
+#, php-format
+msgid "File \"%s\" is not part of the WordPress distribution and should not exist in the root directory. It may have been planted by an attacker. Verify and delete if not legitimate."
+msgstr ""
+
+#: includes/class-turbo-guard-scanner.php:1515
+msgid "PHP File in Uploads Directory"
+msgstr ""
+
+#: includes/class-turbo-guard-scanner.php:1516
+msgid "PHP files should never exist in the uploads directory. This is a strong indicator of a backdoor or malware."
+msgstr ""
+
+#: includes/class-turbo-guard-scanner.php:1540
+msgid "Previously Infected File (.suspected)"
+msgstr ""
+
+#. translators: %s: file path
+#: includes/class-turbo-guard-scanner.php:1543
+#, php-format
+msgid "File \"%s\" was renamed to .suspected by your hosting provider after detecting malware. This file should be reviewed and deleted — it is evidence of a prior compromise. The original file may still be active under its original name."
+msgstr ""
+
+#. translators: 1: file extension, 2: threat description
+#: includes/class-turbo-guard-scanner.php:1608
+#, php-format
+msgid "Image file (.%1$s) contains embedded PHP code. Real images never contain PHP. %2$s"
+msgstr ""
+
+#: includes/class-turbo-guard-scanner.php:1638
+msgid "Script Injection in Image File"
+msgstr ""
+
+#. translators: %s: file path
+#: includes/class-turbo-guard-scanner.php:1641
+#, php-format
+msgid "Image file \"%s\" contains <script> tags with JavaScript code. Real images never contain JavaScript. This file may be used for XSS attacks via SVG/image polyglots."
+msgstr ""
+
+#. translators: %s is the file path
+#: includes/class-turbo-guard-scanner.php:1711
+#, php-format
+msgid "Suspicious pattern detected in file: %s"
+msgstr ""
+
+#: includes/class-turbo-guard-scanner.php:2113
+msgid "WordPress core file"
+msgstr ""
+
+#: includes/class-turbo-guard-scanner.php:2120
+msgid "Plugin file"
+msgstr ""
+
+#: includes/class-turbo-guard-scanner.php:2127
+msgid "Theme file"
+msgstr ""
+
+#: includes/class-turbo-guard-scanner.php:2134
+msgid "File in uploads directory"
+msgstr ""
+
+#: includes/class-turbo-guard-scanner.php:2141
+msgid "Not a core, theme, or plugin file from wordpress.org"
+msgstr ""
+
+#. translators: 1: pattern text, 2: post ID
+#: includes/class-turbo-guard-scanner.php:2371
+#, php-format
+msgid "Pattern \"%1$s\" found in post ID %2$d. This post may contain injected spam content. Review and delete if not legitimate."
+msgstr ""
+
+#. translators: %s: database table name
+#: includes/class-turbo-guard-scanner.php:2653
+#, php-format
+msgid "Table \"%s\" was not present when the database baseline was recorded. It may have been created by an attacker, or by a recently installed/updated plugin. Verify before deleting."
+msgstr ""
+
+#. translators: %s: option name
+#: includes/class-turbo-guard-scanner.php:2732
+#, php-format
+msgid "Option \"%s\" was not present when the database baseline was recorded. It may have been added by an attacker, or by a recently installed/updated plugin. Review its value before removing."
+msgstr ""
+
+#. translators: 1: site name, 2: count
+#: includes/class-turbo-guard-seo-spam-detector.php:798
+#, php-format
+msgid "[%1$s] Turbo Guard: %2$d SEO Spam Indicators Found"
+msgstr ""
+
+#. translators: %d: number of SEO spam indicators
+#: includes/class-turbo-guard-seo-spam-detector.php:805
+#, php-format
+msgid ""
+"Turbo Guard SEO spam scan found %d issue(s):\n"
+"\n"
+""
+msgstr ""
+
+#. translators: %s: URL to view SEO spam details
+#. translators: %s: URL to view vulnerability details
+#: includes/class-turbo-guard-seo-spam-detector.php:823
+#: includes/class-turbo-guard-vuln-scanner.php:499
+#, php-format
+msgid "View details: %s"
+msgstr ""
+
+#. translators: 1: action taken, 2: post ID
+#: includes/class-turbo-guard-seo-spam-detector.php:902
+#, php-format
+msgid "Spam post %1$s: ID %2$d"
+msgstr ""
+
+#: includes/class-turbo-guard-seo-spam-detector.php:903
+msgid "deleted permanently"
+msgstr ""
+
+#: includes/class-turbo-guard-seo-spam-detector.php:903
+msgid "moved to trash"
+msgstr ""
+
+#: includes/class-turbo-guard-vuln-scanner.php:74
+msgid "The configured WPScan API key is invalid or expired. Showing limited WordPress.org status instead of detailed CVE data."
+msgstr ""
+
+#: includes/class-turbo-guard-vuln-scanner.php:78
+msgid "Could not reach the WPScan API. Showing limited WordPress.org status instead of detailed CVE data."
+msgstr ""
+
+#: includes/class-turbo-guard-vuln-scanner.php:83
+msgid "No WPScan API key is configured, so detailed CVE data is unavailable. Showing limited WordPress.org status instead. Add a free key in Settings for full results."
+msgstr ""
+
+#. translators: %d: vulnerability count
+#: includes/class-turbo-guard-vuln-scanner.php:156
+#, php-format
+msgid "Vulnerability scan complete. %d vulnerabilities found."
+msgstr ""
+
+#. translators: %s: plugin/theme name
+#: includes/class-turbo-guard-vuln-scanner.php:371
+#, php-format
+msgid "%s has been removed from WordPress.org"
+msgstr ""
+
+#: includes/class-turbo-guard-vuln-scanner.php:416
+msgid "Unknown vulnerability"
+msgstr ""
+
+#. translators: 1: site name, 2: count
+#: includes/class-turbo-guard-vuln-scanner.php:475
+#, php-format
+msgid "[%1$s] Turbo Guard: %2$d Vulnerabilities Found"
+msgstr ""
+
+#. translators: %d: number of vulnerability issues found
+#: includes/class-turbo-guard-vuln-scanner.php:482
+#, php-format
+msgid ""
+"Turbo Guard vulnerability scan found %d issue(s):\n"
+"\n"
+""
+msgstr ""

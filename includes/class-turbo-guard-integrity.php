@@ -72,17 +72,44 @@ class Turbo_Guard_Integrity {
 		add_action( 'turbo_guard_file_watcher', array( $this, 'run_file_watcher' ) );
 		add_action( 'turbo_guard_integrity_check', array( $this, 'run_core_integrity_check' ) );
 
-		// Schedule if not already scheduled.
-		if ( ! wp_next_scheduled( 'turbo_guard_file_watcher' ) ) {
-			wp_schedule_event( time() + HOUR_IN_SECONDS, 'twicedaily', 'turbo_guard_file_watcher' );
-		}
-		if ( ! wp_next_scheduled( 'turbo_guard_integrity_check' ) ) {
-			wp_schedule_event( time() + 2 * HOUR_IN_SECONDS, 'daily', 'turbo_guard_integrity_check' );
-		}
+		// Schedule (or unschedule) the cron jobs based on their on/off settings.
+		self::sync_cron_schedules();
 
 		// AJAX: manual trigger from admin.
 		add_action( 'wp_ajax_turbo_guard_run_integrity_check', array( $this, 'ajax_run_integrity_check' ) );
 		add_action( 'wp_ajax_turbo_guard_rebuild_baseline', array( $this, 'ajax_rebuild_baseline' ) );
+		add_action( 'wp_ajax_turbo_guard_run_file_watcher', array( $this, 'ajax_run_file_watcher' ) );
+		add_action( 'wp_ajax_turbo_guard_toggle_integrity_setting', array( $this, 'ajax_toggle_integrity_setting' ) );
+	}
+
+	/**
+	 * Schedule or unschedule the file watcher and core integrity cron jobs
+	 * based on their on/off settings.
+	 *
+	 * Idempotent — safe to run on every request. When a feature is enabled and
+	 * its event is missing, the event is (re)created; when disabled, any
+	 * lingering event is cleared.
+	 *
+	 * @since 1.1.5
+	 */
+	public static function sync_cron_schedules() {
+		// File watcher — every 12 hours.
+		if ( 'yes' === get_option( 'turbo_guard_file_watcher_enabled', 'yes' ) ) {
+			if ( ! wp_next_scheduled( 'turbo_guard_file_watcher' ) ) {
+				wp_schedule_event( time() + HOUR_IN_SECONDS, 'twicedaily', 'turbo_guard_file_watcher' );
+			}
+		} else {
+			wp_clear_scheduled_hook( 'turbo_guard_file_watcher' );
+		}
+
+		// Core integrity check — daily.
+		if ( 'yes' === get_option( 'turbo_guard_integrity_check_enabled', 'yes' ) ) {
+			if ( ! wp_next_scheduled( 'turbo_guard_integrity_check' ) ) {
+				wp_schedule_event( time() + 2 * HOUR_IN_SECONDS, 'daily', 'turbo_guard_integrity_check' );
+			}
+		} else {
+			wp_clear_scheduled_hook( 'turbo_guard_integrity_check' );
+		}
 	}
 
 	// =========================================================================
@@ -572,6 +599,65 @@ class Turbo_Guard_Integrity {
 		wp_send_json_success( array(
 			'count'   => $count,
 			'message' => sprintf( 'Baseline rebuilt. %d files tracked.', $count ),
+		) );
+	}
+
+	/**
+	 * AJAX: Run the file watcher manually.
+	 *
+	 * @since 1.2.0
+	 */
+	public function ajax_run_file_watcher() {
+		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => 'Permission denied.' ) );
+		}
+
+		$result = $this->run_file_watcher();
+
+		wp_send_json_success( array(
+			'new'      => $result['new'],
+			'modified' => $result['modified'],
+			'deleted'  => $result['deleted'],
+			'message'  => sprintf(
+				'Done. %d new, %d modified, %d deleted files.',
+				$result['new'],
+				$result['modified'],
+				$result['deleted']
+			),
+		) );
+	}
+
+	/**
+	 * AJAX: Toggle an automatic integrity feature on/off.
+	 *
+	 * Persists the option and immediately re-syncs the cron schedule so the
+	 * change takes effect without waiting for a future page load.
+	 *
+	 * @since 1.1.5
+	 */
+	public function ajax_toggle_integrity_setting() {
+		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => 'Permission denied.' ) );
+		}
+
+		$key = isset( $_POST['key'] ) ? sanitize_key( $_POST['key'] ) : '';
+		if ( ! in_array( $key, array( 'file_watcher_enabled', 'integrity_check_enabled' ), true ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid setting.', 'turbo-guard' ) ) );
+		}
+
+		$enabled = isset( $_POST['enabled'] ) ? sanitize_text_field( wp_unslash( $_POST['enabled'] ) ) : 'no';
+		$enabled = ( 'yes' === $enabled || '1' === $enabled || 'true' === $enabled || 'on' === $enabled ) ? 'yes' : 'no';
+
+		update_option( 'turbo_guard_' . $key, $enabled );
+		self::sync_cron_schedules();
+
+		wp_send_json_success( array(
+			'enabled' => ( 'yes' === $enabled ),
+			'message' => ( 'yes' === $enabled )
+				? __( 'Automatic check enabled.', 'turbo-guard' )
+				: __( 'Automatic check disabled.', 'turbo-guard' ),
 		) );
 	}
 

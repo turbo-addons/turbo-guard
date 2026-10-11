@@ -3,7 +3,7 @@ Contributors: turboaddons, siraji2017, sharifok
 Tags: security, malware, scanner, firewall, 2fa
 Requires at least: 5.6
 Tested up to: 7.1
-Stable tag: 1.1.4
+Stable tag: 1.1.5
 Requires PHP: 7.4
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -201,6 +201,14 @@ Used for Google Search Console integration to detect SEO spam and manage indexed
 * Privacy Policy: https://policies.google.com/privacy
 
 == Changelog ==
+
+= 1.1.5 =
+* Fixed: scheduled scans now run to completion (resumable, chunked under a time budget) instead of only scanning the first 500 files
+* Performance: the file list is computed once per scan and cached, so each scan chunk no longer re-walks the whole filesystem
+* Fixed: "Enable Scanner" now actually gates the automatic malware scan
+* Fixed: "Scan Complete Alerts" and "Threat Alerts" now send emails from the malware scanner (threat alerts fire on critical/high findings only, to avoid false-positive noise)
+* Added: "Scan All Images" and "Scan Outside WordPress" settings (previously hidden/off)
+* Removed: broken "Weekly" schedule option and the dead "Quarantine Files" setting
 
 = 1.1.4 =
 * Firewall: inspect raw JSON/XML request bodies and cookies, so REST API and headless payloads are no longer a blind spot

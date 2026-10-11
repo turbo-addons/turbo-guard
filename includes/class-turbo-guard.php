@@ -185,17 +185,19 @@ class Turbo_Guard {
 	/**
 	 * Run the scheduled malware + vulnerability scan.
 	 *
-	 * The malware scan is local and always runs. The vulnerability scan
-	 * contacts the WPScan API with installed plugin/theme versions, so it
-	 * only runs when the site owner explicitly opted in via the
-	 * `enable_scheduled_vuln_scan` setting (default OFF).
+	 * The malware scan is local and runs when the `scan_enabled` setting is on.
+	 * The vulnerability scan contacts the WPScan API with installed
+	 * plugin/theme versions, so it only runs when the site owner explicitly
+	 * opted in via the `enable_scheduled_vuln_scan` setting (default OFF).
 	 *
 	 * @since 1.1.0
 	 */
 	public function run_scheduled_scan() {
-		$scanner = new Turbo_Guard_Scanner();
-		$scan_id = $scanner->start_scan();
-		$scanner->scan_chunk( $scan_id, 0, 500 ); // Large chunk for background cron.
+		// Respect the "Enable Scanner" toggle — skip the automatic malware scan
+		// entirely when scanning is turned off.
+		if ( 'yes' === get_option( 'turbo_guard_scan_enabled', 'yes' ) ) {
+			$this->run_scheduled_malware_scan();
+		}
 
 		// Vulnerability scan is opt-in (Pro): only contact WPScan API when enabled.
 		if ( 'yes' === get_option( 'turbo_guard_enable_scheduled_vuln_scan', 'no' ) && turbo_guard_is_pro() ) {
@@ -206,6 +208,47 @@ class Turbo_Guard {
 		if ( 'yes' === get_option( 'turbo_guard_enable_scheduled_seo_spam_scan', 'no' ) ) {
 			Turbo_Guard_SEO_Spam_Detector::run_scan();
 		}
+	}
+
+	/**
+	 * Run (or resume) the scheduled malware scan.
+	 *
+	 * Scans in small chunks under a time budget so a cron tick never exceeds
+	 * the host's PHP timeout. If the site has more files than can be scanned in
+	 * one tick, the current scan + offset are persisted and resumed on the next
+	 * tick instead of silently restarting from zero (and never completing).
+	 *
+	 * @since 1.1.5
+	 */
+	private function run_scheduled_malware_scan() {
+		@set_time_limit( 0 ); // phpcs:ignore WordPress.PHP.NoSilencedErrors, Squiz.PHP.DiscouragedFunctions.Discouraged -- best-effort for background cron.
+
+		$scanner = new Turbo_Guard_Scanner();
+
+		// Resume an in-progress scan, otherwise start a fresh one.
+		$scan_id = (int) get_option( 'turbo_guard_scheduled_scan_id', 0 );
+		if ( $scan_id && 'running' === Turbo_Guard_Scanner::get_scan_status( $scan_id ) ) {
+			$offset = (int) get_option( 'turbo_guard_scheduled_scan_offset', 0 );
+		} else {
+			$scan_id = $scanner->start_scan();
+			$offset  = 0;
+			update_option( 'turbo_guard_scheduled_scan_id', $scan_id, false );
+		}
+
+		$deadline = time() + 50; // Keep the whole scan under typical cron timeouts.
+
+		do {
+			$result = $scanner->scan_chunk( $scan_id, $offset, 200 );
+			$offset = isset( $result['next_offset'] ) ? (int) $result['next_offset'] : $offset + 200;
+
+			if ( ! empty( $result['done'] ) ) {
+				delete_option( 'turbo_guard_scheduled_scan_id' );
+				delete_option( 'turbo_guard_scheduled_scan_offset' );
+				return;
+			}
+
+			update_option( 'turbo_guard_scheduled_scan_offset', $offset, false );
+		} while ( time() < $deadline );
 	}
 
 	/**

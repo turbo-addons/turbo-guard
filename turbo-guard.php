@@ -3,7 +3,7 @@
  * Plugin Name: Turbo Guard – Security & Malware Scanner
  * Plugin URI: https://wp-turbo.com/turbo-guard/
  * Description: Advanced WordPress security with AI-powered malware scanning, WordPress core file manifest verification, firewall, 2FA, vulnerability scanner, file integrity checker, bot protection & SEO spam removal. Detects every threat for free — clean up to 3 files free, then upgrade to Turbo Guard Pro.
- * Version: 1.1.4
+ * Version: 1.1.5
  * Author: Turbo Addons
  * Author URI: https://wp-turbo.com
  * License: GPL-3.0-or-later
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'TURBO_GUARD_VERSION', '1.1.4' );
+define( 'TURBO_GUARD_VERSION', '1.1.5' );
 define( 'TURBO_GUARD_PLUGIN_FILE', __FILE__ );
 define( 'TURBO_GUARD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TURBO_GUARD_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -192,7 +192,9 @@ register_activation_hook( __FILE__, 'turbo_guard_activate' );
  * @since 1.0.0
  */
 function turbo_guard_deactivate() {
-	// Clear scheduled scans.
+	// Clear scheduled scans and the file-integrity cron jobs.
 	wp_clear_scheduled_hook( 'turbo_guard_scheduled_scan' );
+	wp_clear_scheduled_hook( 'turbo_guard_file_watcher' );
+	wp_clear_scheduled_hook( 'turbo_guard_integrity_check' );
 }
 register_deactivation_hook( __FILE__, 'turbo_guard_deactivate' );

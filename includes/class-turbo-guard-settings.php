@@ -45,7 +45,6 @@ class Turbo_Guard_Settings {
 			'notify_admin_email'       => get_option( 'turbo_guard_notify_admin_email', get_option( 'admin_email' ) ),
 			'notify_on_threats'        => get_option( 'turbo_guard_notify_on_threats', 'yes' ),
 			'notify_on_scan_complete'  => get_option( 'turbo_guard_notify_on_scan_complete', 'no' ),
-			'quarantine_malware'       => get_option( 'turbo_guard_quarantine_malware', 'yes' ),
 			'remove_data_on_uninstall' => get_option( 'turbo_guard_remove_data_on_uninstall', 'no' ),
 		);
 	}
@@ -74,7 +73,6 @@ class Turbo_Guard_Settings {
 			'notify_admin_email',
 			'notify_on_threats',
 			'notify_on_scan_complete',
-			'quarantine_malware',
 			'remove_data_on_uninstall',
 		);
 
@@ -91,7 +89,7 @@ class Turbo_Guard_Settings {
 			} elseif ( 'notify_admin_email' === $key ) {
 				$value = sanitize_email( $value );
 			} elseif ( 'scan_schedule' === $key ) {
-				$value = in_array( $value, array( 'hourly', 'twicedaily', 'daily', 'weekly' ), true ) ? $value : 'daily';
+				$value = in_array( $value, array( 'hourly', 'twicedaily', 'daily' ), true ) ? $value : 'daily';
 			} else {
 				$value = ( 'yes' === $value || 'on' === $value || true === $value ) ? 'yes' : 'no';
 			}
@@ -99,10 +97,16 @@ class Turbo_Guard_Settings {
 			update_option( $option_name, $value );
 		}
 
-		// Reschedule cron if scan schedule changed.
+		// Reschedule cron if scan schedule changed. Only valid WordPress
+		// intervals (hourly, twicedaily, daily) are accepted so the scheduled
+		// event always fires.
 		if ( isset( $settings['scan_schedule'] ) ) {
+			$schedule = in_array( $settings['scan_schedule'], array( 'hourly', 'twicedaily', 'daily' ), true )
+				? $settings['scan_schedule']
+				: 'daily';
+
 			wp_clear_scheduled_hook( 'turbo_guard_scheduled_scan' );
-			wp_schedule_event( time(), $settings['scan_schedule'], 'turbo_guard_scheduled_scan' );
+			wp_schedule_event( time(), $schedule, 'turbo_guard_scheduled_scan' );
 		}
 
 		return true;

@@ -56,22 +56,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<option value="hourly" <?php selected( $turbo_guard_settings['scan_schedule'], 'hourly' ); ?>><?php esc_html_e( 'Every Hour', 'turbo-guard' ); ?></option>
 							<option value="twicedaily" <?php selected( $turbo_guard_settings['scan_schedule'], 'twicedaily' ); ?>><?php esc_html_e( 'Twice Daily', 'turbo-guard' ); ?></option>
 							<option value="daily" <?php selected( $turbo_guard_settings['scan_schedule'], 'daily' ); ?>><?php esc_html_e( 'Daily', 'turbo-guard' ); ?></option>
-							<option value="weekly" <?php selected( $turbo_guard_settings['scan_schedule'], 'weekly' ); ?>><?php esc_html_e( 'Weekly', 'turbo-guard' ); ?></option>
 						</select>
 						<p class="description"><?php esc_html_e( 'How often should automatic scans run?', 'turbo-guard' ); ?></p>
 					</td>
 				</tr>
 				<tr>
 					<th scope="row">
-						<label for="quarantine_malware"><?php esc_html_e( 'Quarantine Files', 'turbo-guard' ); ?></label>
+						<label for="scan_images"><?php esc_html_e( 'Scan All Images', 'turbo-guard' ); ?></label>
 					</th>
 					<td>
 						<label>
-							<input type="checkbox" id="quarantine_malware" name="quarantine_malware" value="yes"
-								<?php checked( $turbo_guard_settings['quarantine_malware'], 'yes' ); ?> />
-							<?php esc_html_e( 'Move malware to quarantine instead of deleting immediately', 'turbo-guard' ); ?>
+							<input type="checkbox" id="scan_images" name="scan_images" value="yes"
+								<?php checked( $turbo_guard_settings['scan_images'], 'yes' ); ?> />
+							<?php esc_html_e( 'Include all image files in the scan', 'turbo-guard' ); ?>
 						</label>
-						<p class="description"><?php esc_html_e( 'Recommended for safety - allows file recovery if needed.', 'turbo-guard' ); ?></p>
+						<p class="description"><?php esc_html_e( 'Detects PHP backdoors disguised as .jpg/.png/.ico files. Slightly slower scans.', 'turbo-guard' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="scan_outside_wp"><?php esc_html_e( 'Scan Outside WordPress', 'turbo-guard' ); ?></label>
+					</th>
+					<td>
+						<label>
+							<input type="checkbox" id="scan_outside_wp" name="scan_outside_wp" value="yes"
+								<?php checked( $turbo_guard_settings['scan_outside_wp'], 'yes' ); ?> />
+							<?php esc_html_e( 'Also scan the parent directory (above public_html)', 'turbo-guard' ); ?>
+						</label>
+						<p class="description"><?php esc_html_e( 'Catches cPanel-level injected files above the WordPress installation.', 'turbo-guard' ); ?></p>
 					</td>
 				</tr>
 				<tr>

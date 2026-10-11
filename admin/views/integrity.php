@@ -16,6 +16,8 @@ $turbo_guard_baseline        = get_option( 'turbo_guard_file_baseline', array() 
 $turbo_guard_baseline_count  = count( $turbo_guard_baseline );
 $turbo_guard_watcher_last    = $turbo_guard_watcher_last_run;
 $turbo_guard_baseline_at     = $turbo_guard_baseline_built_at;
+$turbo_guard_watcher_auto    = get_option( 'turbo_guard_file_watcher_enabled', 'yes' );
+$turbo_guard_integrity_auto  = get_option( 'turbo_guard_integrity_check_enabled', 'yes' );
 ?>
 
 <div class="wrap turbo-guard-integrity">
@@ -86,6 +88,13 @@ $turbo_guard_baseline_at     = $turbo_guard_baseline_built_at;
 			<button id="tg-run-integrity" class="button button-primary button-small">
 				<?php esc_html_e( 'Run Check Now', 'turbo-guard' ); ?>
 			</button>
+			<div style="margin-top:12px;">
+				<label class="turbo-guard-toggle">
+					<input type="checkbox" class="tg-integrity-auto-toggle" data-key="integrity_check_enabled" value="yes" <?php checked( $turbo_guard_integrity_auto, 'yes' ); ?> />
+					<span class="turbo-guard-toggle-slider" aria-hidden="true"></span>
+					<span class="turbo-guard-toggle-label"><?php esc_html_e( 'Automatic daily check', 'turbo-guard' ); ?></span>
+				</label>
+			</div>
 		</div>
 
 		<!-- File Watcher -->
@@ -94,7 +103,9 @@ $turbo_guard_baseline_at     = $turbo_guard_baseline_built_at;
 			<div class="turbo-guard-stat-value tg-green">
 				<span class="dashicons dashicons-visibility" style="font-size:32px;width:32px;height:32px;"></span>
 			</div>
-			<p class="turbo-guard-stat-label"><?php esc_html_e( 'Runs every 12 hours via WP-Cron', 'turbo-guard' ); ?></p>
+			<p class="turbo-guard-stat-label">
+				<?php echo ( 'yes' === $turbo_guard_watcher_auto ) ? esc_html__( 'Runs every 12 hours via WP-Cron', 'turbo-guard' ) : esc_html__( 'Automatic monitoring is off', 'turbo-guard' ); ?>
+			</p>
 			<?php if ( $turbo_guard_watcher_last ) : ?>
 				<p style="font-size:11px;color:#9ca3af;margin:4px 0 8px;">
 					<?php
@@ -109,6 +120,13 @@ $turbo_guard_baseline_at     = $turbo_guard_baseline_built_at;
 			<button id="tg-run-watcher" class="button button-secondary button-small">
 				<?php esc_html_e( 'Run Now', 'turbo-guard' ); ?>
 			</button>
+			<div style="margin-top:12px;">
+				<label class="turbo-guard-toggle">
+					<input type="checkbox" class="tg-integrity-auto-toggle" data-key="file_watcher_enabled" value="yes" <?php checked( $turbo_guard_watcher_auto, 'yes' ); ?> />
+					<span class="turbo-guard-toggle-slider" aria-hidden="true"></span>
+					<span class="turbo-guard-toggle-label"><?php esc_html_e( 'Automatic monitoring', 'turbo-guard' ); ?></span>
+				</label>
+			</div>
 		</div>
 
 		<!-- Baseline -->
