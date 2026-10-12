@@ -413,6 +413,11 @@
 	flex-shrink: 0;
 }
 
+#turbo-guard-start-scan .dashicons.dashicons-search {
+	border-color: var(--tg-blue-dark) !important;
+	color: #fff !important;
+}
+
 #turbo-guard-start-scan:hover {
 	background: var(--tg-blue-dark) !important;
 	box-shadow: 0 4px 8px rgba(37,99,235,.4) !important;

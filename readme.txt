@@ -48,7 +48,7 @@ Turbo Guard is a comprehensive WordPress security plugin built by a team that ma
 * Prevents PHP file uploads
 * Advanced IP blocking: exact IP, CIDR, ranges, wildcards
 * Rate limiting (120 requests per minute per IP)
-* Bad bot blocker: blocks 25+ vulnerability scanners and scrapers
+* Bad bot blocker: blocks known attack tools (SQLMap, Nikto, WPScan, Nuclei, and more) while always allowing verified search-engine crawlers
 
 = Geo-Fence and Trusted Location =
 
@@ -209,6 +209,7 @@ Used for Google Search Console integration to detect SEO spam and manage indexed
 * Fixed: "Scan Complete Alerts" and "Threat Alerts" now send emails from the malware scanner (threat alerts fire on critical/high findings only, to avoid false-positive noise)
 * Added: "Scan All Images" and "Scan Outside WordPress" settings (previously hidden/off)
 * Removed: broken "Weekly" schedule option and the dead "Quarantine Files" setting
+* Improved: Bot Protection — verified search-engine crawlers (Googlebot, Bingbot, …) are now always allowed and bots spoofing a crawler user agent are blocked via reverse DNS
 
 = 1.1.4 =
 * Firewall: inspect raw JSON/XML request bodies and cookies, so REST API and headless payloads are no longer a blind spot

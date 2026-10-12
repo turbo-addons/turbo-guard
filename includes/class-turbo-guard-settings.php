@@ -38,6 +38,10 @@ class Turbo_Guard_Settings {
 			'enable_scheduled_seo_spam_scan' => get_option( 'turbo_guard_enable_scheduled_seo_spam_scan', 'no' ),
 			'seo_allow_cjk_content'   => get_option( 'turbo_guard_seo_allow_cjk_content', 'no' ),
 			'firewall_enabled'         => get_option( 'turbo_guard_firewall_enabled', 'yes' ),
+			'bot_protection_enabled'   => get_option( 'turbo_guard_bot_protection_enabled', 'yes' ),
+			'bot_aggressive_mode'      => get_option( 'turbo_guard_bot_aggressive_mode', 'no' ),
+			'bot_verify_crawlers'      => get_option( 'turbo_guard_bot_verify_crawlers', 'yes' ),
+			'bot_custom_blocked'       => get_option( 'turbo_guard_bot_custom_blocked', '' ),
 			'login_security_enabled'   => get_option( 'turbo_guard_login_security_enabled', 'yes' ),
 			'brute_force_protection'   => get_option( 'turbo_guard_brute_force_protection', 'yes' ),
 			'max_login_attempts'       => absint( get_option( 'turbo_guard_max_login_attempts', 5 ) ),
@@ -66,6 +70,10 @@ class Turbo_Guard_Settings {
 			'enable_scheduled_seo_spam_scan',
 			'seo_allow_cjk_content',
 			'firewall_enabled',
+			'bot_protection_enabled',
+			'bot_aggressive_mode',
+			'bot_verify_crawlers',
+			'bot_custom_blocked',
 			'login_security_enabled',
 			'brute_force_protection',
 			'max_login_attempts',
@@ -88,6 +96,8 @@ class Turbo_Guard_Settings {
 				$value = absint( $value );
 			} elseif ( 'notify_admin_email' === $key ) {
 				$value = sanitize_email( $value );
+			} elseif ( 'bot_custom_blocked' === $key ) {
+				$value = sanitize_textarea_field( $value );
 			} elseif ( 'scan_schedule' === $key ) {
 				$value = in_array( $value, array( 'hourly', 'twicedaily', 'daily' ), true ) ? $value : 'daily';
 			} else {

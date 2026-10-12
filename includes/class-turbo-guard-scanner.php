@@ -2227,7 +2227,12 @@ class Turbo_Guard_Scanner {
 		$view_url      = admin_url( 'admin.php?page=turbo-guard-scanner' );
 
 		// Threat alert — only when real (critical/high) malware was detected.
-		if ( $serious_count > 0 && 'yes' === get_option( 'turbo_guard_notify_on_threats', 'yes' ) ) {
+		// Pro users are skipped here: the Pro add-on's AI Advisor already sends a
+		// richer advisory email for the same scan, so sending this free-tier
+		// summary too would double-email them.
+		if ( $serious_count > 0
+			&& 'yes' === get_option( 'turbo_guard_notify_on_threats', 'yes' )
+			&& ! turbo_guard_is_pro() ) {
 			$subject = '[' . $site . '] Turbo Guard: ' . $serious_count . ' serious threat(s) detected';
 
 			$body  = sprintf( "Turbo Guard found %d serious threat(s) during a malware scan.\n\n", $serious_count );

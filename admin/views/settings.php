@@ -189,6 +189,82 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</table>
 		</div>
 
+		<!-- Bot Protection Settings -->
+		<div class="turbo-guard-card">
+			<h2>
+				<span class="dashicons dashicons-shield-alt" style="color:#2563eb;vertical-align:middle;margin-right:6px;"></span>
+				<?php esc_html_e( 'Bot Protection', 'turbo-guard' ); ?>
+			</h2>
+			<?php
+			$turbo_guard_bot_stats = Turbo_Guard_Bot_Protection::get_stats();
+			?>
+			<?php if ( $turbo_guard_bot_stats['total'] > 0 ) : ?>
+				<p class="description" style="margin-bottom:14px;">
+					<span class="dashicons dashicons-shield" style="color:#16a34a;vertical-align:middle;"></span>
+					<?php
+					printf(
+						/* translators: 1: number of blocked requests, 2: number of unique IPs */
+						esc_html__( '%1$s malicious requests blocked in the last 7 days (%2$s unique IPs).', 'turbo-guard' ),
+						'<strong>' . esc_html( number_format_i18n( $turbo_guard_bot_stats['total'] ) ) . '</strong>',
+						esc_html( number_format_i18n( $turbo_guard_bot_stats['unique'] ) )
+					);
+					?>
+				</p>
+			<?php endif; ?>
+
+			<table class="form-table">
+				<tr>
+					<th scope="row">
+						<label for="bot_protection_enabled"><?php esc_html_e( 'Block Bad Bots', 'turbo-guard' ); ?></label>
+					</th>
+					<td>
+						<label>
+							<input type="checkbox" id="bot_protection_enabled" name="bot_protection_enabled" value="yes"
+								<?php checked( $turbo_guard_settings['bot_protection_enabled'], 'yes' ); ?> />
+							<?php esc_html_e( 'Block vulnerability scanners and attack tools by user agent', 'turbo-guard' ); ?>
+						</label>
+						<p class="description"><?php esc_html_e( 'Blocks known attack tools (SQLMap, Nikto, WPScan, Nuclei, and more) while always allowing verified search-engine crawlers. Blocked IPs are added to the firewall for 24 hours.', 'turbo-guard' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="bot_verify_crawlers"><?php esc_html_e( 'Verify Crawlers', 'turbo-guard' ); ?></label>
+					</th>
+					<td>
+						<label>
+							<input type="checkbox" id="bot_verify_crawlers" name="bot_verify_crawlers" value="yes"
+								<?php checked( $turbo_guard_settings['bot_verify_crawlers'], 'yes' ); ?> />
+							<?php esc_html_e( 'Confirm claimed crawlers (Googlebot, Bingbot, etc.) by reverse DNS', 'turbo-guard' ); ?>
+						</label>
+						<p class="description"><?php esc_html_e( 'Blocks bots that spoof a trusted crawler user agent. Recommended. Fails open if your server cannot perform reverse DNS lookups, so genuine crawlers are never blocked.', 'turbo-guard' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="bot_aggressive_mode"><?php esc_html_e( 'Aggressive Mode', 'turbo-guard' ); ?></label>
+					</th>
+					<td>
+						<label>
+							<input type="checkbox" id="bot_aggressive_mode" name="bot_aggressive_mode" value="yes"
+								<?php checked( $turbo_guard_settings['bot_aggressive_mode'], 'yes' ); ?> />
+							<?php esc_html_e( 'Also block generic HTTP clients and empty user agents', 'turbo-guard' ); ?>
+						</label>
+						<p class="description"><?php esc_html_e( 'Blocks curl, wget, python-requests, headless browsers, and requests with no user agent. More aggressive — enable only if you do not rely on server-to-server integrations, uptime monitors, or webhook callbacks.', 'turbo-guard' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="bot_custom_blocked"><?php esc_html_e( 'Custom Blocked User Agents', 'turbo-guard' ); ?></label>
+					</th>
+					<td>
+						<textarea id="bot_custom_blocked" name="bot_custom_blocked" rows="4" class="large-text code"
+							placeholder="<?php esc_attr_e( 'One substring per line, e.g. SomeBadBot', 'turbo-guard' ); ?>"><?php echo esc_textarea( $turbo_guard_settings['bot_custom_blocked'] ); ?></textarea>
+						<p class="description"><?php esc_html_e( 'Optional. Block any request whose user agent contains one of these substrings (case-insensitive), one per line.', 'turbo-guard' ); ?></p>
+					</td>
+				</tr>
+			</table>
+		</div>
+
 		<!-- Login Security Settings -->
 		<div class="turbo-guard-card">
 			<h2><?php esc_html_e( 'Login Security Settings', 'turbo-guard' ); ?></h2>
