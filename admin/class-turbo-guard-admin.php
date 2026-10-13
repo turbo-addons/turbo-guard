@@ -873,7 +873,7 @@ class Turbo_Guard_Admin {
 	public function ajax_toggle_2fa_global() {
 		$this->guard_2fa_ajax();
 
-		$enabled = isset( $_POST['enabled'] ) ? sanitize_text_field( wp_unslash( $_POST['enabled'] ) ) : 'no';
+		$enabled = isset( $_POST['enabled'] ) ? sanitize_text_field( wp_unslash( $_POST['enabled'] ) ) : 'no'; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in guard_2fa_ajax().
 		$enabled = ( 'yes' === $enabled || '1' === $enabled || 'on' === $enabled ) ? 'yes' : 'no';
 
 		update_option( 'turbo_guard_2fa_enabled_global', $enabled );
@@ -889,8 +889,8 @@ class Turbo_Guard_Admin {
 	public function ajax_2fa_enable() {
 		$this->guard_2fa_ajax();
 
-		$secret = isset( $_POST['secret'] ) ? sanitize_text_field( wp_unslash( $_POST['secret'] ) ) : '';
-		$code   = isset( $_POST['code'] ) ? preg_replace( '/\D/', '', sanitize_text_field( wp_unslash( $_POST['code'] ) ) ) : '';
+		$secret = isset( $_POST['secret'] ) ? sanitize_text_field( wp_unslash( $_POST['secret'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in guard_2fa_ajax().
+		$code   = isset( $_POST['code'] ) ? preg_replace( '/\D/', '', sanitize_text_field( wp_unslash( $_POST['code'] ) ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in guard_2fa_ajax().
 
 		if ( '' === $secret || '' === $code ) {
 			wp_send_json_error( array( 'message' => __( 'Please enter the 6-digit code from your authenticator app.', 'turbo-guard' ) ) );

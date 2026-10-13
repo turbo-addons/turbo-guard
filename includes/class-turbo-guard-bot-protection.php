@@ -43,7 +43,7 @@ class Turbo_Guard_Bot_Protection {
 	/**
 	 * Verified search-engine / social crawlers.
 	 *
-	 * signature => array( label, rDNS suffixes )
+	 * Signature => array( label, rDNS suffixes ).
 	 *
 	 * When the rDNS suffix list is non-empty the source IP's reverse DNS is
 	 * verified against it, so a spoofed user agent is detected and blocked.

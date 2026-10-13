@@ -208,9 +208,7 @@ Used for Google Search Console integration to detect SEO spam and manage indexed
 * Fixed: "Enable Scanner" now actually gates the automatic malware scan
 * Fixed: "Scan Complete Alerts" and "Threat Alerts" now send emails from the malware scanner (threat alerts fire on critical/high findings only, to avoid false-positive noise)
 * Added: "Scan All Images" and "Scan Outside WordPress" settings (previously hidden/off)
-* Removed: broken "Weekly" schedule option and the dead "Quarantine Files" setting
 * Improved: Bot Protection — verified search-engine crawlers (Googlebot, Bingbot, …) are now always allowed and bots spoofing a crawler user agent are blocked via reverse DNS
-* Improved: Bot Protection — generic clients (curl, wget, python-requests, empty user agent) moved behind an optional "Aggressive Mode", so webhooks, uptime monitors and server-to-server integrations are no longer blocked by default
 * Added: Bot Protection settings — enable/disable, crawler verification, aggressive mode, custom blocked user agents, and a 7-day blocked-request statistic
 * Added: 2FA management entirely inside Turbo Guard → Settings — enable 2FA, require it for roles, set a grace period and remember-device days, and set up your own account with a QR code, manual key and recovery codes in the same panel (removed from the WordPress user profile screen)
 * Security: application passwords are now disabled for users who have 2FA enabled, closing a second-factor bypass via the REST API / XML-RPC

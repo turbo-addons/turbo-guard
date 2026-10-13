@@ -45,29 +45,23 @@ if ( $turbo_guard_remove_data ) {
 	// Remove the quarantine folder and the error-log folder from uploads.
 	$turbo_guard_uploads = wp_upload_dir();
 	if ( ! empty( $turbo_guard_uploads['basedir'] ) ) {
+		if ( ! class_exists( 'WP_Filesystem_Direct' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-base.php';
+			require_once ABSPATH . 'wp-admin/includes/class-wp-filesystem-direct.php';
+		}
+
+		// Use the direct filesystem method so uninstall never prompts for FTP
+		// credentials; this is the standard pattern for uninstall cleanup.
+		$turbo_guard_fs = new WP_Filesystem_Direct( null );
+
 		$turbo_guard_dirs = array( 'turbo-guard-quarantine', 'turbo-guard' );
 
 		foreach ( $turbo_guard_dirs as $turbo_guard_dir_name ) {
 			$turbo_guard_dir = trailingslashit( $turbo_guard_uploads['basedir'] ) . $turbo_guard_dir_name;
 
-			if ( ! is_dir( $turbo_guard_dir ) ) {
-				continue;
+			if ( $turbo_guard_fs->is_dir( $turbo_guard_dir ) ) {
+				$turbo_guard_fs->rmdir( $turbo_guard_dir, true ); // Recursive.
 			}
-
-			$turbo_guard_entries = @scandir( $turbo_guard_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
-			if ( is_array( $turbo_guard_entries ) ) {
-				foreach ( $turbo_guard_entries as $turbo_guard_entry ) {
-					if ( '.' === $turbo_guard_entry || '..' === $turbo_guard_entry ) {
-						continue;
-					}
-					$turbo_guard_path = $turbo_guard_dir . '/' . $turbo_guard_entry;
-					if ( is_file( $turbo_guard_path ) ) {
-						@unlink( $turbo_guard_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.unlink_unlink
-					}
-				}
-			}
-
-			@rmdir( $turbo_guard_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
 		}
 	}
 }

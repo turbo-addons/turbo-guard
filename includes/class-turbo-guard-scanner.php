@@ -2342,7 +2342,7 @@ class Turbo_Guard_Scanner {
 				? 'ID, post_title, post_type, post_status, post_content, post_excerpt'
 				: 'ID, post_title, post_type, post_status';
 
-			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $select is a fixed allowlist (column list), never user input.
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter -- $select is a fixed allowlist (column list), never user input.
 			$results = $wpdb->get_results(
 				$wpdb->prepare(
 					"SELECT {$select}
@@ -2354,7 +2354,7 @@ class Turbo_Guard_Scanner {
 					'%' . $wpdb->esc_like( $pattern_data['pattern'] ) . '%'
 				)
 			);
-			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, PluginCheck.Security.DirectDB.UnescapedDBParameter
 
 			foreach ( $results as $post ) {
 				// Skip if we already reported this post for a higher-priority pattern.
