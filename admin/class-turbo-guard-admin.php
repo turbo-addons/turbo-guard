@@ -62,6 +62,7 @@ class Turbo_Guard_Admin {
 		add_action( 'wp_ajax_turbo_guard_2fa_enable', array( $this, 'ajax_2fa_enable' ) );
 		add_action( 'wp_ajax_turbo_guard_2fa_disable', array( $this, 'ajax_2fa_disable' ) );
 		add_action( 'wp_ajax_turbo_guard_2fa_regenerate', array( $this, 'ajax_2fa_regenerate' ) );
+		add_action( 'wp_ajax_turbo_guard_toggle_2fa', array( $this, 'ajax_toggle_2fa_global' ) );
 
 		// GSC AJAX endpoints.
 		add_action( 'wp_ajax_turbo_guard_gsc_get_urls', array( $this, 'ajax_gsc_get_urls' ) );
@@ -862,6 +863,22 @@ class Turbo_Guard_Admin {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
+	}
+
+	/**
+	 * AJAX: Enable/disable 2FA site-wide (immediate, no Save required).
+	 *
+	 * @since 1.1.5
+	 */
+	public function ajax_toggle_2fa_global() {
+		$this->guard_2fa_ajax();
+
+		$enabled = isset( $_POST['enabled'] ) ? sanitize_text_field( wp_unslash( $_POST['enabled'] ) ) : 'no';
+		$enabled = ( 'yes' === $enabled || '1' === $enabled || 'on' === $enabled ) ? 'yes' : 'no';
+
+		update_option( 'turbo_guard_2fa_enabled_global', $enabled );
+
+		wp_send_json_success( array( 'enabled' => $enabled ) );
 	}
 
 	/**

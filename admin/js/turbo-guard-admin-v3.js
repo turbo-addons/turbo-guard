@@ -889,10 +889,53 @@
 		 * Render the TOTP QR code for the pending 2FA setup, if present.
 		 */
 		init2fa: function () {
+			var $toggle = $( '#2fa_enabled_global' );
+			if ( $toggle.length ) {
+				this.sync2faVisibility();
+				$toggle.on( 'change', $.proxy( this.toggle2faGlobal, this ) );
+			}
+
 			var $setup = $( '.tg-2fa-setup' );
 			if ( $setup.length && typeof qrcode === 'function' ) {
 				this.render2faQr( $setup );
 			}
+		},
+
+		/**
+		 * Show/hide the 2FA options & setup depending on the enable toggle.
+		 */
+		sync2faVisibility: function () {
+			var on = $( '#2fa_enabled_global' ).is( ':checked' );
+			$( '#turbo-guard-2fa-options' ).toggle( on );
+		},
+
+		/**
+		 * Persist the site-wide "Enable 2FA" toggle immediately.
+		 */
+		toggle2faGlobal: function (e) {
+			var enabled = e.target.checked ? 'yes' : 'no';
+			var $status = $( '#turbo-guard-2fa-toggle-status' );
+
+			this.sync2faVisibility();
+			$status.text( 'Saving…' );
+
+			$.post(
+				turboGuardAdmin.ajaxUrl,
+				{
+					action:  'turbo_guard_toggle_2fa',
+					nonce:   turboGuardAdmin.nonce,
+					enabled: enabled
+				},
+				function ( res ) {
+					$status.text( res && res.success ? 'Saved' : 'Save failed' );
+					window.setTimeout( function () { $status.text( '' ); }, 2000 );
+				}
+			).fail(
+				function () {
+					$status.text( 'Save failed' );
+					window.setTimeout( function () { $status.text( '' ); }, 2000 );
+				}
+			);
 		},
 
 		render2faQr: function ( $setup ) {

@@ -344,106 +344,108 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 			<table class="form-table">
 				<tr>
-					<th scope="row">
-						<label for="2fa_enabled_global"><?php esc_html_e( 'Enable 2FA', 'turbo-guard' ); ?></label>
-					</th>
+					<th scope="row"><?php esc_html_e( 'Enable 2FA', 'turbo-guard' ); ?></th>
 					<td>
-						<label>
+						<label class="turbo-guard-toggle">
 							<input type="checkbox" id="2fa_enabled_global" name="2fa_enabled_global" value="yes"
 								<?php checked( $turbo_guard_settings['2fa_enabled_global'], 'yes' ); ?> />
-							<?php esc_html_e( 'Allow two-factor authentication on this site', 'turbo-guard' ); ?>
+							<span class="turbo-guard-toggle-slider" aria-hidden="true"></span>
+							<span class="turbo-guard-toggle-label"><?php esc_html_e( 'Enable two-factor authentication', 'turbo-guard' ); ?></span>
 						</label>
-						<p class="description"><?php esc_html_e( 'When disabled, the login code check is not run and per-account setup is unavailable.', 'turbo-guard' ); ?></p>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row"><?php esc_html_e( 'Require 2FA for', 'turbo-guard' ); ?></th>
-					<td>
-						<?php foreach ( $turbo_guard_all_roles as $turbo_guard_role_slug => $turbo_guard_role_name ) : ?>
-							<label style="display:block;margin-bottom:4px;">
-								<input type="checkbox" name="2fa_enforce_roles[]" value="<?php echo esc_attr( $turbo_guard_role_slug ); ?>"
-									<?php checked( in_array( $turbo_guard_role_slug, (array) $turbo_guard_settings['2fa_enforce_roles'], true ) ); ?> />
-								<?php echo esc_html( translate_user_role( $turbo_guard_role_name ) ); ?>
-							</label>
-						<?php endforeach; ?>
-						<p class="description"><?php esc_html_e( 'Users in the selected roles see a reminder to set up 2FA. They are never locked out of wp-admin.', 'turbo-guard' ); ?></p>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row">
-						<label for="2fa_grace_days"><?php esc_html_e( 'Grace Period', 'turbo-guard' ); ?></label>
-					</th>
-					<td>
-						<input type="number" id="2fa_grace_days" name="2fa_grace_days"
-							value="<?php echo esc_attr( $turbo_guard_settings['2fa_grace_days'] ); ?>"
-							min="0" max="365" class="small-text" />
-						<?php esc_html_e( 'days', 'turbo-guard' ); ?>
-						<p class="description"><?php esc_html_e( 'How long required users get a gentle reminder before the notice becomes an error. Set 0 for an immediate error notice.', 'turbo-guard' ); ?></p>
-					</td>
-				</tr>
-				<tr>
-					<th scope="row">
-						<label for="2fa_remember_days"><?php esc_html_e( 'Remember Device', 'turbo-guard' ); ?></label>
-					</th>
-					<td>
-						<input type="number" id="2fa_remember_days" name="2fa_remember_days"
-							value="<?php echo esc_attr( $turbo_guard_settings['2fa_remember_days'] ); ?>"
-							min="0" max="365" class="small-text" />
-						<?php esc_html_e( 'days', 'turbo-guard' ); ?>
-						<p class="description"><?php esc_html_e( 'Let users skip the 2FA code on a trusted device for this many days. Set 0 to always require a code.', 'turbo-guard' ); ?></p>
+						<span id="turbo-guard-2fa-toggle-status" class="description" style="margin-left:8px;"></span>
 					</td>
 				</tr>
 			</table>
 
-			<hr style="margin:22px 0;" />
+			<div id="turbo-guard-2fa-options"<?php echo $turbo_guard_2fa_active ? '' : ' style="display:none;"'; ?>>
+				<table class="form-table">
+					<tr>
+						<th scope="row"><?php esc_html_e( 'Require 2FA for', 'turbo-guard' ); ?></th>
+						<td>
+							<?php foreach ( $turbo_guard_all_roles as $turbo_guard_role_slug => $turbo_guard_role_name ) : ?>
+								<label style="display:block;margin-bottom:4px;">
+									<input type="checkbox" name="2fa_enforce_roles[]" value="<?php echo esc_attr( $turbo_guard_role_slug ); ?>"
+										<?php checked( in_array( $turbo_guard_role_slug, (array) $turbo_guard_settings['2fa_enforce_roles'], true ) ); ?> />
+									<?php echo esc_html( translate_user_role( $turbo_guard_role_name ) ); ?>
+								</label>
+							<?php endforeach; ?>
+							<p class="description"><?php esc_html_e( 'Users in the selected roles see a reminder to set up 2FA. They are never locked out of wp-admin.', 'turbo-guard' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="2fa_grace_days"><?php esc_html_e( 'Grace Period', 'turbo-guard' ); ?></label>
+						</th>
+						<td>
+							<input type="number" id="2fa_grace_days" name="2fa_grace_days"
+								value="<?php echo esc_attr( $turbo_guard_settings['2fa_grace_days'] ); ?>"
+								min="0" max="365" class="small-text" />
+							<?php esc_html_e( 'days', 'turbo-guard' ); ?>
+							<p class="description"><?php esc_html_e( 'How long required users get a gentle reminder before the notice becomes an error. Set 0 for an immediate error notice.', 'turbo-guard' ); ?></p>
+						</td>
+					</tr>
+					<tr>
+						<th scope="row">
+							<label for="2fa_remember_days"><?php esc_html_e( 'Remember Device', 'turbo-guard' ); ?></label>
+						</th>
+						<td>
+							<input type="number" id="2fa_remember_days" name="2fa_remember_days"
+								value="<?php echo esc_attr( $turbo_guard_settings['2fa_remember_days'] ); ?>"
+								min="0" max="365" class="small-text" />
+							<?php esc_html_e( 'days', 'turbo-guard' ); ?>
+							<p class="description"><?php esc_html_e( 'Let users skip the 2FA code on a trusted device for this many days. Set 0 to always require a code.', 'turbo-guard' ); ?></p>
+						</td>
+					</tr>
+				</table>
 
-			<h3 style="margin:0 0 10px;">
-				<span class="dashicons dashicons-admin-users" style="vertical-align:middle;margin-right:4px;"></span>
-				<?php esc_html_e( 'Your Account', 'turbo-guard' ); ?>
-			</h3>
+				<hr style="margin:22px 0;" />
 
-			<?php if ( ! $turbo_guard_2fa_active ) : ?>
-				<p class="description"><?php esc_html_e( 'Enable 2FA above and save your settings, then set it up here.', 'turbo-guard' ); ?></p>
-			<?php elseif ( $turbo_guard_2fa_on ) : ?>
-				<p>
-					<span style="color:#16a34a;font-weight:600;">&#10003; <?php esc_html_e( 'Two-factor authentication is enabled for your account.', 'turbo-guard' ); ?></span>
-				</p>
-				<p class="description">
-					<?php
-					printf(
-						/* translators: %d: remaining recovery codes */
-						esc_html__( '%d recovery codes remaining. Each can be used once.', 'turbo-guard' ),
-						count( $turbo_guard_2fa_codes )
-					);
-					?>
-				</p>
-				<p>
-					<button type="button" class="button" id="turbo-guard-2fa-regen"><?php esc_html_e( 'Regenerate Recovery Codes', 'turbo-guard' ); ?></button>
-					<button type="button" class="button" id="turbo-guard-2fa-disable" style="color:#b91c1c;border-color:#b91c1c;"><?php esc_html_e( 'Disable 2FA', 'turbo-guard' ); ?></button>
-				</p>
-			<?php else : ?>
-				<div class="tg-2fa-setup"
-					data-secret="<?php echo esc_attr( $turbo_guard_2fa_secret ); ?>"
-					data-account="<?php echo esc_attr( $turbo_guard_2fa_acct ); ?>"
-					data-issuer="<?php echo esc_attr( $turbo_guard_2fa_issuer ); ?>">
-					<p style="margin-bottom:6px;"><strong>1.</strong> <?php esc_html_e( 'Scan this QR code with Google Authenticator, Authy, or any TOTP app:', 'turbo-guard' ); ?></p>
-					<div id="turbo-guard-2fa-qr" style="background:#fff;padding:10px;display:inline-block;border:1px solid #e5e7eb;border-radius:8px;"></div>
-					<p style="margin:12px 0 6px;">
-						<strong>2.</strong>
-						<?php esc_html_e( 'Or enter this key manually:', 'turbo-guard' ); ?>
-						<code id="turbo-guard-2fa-key" style="background:#f3f4f6;padding:4px 8px;border-radius:4px;user-select:all;margin-left:6px;"><?php echo esc_html( $turbo_guard_2fa_secret ); ?></code>
+				<h3 style="margin:0 0 10px;">
+					<span class="dashicons dashicons-admin-users" style="vertical-align:middle;margin-right:4px;"></span>
+					<?php esc_html_e( 'Your Account', 'turbo-guard' ); ?>
+				</h3>
+
+				<?php if ( $turbo_guard_2fa_on ) : ?>
+					<p>
+						<span style="color:#16a34a;font-weight:600;">&#10003; <?php esc_html_e( 'Two-factor authentication is enabled for your account.', 'turbo-guard' ); ?></span>
 					</p>
-					<p style="margin-top:12px;">
-						<strong>3.</strong>
-						<?php esc_html_e( 'Enter the 6-digit code to activate:', 'turbo-guard' ); ?>
-						<input type="text" id="turbo-guard-2fa-code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" class="regular-text"
-							style="font-size:18px;letter-spacing:.2em;text-align:center;max-width:140px;margin:0 8px;" />
-						<button type="button" class="button button-primary" id="turbo-guard-2fa-enable"><?php esc_html_e( 'Enable 2FA', 'turbo-guard' ); ?></button>
+					<p class="description">
+						<?php
+						printf(
+							/* translators: %d: remaining recovery codes */
+							esc_html__( '%d recovery codes remaining. Each can be used once.', 'turbo-guard' ),
+							count( $turbo_guard_2fa_codes )
+						);
+						?>
 					</p>
-				</div>
-			<?php endif; ?>
+					<p>
+						<button type="button" class="button" id="turbo-guard-2fa-regen"><?php esc_html_e( 'Regenerate Recovery Codes', 'turbo-guard' ); ?></button>
+						<button type="button" class="button" id="turbo-guard-2fa-disable" style="color:#b91c1c;border-color:#b91c1c;"><?php esc_html_e( 'Disable 2FA', 'turbo-guard' ); ?></button>
+					</p>
+				<?php else : ?>
+					<div class="tg-2fa-setup"
+						data-secret="<?php echo esc_attr( $turbo_guard_2fa_secret ); ?>"
+						data-account="<?php echo esc_attr( $turbo_guard_2fa_acct ); ?>"
+						data-issuer="<?php echo esc_attr( $turbo_guard_2fa_issuer ); ?>">
+						<p style="margin-bottom:6px;"><strong>1.</strong> <?php esc_html_e( 'Scan this QR code with Google Authenticator, Authy, or any TOTP app:', 'turbo-guard' ); ?></p>
+						<div id="turbo-guard-2fa-qr" style="background:#fff;padding:10px;display:inline-block;border:1px solid #e5e7eb;border-radius:8px;"></div>
+						<p style="margin:12px 0 6px;">
+							<strong>2.</strong>
+							<?php esc_html_e( 'Or enter this key manually:', 'turbo-guard' ); ?>
+							<code id="turbo-guard-2fa-key" style="background:#f3f4f6;padding:4px 8px;border-radius:4px;user-select:all;margin-left:6px;"><?php echo esc_html( $turbo_guard_2fa_secret ); ?></code>
+						</p>
+						<p style="margin-top:12px;">
+							<strong>3.</strong>
+							<?php esc_html_e( 'Enter the 6-digit code to activate:', 'turbo-guard' ); ?>
+							<input type="text" id="turbo-guard-2fa-code" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" class="regular-text"
+								style="font-size:18px;letter-spacing:.2em;text-align:center;max-width:140px;margin:0 8px;" />
+							<button type="button" class="button button-primary" id="turbo-guard-2fa-enable"><?php esc_html_e( 'Enable 2FA', 'turbo-guard' ); ?></button>
+						</p>
+					</div>
+				<?php endif; ?>
 
-			<div id="turbo-guard-2fa-result" class="turbo-guard-notice" style="display:none;margin-top:12px;"></div>
+				<div id="turbo-guard-2fa-result" class="turbo-guard-notice" style="display:none;margin-top:12px;"></div>
+			</div>
 		</div>
 
 		<!-- Notifications -->
