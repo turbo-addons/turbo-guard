@@ -84,6 +84,11 @@ class Turbo_Guard_2FA {
 		// Intercept login after password is verified (priority 30 = after WP core).
 		add_filter( 'authenticate', array( $this, 'intercept_login' ), 30, 3 );
 
+		// Disable application passwords for 2FA-enabled users so a stored
+		// application password cannot bypass the second factor (REST / XML-RPC /
+		// Basic Auth all resolve through this core availability check).
+		add_filter( 'wp_is_application_passwords_available_for_user', array( $this, 'restrict_application_passwords' ), 10, 2 );
+
 		// Add 2FA code input to login form.
 		add_action( 'login_form', array( $this, 'render_login_field' ) );
 
@@ -251,6 +256,27 @@ class Turbo_Guard_2FA {
 			return false;
 		}
 		return $this->role_requires_2fa( $user ) && ! $this->is_user_enabled( $user->ID );
+	}
+
+	/**
+	 * Disable application passwords for users who have 2FA enabled.
+	 *
+	 * Application passwords (Basic Auth) authenticate independently of the
+	 * login form, so without this a user could bypass the second factor via
+	 * the REST API, XML-RPC or any other application-password consumer. Core
+	 * checks this filter both in `wp_authenticate_application_password()` and
+	 * in `wp_validate_application_password()` (the REST path).
+	 *
+	 * @since 1.1.5
+	 * @param bool    $available Whether application passwords are available.
+	 * @param WP_User $user      The user being checked.
+	 * @return bool
+	 */
+	public function restrict_application_passwords( $available, $user ) {
+		if ( $user instanceof WP_User && $this->is_user_enabled( $user->ID ) ) {
+			return false;
+		}
+		return $available;
 	}
 
 	/**

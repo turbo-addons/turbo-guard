@@ -38,4 +38,36 @@ if ( $turbo_guard_remove_data ) {
 	// Delete all transients.
 	$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_turbo_guard_%'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
 	$wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_timeout_turbo_guard_%'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+	// Delete plugin user meta (2FA secrets / recovery codes, dismissed notices).
+	$wpdb->query( "DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE 'turbo_guard_%'" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+
+	// Remove the quarantine folder and the error-log folder from uploads.
+	$turbo_guard_uploads = wp_upload_dir();
+	if ( ! empty( $turbo_guard_uploads['basedir'] ) ) {
+		$turbo_guard_dirs = array( 'turbo-guard-quarantine', 'turbo-guard' );
+
+		foreach ( $turbo_guard_dirs as $turbo_guard_dir_name ) {
+			$turbo_guard_dir = trailingslashit( $turbo_guard_uploads['basedir'] ) . $turbo_guard_dir_name;
+
+			if ( ! is_dir( $turbo_guard_dir ) ) {
+				continue;
+			}
+
+			$turbo_guard_entries = @scandir( $turbo_guard_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+			if ( is_array( $turbo_guard_entries ) ) {
+				foreach ( $turbo_guard_entries as $turbo_guard_entry ) {
+					if ( '.' === $turbo_guard_entry || '..' === $turbo_guard_entry ) {
+						continue;
+					}
+					$turbo_guard_path = $turbo_guard_dir . '/' . $turbo_guard_entry;
+					if ( is_file( $turbo_guard_path ) ) {
+						@unlink( $turbo_guard_path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged, WordPress.WP.AlternativeFunctions.unlink_unlink
+					}
+				}
+			}
+
+			@rmdir( $turbo_guard_dir ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+		}
+	}
 }
