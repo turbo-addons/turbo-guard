@@ -301,6 +301,15 @@ class Turbo_Guard_2FA {
 			return;
 		}
 
+		// Administrators are NEVER hard-redirected. Locking an administrator out
+		// of wp-admin (including the Users screen and every other menu) is a
+		// denial-of-service risk, so admins see a persistent reminder and can
+		// still manage the site and set 2FA up at their own pace.
+		if ( current_user_can( 'manage_options' ) ) {
+			add_action( 'admin_notices', array( $this, 'render_setup_reminder' ) );
+			return;
+		}
+
 		if ( $this->is_within_grace() ) {
 			add_action( 'admin_notices', array( $this, 'render_setup_reminder' ) );
 			return;
@@ -310,16 +319,6 @@ class Turbo_Guard_2FA {
 		$allowed = array( 'profile.php', 'user-edit.php', 'admin-ajax.php', 'admin-post.php' );
 		if ( in_array( $pagenow, $allowed, true ) ) {
 			return;
-		}
-
-		// Escape hatch: an administrator can always reach Turbo Guard's settings
-		// page, so a misconfigured requirement can be undone.
-		if ( 'admin.php' === $pagenow && current_user_can( 'manage_options' ) ) {
-			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view check.
-			$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
-			if ( 'turbo-guard-settings' === $page ) {
-				return;
-			}
 		}
 
 		wp_safe_redirect( admin_url( 'profile.php?turbo_guard_2fa_required=1#turbo-guard-2fa' ) );
