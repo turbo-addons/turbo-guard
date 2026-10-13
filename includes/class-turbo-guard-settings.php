@@ -46,6 +46,10 @@ class Turbo_Guard_Settings {
 			'brute_force_protection'   => get_option( 'turbo_guard_brute_force_protection', 'yes' ),
 			'max_login_attempts'       => absint( get_option( 'turbo_guard_max_login_attempts', 5 ) ),
 			'lockout_duration'         => absint( get_option( 'turbo_guard_lockout_duration', 3600 ) ),
+			'2fa_enabled_global'       => get_option( 'turbo_guard_2fa_enabled_global', 'yes' ),
+			'2fa_enforce_roles'        => (array) get_option( 'turbo_guard_2fa_enforce_roles', array() ),
+			'2fa_grace_days'           => absint( get_option( 'turbo_guard_2fa_grace_days', 0 ) ),
+			'2fa_remember_days'        => absint( get_option( 'turbo_guard_2fa_remember_days', 0 ) ),
 			'notify_admin_email'       => get_option( 'turbo_guard_notify_admin_email', get_option( 'admin_email' ) ),
 			'notify_on_threats'        => get_option( 'turbo_guard_notify_on_threats', 'yes' ),
 			'notify_on_scan_complete'  => get_option( 'turbo_guard_notify_on_scan_complete', 'no' ),
@@ -78,6 +82,10 @@ class Turbo_Guard_Settings {
 			'brute_force_protection',
 			'max_login_attempts',
 			'lockout_duration',
+			'2fa_enabled_global',
+			'2fa_enforce_roles',
+			'2fa_grace_days',
+			'2fa_remember_days',
 			'notify_admin_email',
 			'notify_on_threats',
 			'notify_on_scan_complete',
@@ -92,8 +100,10 @@ class Turbo_Guard_Settings {
 			$option_name = 'turbo_guard_' . $key;
 
 			// Sanitize based on type.
-			if ( in_array( $key, array( 'max_login_attempts', 'lockout_duration' ), true ) ) {
+			if ( in_array( $key, array( 'max_login_attempts', 'lockout_duration', '2fa_grace_days', '2fa_remember_days' ), true ) ) {
 				$value = absint( $value );
+			} elseif ( '2fa_enforce_roles' === $key ) {
+				$value = self::sanitize_roles( $value );
 			} elseif ( 'notify_admin_email' === $key ) {
 				$value = sanitize_email( $value );
 			} elseif ( 'bot_custom_blocked' === $key ) {
@@ -105,6 +115,17 @@ class Turbo_Guard_Settings {
 			}
 
 			update_option( $option_name, $value );
+		}
+
+		// Track when 2FA became required for roles, so the grace period can be
+		// calculated. Cleared when no roles are required.
+		if ( array_key_exists( '2fa_enforce_roles', $settings ) ) {
+			$enforced_roles = (array) get_option( 'turbo_guard_2fa_enforce_roles', array() );
+			if ( empty( $enforced_roles ) ) {
+				delete_option( 'turbo_guard_2fa_required_since' );
+			} elseif ( ! get_option( 'turbo_guard_2fa_required_since' ) ) {
+				update_option( 'turbo_guard_2fa_required_since', time() );
+			}
 		}
 
 		// Reschedule cron if scan schedule changed. Only valid WordPress
@@ -120,6 +141,31 @@ class Turbo_Guard_Settings {
 		}
 
 		return true;
+	}
+
+	/**
+	 * Sanitize a list of role slugs against the site's registered roles.
+	 *
+	 * @since 1.1.5
+	 * @param mixed $roles Raw role slugs (array or scalar).
+	 * @return string[] Valid, unique role slugs.
+	 */
+	private static function sanitize_roles( $roles ) {
+		if ( ! is_array( $roles ) ) {
+			$roles = array( $roles );
+		}
+
+		$valid = array_keys( wp_roles()->get_names() );
+		$clean = array();
+
+		foreach ( $roles as $role ) {
+			$role = sanitize_key( $role );
+			if ( '' !== $role && in_array( $role, $valid, true ) ) {
+				$clean[] = $role;
+			}
+		}
+
+		return array_values( array_unique( $clean ) );
 	}
 
 	/**

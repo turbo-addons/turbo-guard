@@ -604,7 +604,29 @@
 
 			$( '#turbo-guard-settings-form input[type="checkbox"]' ).each(
 				function () {
-					settings[$( this ).attr( 'name' )] = $( this ).is( ':checked' ) ? 'yes' : 'no';
+					var name = $( this ).attr( 'name' );
+					if ( ! name || name.slice( -2 ) === '[]' ) {
+						return; // Grouped checkboxes are handled separately below.
+					}
+					settings[name] = $( this ).is( ':checked' ) ? 'yes' : 'no';
+				}
+			);
+
+			// Grouped checkboxes (name ends with []) — e.g. required 2FA roles.
+			var checkboxGroups = {};
+			$( '#turbo-guard-settings-form input[type="checkbox"]' ).each(
+				function () {
+					var name = $( this ).attr( 'name' );
+					if ( ! name || name.slice( -2 ) !== '[]' ) {
+						return;
+					}
+					var base = name.slice( 0, -2 );
+					if ( ! checkboxGroups[base] ) {
+						checkboxGroups[base] = [];
+					}
+					if ( $( this ).is( ':checked' ) ) {
+						checkboxGroups[base].push( $( this ).val() );
+					}
 				}
 			);
 
@@ -637,6 +659,24 @@
 			$( '#allowed_countries option:selected' ).each( function () {
 				postData += '&settings%5Ballowed_countries%5D%5B%5D=' + encodeURIComponent( $( this ).val() );
 			} );
+
+			// Grouped checkboxes (e.g. required 2FA roles). Always send the key
+			// so an emptied selection clears the stored value.
+			$.each(
+				checkboxGroups,
+				function (base, vals) {
+					if ( vals.length === 0 ) {
+						postData += '&settings%5B' + encodeURIComponent( base ) + '%5D=';
+					} else {
+						$.each(
+							vals,
+							function (i, v) {
+								postData += '&settings%5B' + encodeURIComponent( base ) + '%5D%5B%5D=' + encodeURIComponent( v );
+							}
+						);
+					}
+				}
+			);
 
 			$.ajax(
 				{

@@ -95,6 +95,9 @@ class Turbo_Guard_2FA {
 		add_action( 'personal_options_update', array( $this, 'save_profile' ) );
 		add_action( 'edit_user_profile_update', array( $this, 'save_profile' ) );
 
+		// Enforce 2FA for users whose role requires it.
+		add_action( 'admin_init', array( $this, 'enforce_required_2fa' ) );
+
 		// Enqueue styles on login page.
 		add_action( 'login_enqueue_scripts', array( $this, 'enqueue_login_styles' ) );
 	}
@@ -123,6 +126,11 @@ class Turbo_Guard_2FA {
 			return $user;
 		}
 
+		// A previously trusted device may skip the code prompt.
+		if ( $this->is_trusted_device( $user->ID ) ) {
+			return $user;
+		}
+
 		// phpcs:disable WordPress.Security.NonceVerification.Missing
 		$code = isset( $_POST['turbo_guard_2fa_code'] ) ? sanitize_text_field( wp_unslash( $_POST['turbo_guard_2fa_code'] ) ) : '';
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
@@ -143,11 +151,12 @@ class Turbo_Guard_2FA {
 			return $user; // Secret missing — fail-open so admin isn't locked out.
 		}
 
-		if ( $this->verify_totp( $secret, $code ) ) {
-			return $user;
-		}
-
-		if ( $this->verify_recovery_code( $user->ID, $code ) ) {
+		if ( $this->verify_totp( $secret, $code ) || $this->verify_recovery_code( $user->ID, $code ) ) {
+			// Honor "remember this device" when the user asked and it is enabled.
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- login form; the code was already verified.
+			if ( ! empty( $_POST['turbo_guard_2fa_remember'] ) ) {
+				$this->set_trusted_device( $user->ID );
+			}
 			return $user;
 		}
 
@@ -179,6 +188,14 @@ class Turbo_Guard_2FA {
 				/>
 			</label>
 		</p>
+		<?php if ( absint( get_option( 'turbo_guard_2fa_remember_days', 0 ) ) > 0 ) : ?>
+		<p>
+			<label>
+				<input type="checkbox" name="turbo_guard_2fa_remember" value="1" />
+				<?php esc_html_e( 'Remember this device', 'turbo-guard' ); ?>
+			</label>
+		</p>
+		<?php endif; ?>
 		<?php
 	}
 
@@ -192,6 +209,213 @@ class Turbo_Guard_2FA {
 			'login',
 			'#turbo_guard_2fa_code{font-size:20px;text-align:center;width:100%;}'
 		);
+	}
+
+	// =========================================================
+	// ROLE ENFORCEMENT & TRUSTED DEVICES
+	// =========================================================
+
+	/**
+	 * Whether a user's role is in the "require 2FA" list.
+	 *
+	 * @since 1.1.5
+	 * @param WP_User|int $user User object or ID.
+	 * @return bool
+	 */
+	public function role_requires_2fa( $user ) {
+		if ( ! ( $user instanceof WP_User ) ) {
+			$user = get_userdata( $user );
+		}
+		if ( ! $user ) {
+			return false;
+		}
+
+		$enforced = (array) get_option( 'turbo_guard_2fa_enforce_roles', array() );
+		if ( empty( $enforced ) ) {
+			return false;
+		}
+
+		foreach ( (array) $user->roles as $role ) {
+			if ( in_array( $role, $enforced, true ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Whether a user is required to have 2FA but has not configured it yet.
+	 *
+	 * @since 1.1.5
+	 * @param WP_User|int $user User object or ID.
+	 * @return bool
+	 */
+	public function is_2fa_required_for( $user ) {
+		if ( ! ( $user instanceof WP_User ) ) {
+			$user = get_userdata( $user );
+		}
+		if ( ! $user ) {
+			return false;
+		}
+		return $this->role_requires_2fa( $user ) && ! $this->is_user_enabled( $user->ID );
+	}
+
+	/**
+	 * Whether the stored grace period is still active.
+	 *
+	 * @since 1.1.5
+	 * @return bool
+	 */
+	public function is_within_grace() {
+		$days = absint( get_option( 'turbo_guard_2fa_grace_days', 0 ) );
+		if ( $days <= 0 ) {
+			return false; // No grace period — enforce immediately.
+		}
+
+		$since = (int) get_option( 'turbo_guard_2fa_required_since', 0 );
+		if ( ! $since ) {
+			return false;
+		}
+
+		return time() < ( $since + ( $days * DAY_IN_SECONDS ) );
+	}
+
+	/**
+	 * Force required users to configure 2FA once the grace period has elapsed.
+	 *
+	 * Runs on every wp-admin load. During the grace window the user only sees
+	 * a reminder; after it, they are redirected to their profile to set 2FA up.
+	 * The profile, user-edit, admin-ajax and admin-post screens stay reachable
+	 * so the user can actually complete the setup.
+	 *
+	 * @since 1.1.5
+	 */
+	public function enforce_required_2fa() {
+		if ( ! is_user_logged_in() || wp_doing_ajax() ) {
+			return;
+		}
+
+		$user = wp_get_current_user();
+		if ( ! $this->is_2fa_required_for( $user ) ) {
+			return;
+		}
+
+		if ( $this->is_within_grace() ) {
+			add_action( 'admin_notices', array( $this, 'render_setup_reminder' ) );
+			return;
+		}
+
+		$pagenow = isset( $GLOBALS['pagenow'] ) ? $GLOBALS['pagenow'] : '';
+		$allowed = array( 'profile.php', 'user-edit.php', 'admin-ajax.php', 'admin-post.php' );
+		if ( in_array( $pagenow, $allowed, true ) ) {
+			return;
+		}
+
+		// Escape hatch: an administrator can always reach Turbo Guard's settings
+		// page, so a misconfigured requirement can be undone.
+		if ( 'admin.php' === $pagenow && current_user_can( 'manage_options' ) ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only view check.
+			$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( $_GET['page'] ) ) : '';
+			if ( 'turbo-guard-settings' === $page ) {
+				return;
+			}
+		}
+
+		wp_safe_redirect( admin_url( 'profile.php?turbo_guard_2fa_required=1#turbo-guard-2fa' ) );
+		exit;
+	}
+
+	/**
+	 * Admin notice shown during the 2FA grace period.
+	 *
+	 * @since 1.1.5
+	 */
+	public function render_setup_reminder() {
+		printf(
+			'<div class="notice notice-warning"><p>%s</p></div>',
+			sprintf(
+				/* translators: %s: link to the user's profile */
+				esc_html__( 'Turbo Guard: your role requires two-factor authentication. %s before the grace period ends.', 'turbo-guard' ),
+				'<a href="' . esc_url( admin_url( 'profile.php#turbo-guard-2fa' ) ) . '">' . esc_html__( 'Set it up on your profile', 'turbo-guard' ) . '</a>'
+			)
+		);
+	}
+
+	/**
+	 * Name of the trusted-device cookie.
+	 *
+	 * @since 1.1.5
+	 * @return string
+	 */
+	private function trusted_cookie_name() {
+		return 'turbo_guard_2fa_device';
+	}
+
+	/**
+	 * Whether the current request carries a valid trusted-device cookie.
+	 *
+	 * @since 1.1.5
+	 * @param int $user_id User ID.
+	 * @return bool
+	 */
+	public function is_trusted_device( $user_id ) {
+		$name = $this->trusted_cookie_name();
+		if ( empty( $_COOKIE[ $name ] ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- validated below.
+		$raw   = wp_unslash( $_COOKIE[ $name ] );
+		$parts = explode( '|', (string) $raw );
+		if ( 3 !== count( $parts ) ) {
+			return false;
+		}
+
+		list( $uid, $exp, $sig ) = $parts;
+		if ( (int) $uid !== (int) $user_id ) {
+			return false;
+		}
+		if ( (int) $exp < time() ) {
+			return false;
+		}
+
+		$expected = hash_hmac( 'sha256', $uid . '|' . $exp, wp_salt( 'auth' ) );
+
+		return hash_equals( $expected, (string) $sig );
+	}
+
+	/**
+	 * Set the trusted-device cookie for a user (if enabled).
+	 *
+	 * @since 1.1.5
+	 * @param int $user_id User ID.
+	 */
+	private function set_trusted_device( $user_id ) {
+		$days = absint( get_option( 'turbo_guard_2fa_remember_days', 0 ) );
+		if ( $days <= 0 ) {
+			return;
+		}
+
+		$expires = time() + ( $days * DAY_IN_SECONDS );
+		$sig     = hash_hmac( 'sha256', $user_id . '|' . $expires, wp_salt( 'auth' ) );
+		$value   = $user_id . '|' . $expires . '|' . $sig;
+
+		setcookie(
+			$this->trusted_cookie_name(),
+			$value,
+			array(
+				'expires'  => $expires,
+				'path'     => COOKIEPATH ? COOKIEPATH : '/',
+				'domain'   => COOKIE_DOMAIN ? COOKIE_DOMAIN : '',
+				'secure'   => is_ssl(),
+				'httponly' => true,
+				'samesite' => 'Lax',
+			)
+		);
+
+		// Make it available for the remainder of this request.
+		$_COOKIE[ $this->trusted_cookie_name() ] = $value;
 	}
 
 	// =========================================================
@@ -456,7 +680,15 @@ class Turbo_Guard_2FA {
 
 		wp_nonce_field( 'turbo_guard_2fa_profile_' . $user->ID, 'turbo_guard_2fa_nonce' );
 		?>
-		<h2><?php esc_html_e( 'Two-Factor Authentication (Turbo Guard)', 'turbo-guard' ); ?></h2>
+		<h2 id="turbo-guard-2fa"><?php esc_html_e( 'Two-Factor Authentication (Turbo Guard)', 'turbo-guard' ); ?></h2>
+		<?php if ( $this->is_2fa_required_for( $user ) ) : ?>
+			<div class="notice notice-error inline" style="margin:0 0 12px;">
+				<p>
+					<strong><?php esc_html_e( 'Action required:', 'turbo-guard' ); ?></strong>
+					<?php esc_html_e( 'Two-factor authentication is required for your role. Set it up below to keep access to the dashboard.', 'turbo-guard' ); ?>
+				</p>
+			</div>
+		<?php endif; ?>
 		<table class="form-table">
 			<tr>
 				<th><?php esc_html_e( '2FA Status', 'turbo-guard' ); ?></th>

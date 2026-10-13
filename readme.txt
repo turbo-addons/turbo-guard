@@ -210,6 +210,9 @@ Used for Google Search Console integration to detect SEO spam and manage indexed
 * Added: "Scan All Images" and "Scan Outside WordPress" settings (previously hidden/off)
 * Removed: broken "Weekly" schedule option and the dead "Quarantine Files" setting
 * Improved: Bot Protection — verified search-engine crawlers (Googlebot, Bingbot, …) are now always allowed and bots spoofing a crawler user agent are blocked via reverse DNS
+* Improved: Bot Protection — generic clients (curl, wget, python-requests, empty user agent) moved behind an optional "Aggressive Mode", so webhooks, uptime monitors and server-to-server integrations are no longer blocked by default
+* Added: Bot Protection settings — enable/disable, crawler verification, aggressive mode, custom blocked user agents, and a 7-day blocked-request statistic
+* Added: 2FA settings panel — site-wide enable, "require 2FA for" roles, grace period, and "remember this device" days; users in a required role are prompted to set up 2FA and redirected to their profile until they do
 
 = 1.1.4 =
 * Firewall: inspect raw JSON/XML request bodies and cookies, so REST API and headless payloads are no longer a blind spot

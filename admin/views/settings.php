@@ -320,6 +320,72 @@ if ( ! defined( 'ABSPATH' ) ) {
 			</table>
 		</div>
 
+		<!-- Two-Factor Authentication Settings -->
+		<div class="turbo-guard-card" id="turbo-guard-2fa">
+			<h2>
+				<span class="dashicons dashicons-lock" style="color:#16a34a;vertical-align:middle;margin-right:6px;"></span>
+				<?php esc_html_e( 'Two-Factor Authentication', 'turbo-guard' ); ?>
+			</h2>
+			<p class="description" style="margin-bottom:14px;">
+				<?php esc_html_e( 'Protect logins with a time-based one-time code from an authenticator app (Google Authenticator, Authy, etc.).', 'turbo-guard' ); ?>
+			</p>
+
+			<?php $turbo_guard_all_roles = wp_roles()->get_names(); ?>
+
+			<table class="form-table">
+				<tr>
+					<th scope="row">
+						<label for="2fa_enabled_global"><?php esc_html_e( 'Enable 2FA', 'turbo-guard' ); ?></label>
+					</th>
+					<td>
+						<label>
+							<input type="checkbox" id="2fa_enabled_global" name="2fa_enabled_global" value="yes"
+								<?php checked( $turbo_guard_settings['2fa_enabled_global'], 'yes' ); ?> />
+							<?php esc_html_e( 'Allow two-factor authentication on this site', 'turbo-guard' ); ?>
+						</label>
+						<p class="description"><?php esc_html_e( 'When disabled, the 2FA section is hidden from every user profile and the login code check is not run.', 'turbo-guard' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row"><?php esc_html_e( 'Require 2FA for', 'turbo-guard' ); ?></th>
+					<td>
+						<?php foreach ( $turbo_guard_all_roles as $turbo_guard_role_slug => $turbo_guard_role_name ) : ?>
+							<label style="display:block;margin-bottom:4px;">
+								<input type="checkbox" name="2fa_enforce_roles[]" value="<?php echo esc_attr( $turbo_guard_role_slug ); ?>"
+									<?php checked( in_array( $turbo_guard_role_slug, (array) $turbo_guard_settings['2fa_enforce_roles'], true ) ); ?> />
+								<?php echo esc_html( translate_user_role( $turbo_guard_role_name ) ); ?>
+							</label>
+						<?php endforeach; ?>
+						<p class="description"><?php esc_html_e( 'Users in the selected roles must configure 2FA. They are redirected to their profile to set it up — and cannot use wp-admin until they do (after the grace period below).', 'turbo-guard' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="2fa_grace_days"><?php esc_html_e( 'Grace Period', 'turbo-guard' ); ?></label>
+					</th>
+					<td>
+						<input type="number" id="2fa_grace_days" name="2fa_grace_days"
+							value="<?php echo esc_attr( $turbo_guard_settings['2fa_grace_days'] ); ?>"
+							min="0" max="365" class="small-text" />
+						<?php esc_html_e( 'days', 'turbo-guard' ); ?>
+						<p class="description"><?php esc_html_e( 'How long required users have to set up 2FA after you enable the requirement. During this window they can still log in and only see a reminder. Set 0 to enforce immediately.', 'turbo-guard' ); ?></p>
+					</td>
+				</tr>
+				<tr>
+					<th scope="row">
+						<label for="2fa_remember_days"><?php esc_html_e( 'Remember Device', 'turbo-guard' ); ?></label>
+					</th>
+					<td>
+						<input type="number" id="2fa_remember_days" name="2fa_remember_days"
+							value="<?php echo esc_attr( $turbo_guard_settings['2fa_remember_days'] ); ?>"
+							min="0" max="365" class="small-text" />
+						<?php esc_html_e( 'days', 'turbo-guard' ); ?>
+						<p class="description"><?php esc_html_e( 'Let users skip the 2FA code on a trusted device for this many days. Set 0 to always require a code.', 'turbo-guard' ); ?></p>
+					</td>
+				</tr>
+			</table>
+		</div>
+
 		<!-- Notifications -->
 		<div class="turbo-guard-card">
 			<h2><?php esc_html_e( 'Email Notifications', 'turbo-guard' ); ?></h2>

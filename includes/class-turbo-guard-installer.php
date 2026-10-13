@@ -239,6 +239,9 @@ class Turbo_Guard_Installer {
 			'turbo_guard_remove_data_on_uninstall' => 'no',
 			// v1.1.0 defaults.
 			'turbo_guard_2fa_enabled_global'       => 'yes',
+			'turbo_guard_2fa_enforce_roles'        => array(),
+			'turbo_guard_2fa_grace_days'           => 0,
+			'turbo_guard_2fa_remember_days'        => 0,
 			'turbo_guard_security_headers'         => 'yes',
 			'turbo_guard_hide_wp_version'          => 'yes',
 			'turbo_guard_prevent_user_enum'        => 'yes',
