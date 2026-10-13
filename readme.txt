@@ -214,6 +214,7 @@ Used for Google Search Console integration to detect SEO spam and manage indexed
 * Added: Bot Protection settings — enable/disable, crawler verification, aggressive mode, custom blocked user agents, and a 7-day blocked-request statistic
 * Added: 2FA management entirely inside Turbo Guard → Settings — enable 2FA, require it for roles, set a grace period and remember-device days, and set up your own account with a QR code, manual key and recovery codes in the same panel (removed from the WordPress user profile screen)
 * Security: application passwords are now disabled for users who have 2FA enabled, closing a second-factor bypass via the REST API / XML-RPC
+* Fixed: vulnerability scanner now validates the WPScan key via the `/status` endpoint and reports the real cause — an invalid/expired key (HTTP 401) is no longer confused with an exhausted daily request limit, with the HTTP code shown for support
 * Fixed: uninstall now also removes 2FA user meta and the uploads quarantine/error-log folders
 
 = 1.1.4 =

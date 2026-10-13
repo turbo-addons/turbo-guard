@@ -1545,6 +1545,13 @@ function turbo_guard_ajax_run_vuln_scan() {
 		$message = __( 'Scan complete, but no WPScan API key is configured — showing limited WordPress.org results.', 'turbo-guard' );
 	} elseif ( 'api_error' === $results['status'] ) {
 		$message = $results['message'];
+	} elseif ( 'wpscan' === $results['source'] ) {
+		$message = sprintf(
+			/* translators: 1: vulnerability count, 2: number of items checked */
+			__( 'Scan complete. %1$d vulnerabilities found. Checked %2$d plugins/themes/core against the WPScan database.', 'turbo-guard' ),
+			$results['total'],
+			isset( $results['checked'] ) ? (int) $results['checked'] : 0
+		);
 	} else {
 		$message = sprintf(
 			/* translators: %d: vulnerability count */

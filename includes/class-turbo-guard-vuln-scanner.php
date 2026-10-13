@@ -33,6 +33,27 @@ class Turbo_Guard_Vuln_Scanner {
 	const CACHE_TTL = 43200;
 
 	/**
+	 * Live WPScan API requests made during the current scan.
+	 *
+	 * @var int
+	 */
+	private static $api_live = 0;
+
+	/**
+	 * Items served from cache during the current scan.
+	 *
+	 * @var int
+	 */
+	private static $api_cached = 0;
+
+	/**
+	 * WPScan API requests that failed (network error, 401/403, 429, 5xx).
+	 *
+	 * @var int
+	 */
+	private static $api_errors = 0;
+
+	/**
 	 * Run a full vulnerability scan of installed plugins and themes.
 	 *
 	 * @since 1.1.0
@@ -47,6 +68,11 @@ class Turbo_Guard_Vuln_Scanner {
 	public static function run_scan() {
 		// Clear the site cache before scanning so results are fresh.
 		turbo_guard_clear_site_cache();
+
+		// Reset per-scan request counters.
+		self::$api_live   = 0;
+		self::$api_cached = 0;
+		self::$api_errors = 0;
 
 		$api_key = trim( get_option( 'turbo_guard_wpscan_api_key', '' ) );
 
@@ -66,12 +92,22 @@ class Turbo_Guard_Vuln_Scanner {
 		$use_wpscan = false;
 		if ( '' !== $api_key ) {
 			$validation = self::validate_api_key( $api_key );
-			if ( 'ok' === $validation ) {
-				$use_wpscan = true;
-			} elseif ( 'invalid' === $validation ) {
+
+			if ( 'ok' === $validation['status'] ) {
+				$use_wpscan       = true;
+				$results['quota'] = $validation['quota'];
+			} elseif ( 'invalid' === $validation['status'] ) {
 				$results['status']  = 'api_error';
 				$results['source']  = 'wordpress_org';
-				$results['message'] = __( 'The configured WPScan API key is invalid or expired. Showing limited WordPress.org status instead of detailed CVE data.', 'turbo-guard' );
+				$results['message'] = sprintf(
+					/* translators: %d: HTTP status code returned by the WPScan API. */
+					__( 'WPScan rejected the configured API key (HTTP %d). The key may be invalid or expired, or your server may not be sending the Authorization header. Re-copy your key from wpscan.com and save it again in Settings. Showing limited WordPress.org status instead of detailed CVE data.', 'turbo-guard' ),
+					(int) $validation['code']
+				);
+			} elseif ( 'rate_limited' === $validation['status'] ) {
+				$results['status']  = 'api_error';
+				$results['source']  = 'wordpress_org';
+				$results['message'] = __( 'The WPScan API request limit for this key has been reached. Detailed CVE data will be available again once the limit resets (the free plan resets daily). Showing limited WordPress.org status instead.', 'turbo-guard' );
 			} else {
 				$results['status']  = 'api_error';
 				$results['source']  = 'wordpress_org';
@@ -144,6 +180,22 @@ class Turbo_Guard_Vuln_Scanner {
 			}
 		}
 
+		// Record how many items were checked and whether any request failed.
+		$results['checked'] = self::$api_live + self::$api_cached;
+		$results['errors']  = self::$api_errors;
+
+		// If the WPScan API was used but some requests failed (e.g. the free
+		// daily limit was reached mid-scan), don't report a clean result.
+		if ( $use_wpscan && self::$api_errors > 0 && 'success' === $results['status'] ) {
+			$results['status']  = 'api_error';
+			$results['message'] = sprintf(
+				/* translators: 1: failed request count, 2: total request count */
+				__( 'WPScan was used, but %1$d of %2$d requests failed — results may be incomplete (the free daily limit may have been reached). Showing what was retrieved.', 'turbo-guard' ),
+				self::$api_errors,
+				$results['checked'] + self::$api_errors
+			);
+		}
+
 		// Cache results.
 		set_transient( 'turbo_guard_vuln_results', $results, self::CACHE_TTL );
 
@@ -180,6 +232,7 @@ class Turbo_Guard_Vuln_Scanner {
 		$cache_key = 'turbo_guard_vuln_plugin_' . md5( $slug . $version );
 		$cached    = get_transient( $cache_key );
 		if ( false !== $cached ) {
+			++self::$api_cached;
 			return $cached;
 		}
 
@@ -210,6 +263,7 @@ class Turbo_Guard_Vuln_Scanner {
 		$cache_key = 'turbo_guard_vuln_theme_' . md5( $slug . $version );
 		$cached    = get_transient( $cache_key );
 		if ( false !== $cached ) {
+			++self::$api_cached;
 			return $cached;
 		}
 
@@ -239,6 +293,7 @@ class Turbo_Guard_Vuln_Scanner {
 		$cache_key = 'turbo_guard_vuln_wp_' . md5( $version );
 		$cached    = get_transient( $cache_key );
 		if ( false !== $cached ) {
+			++self::$api_cached;
 			return $cached;
 		}
 
@@ -279,27 +334,45 @@ class Turbo_Guard_Vuln_Scanner {
 		$response = wp_remote_get( self::WPSCAN_API . $endpoint, $args );
 
 		if ( is_wp_error( $response ) ) {
+			++self::$api_errors;
 			return $response;
 		}
 
-		$code = wp_remote_retrieve_response_code( $response );
-		if ( 200 !== (int) $code ) {
-			return new WP_Error( 'wpscan_api_error', 'WPScan API returned HTTP ' . $code );
+		$code = (int) wp_remote_retrieve_response_code( $response );
+
+		if ( 200 === $code ) {
+			++self::$api_live;
+			return json_decode( wp_remote_retrieve_body( $response ), true );
 		}
 
-		return json_decode( wp_remote_retrieve_body( $response ), true );
+		// 404 means WPScan does not track this slug — no data, not a failure.
+		if ( 404 === $code ) {
+			return array();
+		}
+
+		++self::$api_errors;
+		return new WP_Error( 'wpscan_api_error', 'WPScan API returned HTTP ' . $code );
 	}
 
 	/**
-	 * Validate a WPScan API key with a lightweight request.
+	 * Validate a WPScan API key using the lightweight /status endpoint.
+	 *
+	 * Unlike the resource endpoints (which answer 403 for both a missing and an
+	 * invalid token), `/status` returns 401 for a bad token and 200 for a good
+	 * one — and the 200 body reports the remaining request quota, so we can tell
+	 * an expired key apart from an exhausted daily limit.
 	 *
 	 * @since 1.1.3
 	 * @param string $api_key WPScan API token.
-	 * @return string 'ok' | 'invalid' | 'unknown'.
+	 * @return array {
+	 *     @type string   $status 'ok' | 'invalid' | 'rate_limited' | 'unknown'.
+	 *     @type int      $code   HTTP status code returned by the API.
+	 *     @type int|null $quota  Remaining requests, when known.
+	 * }
 	 */
 	private static function validate_api_key( $api_key ) {
 		$response = wp_remote_get(
-			self::WPSCAN_API . '/plugins/akismet',
+			self::WPSCAN_API . '/status',
 			array(
 				'timeout' => 10,
 				'headers' => array(
@@ -310,18 +383,59 @@ class Turbo_Guard_Vuln_Scanner {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			return 'unknown';
+			return array(
+				'status' => 'unknown',
+				'code'   => 0,
+				'quota'  => null,
+			);
 		}
 
 		$code = (int) wp_remote_retrieve_response_code( $response );
 
 		if ( 200 === $code ) {
-			return 'ok';
+			$body  = json_decode( wp_remote_retrieve_body( $response ), true );
+			$quota = null;
+			if ( is_array( $body ) && isset( $body['requests_remaining'] ) ) {
+				$quota = (int) $body['requests_remaining'];
+			}
+
+			// A valid key with no requests left cannot fetch CVE data.
+			if ( null !== $quota && $quota <= 0 ) {
+				return array(
+					'status' => 'rate_limited',
+					'code'   => $code,
+					'quota'  => $quota,
+				);
+			}
+
+			return array(
+				'status' => 'ok',
+				'code'   => $code,
+				'quota'  => $quota,
+			);
 		}
+
 		if ( 401 === $code || 403 === $code ) {
-			return 'invalid';
+			return array(
+				'status' => 'invalid',
+				'code'   => $code,
+				'quota'  => null,
+			);
 		}
-		return 'unknown';
+
+		if ( 429 === $code ) {
+			return array(
+				'status' => 'rate_limited',
+				'code'   => $code,
+				'quota'  => 0,
+			);
+		}
+
+		return array(
+			'status' => 'unknown',
+			'code'   => $code,
+			'quota'  => null,
+		);
 	}
 
 	/**
