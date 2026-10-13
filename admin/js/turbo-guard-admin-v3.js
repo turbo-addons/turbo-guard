@@ -16,6 +16,7 @@
 		init: function () {
 			this.bindEvents();
 			this.updateSelectionCount();
+			this.init2fa();
 		},
 
 		/**
@@ -37,6 +38,11 @@
 
 			// Settings page.
 			$( '#turbo-guard-settings-form' ).on( 'submit', $.proxy( this.saveSettings, this ) );
+
+			// Settings: Two-Factor Authentication setup.
+			$( '#turbo-guard-2fa-enable' ).on( 'click', $.proxy( this.enable2fa, this ) );
+			$( '#turbo-guard-2fa-disable' ).on( 'click', $.proxy( this.disable2fa, this ) );
+			$( '#turbo-guard-2fa-regen' ).on( 'click', $.proxy( this.regenerate2fa, this ) );
 
 			// Firewall: block IP from form.
 			$( '#turbo-guard-block-ip-form' ).on( 'submit', $.proxy( this.blockIp, this ) );
@@ -634,6 +640,9 @@
 				function () {
 					var val  = $( this ).val();
 					var name = $( this ).attr( 'name' );
+					if ( ! name ) {
+						return;
+					}
 					if (name === 'lockout_duration') {
 						val = parseInt( val, 10 ) * 60; // convert minutes to seconds.
 					}
@@ -643,7 +652,11 @@
 
 			// Textarea fields (e.g. trusted_ips).
 			$( '#turbo-guard-settings-form textarea' ).each( function () {
-				settings[$( this ).attr( 'name' )] = $( this ).val();
+				var name = $( this ).attr( 'name' );
+				if ( ! name ) {
+					return;
+				}
+				settings[name] = $( this ).val();
 			} );
 
 			// Build POST string with settings as settings[key]=value.
@@ -866,6 +879,168 @@
 					}
 				}
 			);
+		},
+
+		// =========================================================
+		// TWO-FACTOR AUTHENTICATION (settings page)
+		// =========================================================
+
+		/**
+		 * Render the TOTP QR code for the pending 2FA setup, if present.
+		 */
+		init2fa: function () {
+			var $setup = $( '.tg-2fa-setup' );
+			if ( $setup.length && typeof qrcode === 'function' ) {
+				this.render2faQr( $setup );
+			}
+		},
+
+		render2faQr: function ( $setup ) {
+			var $wrap = $( '#turbo-guard-2fa-qr' );
+			if ( ! $wrap.length ) {
+				return;
+			}
+
+			var secret  = $setup.data( 'secret' );
+			var account = $setup.data( 'account' );
+			var issuer  = $setup.data( 'issuer' );
+			if ( ! secret ) {
+				return;
+			}
+
+			var label = ( issuer ? issuer + ':' : '' ) + account;
+			var uri   = 'otpauth://totp/' + encodeURIComponent( label ) +
+				'?secret=' + encodeURIComponent( secret ) +
+				'&issuer=' + encodeURIComponent( issuer ) +
+				'&algorithm=SHA1&digits=6&period=30';
+
+			try {
+				var qr = qrcode( 0, 'M' );
+				qr.addData( uri );
+				qr.make();
+				$wrap.html( qr.createSvgTag( 4, 0 ) );
+				$wrap.find( 'svg' ).css( { width: '180px', height: '180px' } );
+			} catch ( e ) {
+				$wrap.text( 'QR unavailable — use the manual key below.' );
+			}
+		},
+
+		enable2fa: function () {
+			var $setup = $( '.tg-2fa-setup' );
+			var $btn   = $( '#turbo-guard-2fa-enable' );
+			var code   = $.trim( $( '#turbo-guard-2fa-code' ).val() );
+			var secret = $setup.data( 'secret' );
+
+			if ( ! code ) {
+				this.show2faResult( turboGuardAdmin.strings.tg2faEnterCode, 'error' );
+				return;
+			}
+
+			$btn.prop( 'disabled', true );
+
+			$.post(
+				turboGuardAdmin.ajaxUrl,
+				{
+					action: 'turbo_guard_2fa_enable',
+					nonce:  turboGuardAdmin.nonce,
+					secret: secret,
+					code:   code
+				},
+				$.proxy(
+					function ( res ) {
+						$btn.prop( 'disabled', false );
+						if ( res && res.success ) {
+							this.show2faResult( res.data.message, 'success', res.data.recovery );
+						} else {
+							this.show2faResult( ( res && res.data && res.data.message ) || turboGuardAdmin.strings.tg2faInvalid, 'error' );
+						}
+					},
+					this
+				)
+			).fail(
+				$.proxy(
+					function () {
+						$btn.prop( 'disabled', false );
+						this.show2faResult( turboGuardAdmin.strings.tg2faError, 'error' );
+					},
+					this
+				)
+			);
+		},
+
+		disable2fa: function () {
+			// eslint-disable-next-line no-alert
+			if ( ! window.confirm( 'Disable two-factor authentication for your account?' ) ) {
+				return;
+			}
+
+			var $btn = $( '#turbo-guard-2fa-disable' );
+			$btn.prop( 'disabled', true );
+
+			$.post(
+				turboGuardAdmin.ajaxUrl,
+				{
+					action: 'turbo_guard_2fa_disable',
+					nonce:  turboGuardAdmin.nonce
+				},
+				$.proxy(
+					function ( res ) {
+						if ( res && res.success ) {
+							window.location.reload();
+						} else {
+							$btn.prop( 'disabled', false );
+							this.show2faResult( ( res && res.data && res.data.message ) || turboGuardAdmin.strings.tg2faError, 'error' );
+						}
+					},
+					this
+				)
+			);
+		},
+
+		regenerate2fa: function () {
+			var $btn = $( '#turbo-guard-2fa-regen' );
+			$btn.prop( 'disabled', true );
+
+			$.post(
+				turboGuardAdmin.ajaxUrl,
+				{
+					action: 'turbo_guard_2fa_regenerate',
+					nonce:  turboGuardAdmin.nonce
+				},
+				$.proxy(
+					function ( res ) {
+						$btn.prop( 'disabled', false );
+						if ( res && res.success ) {
+							this.show2faResult( res.data.message, 'success', res.data.recovery );
+						} else {
+							this.show2faResult( ( res && res.data && res.data.message ) || turboGuardAdmin.strings.tg2faError, 'error' );
+						}
+					},
+					this
+				)
+			);
+		},
+
+		show2faResult: function ( message, type, codes ) {
+			var $result = $( '#turbo-guard-2fa-result' );
+			var html    = '<p>' + $( '<div/>' ).text( message ).html() + '</p>';
+
+			if ( codes && codes.length ) {
+				html += '<ul style="margin:8px 0 0;padding-left:22px;font-family:monospace;">';
+				$.each(
+					codes,
+					function ( i, c ) {
+						html += '<li>' + $( '<div/>' ).text( c ).html() + '</li>';
+					}
+				);
+				html += '</ul>';
+			}
+
+			$result
+				.removeClass( 'notice-success notice-error notice-warning' )
+				.addClass( 'notice ' + ( type === 'success' ? 'notice-success' : 'notice-error' ) )
+				.html( html )
+				.show();
 		}
 	};
 

@@ -87,14 +87,6 @@ class Turbo_Guard_2FA {
 		// Add 2FA code input to login form.
 		add_action( 'login_form', array( $this, 'render_login_field' ) );
 
-		// Profile page: show setup UI.
-		add_action( 'show_user_profile', array( $this, 'render_profile_section' ) );
-		add_action( 'edit_user_profile', array( $this, 'render_profile_section' ) );
-
-		// Save profile 2FA settings.
-		add_action( 'personal_options_update', array( $this, 'save_profile' ) );
-		add_action( 'edit_user_profile_update', array( $this, 'save_profile' ) );
-
 		// Enforce 2FA for users whose role requires it.
 		add_action( 'admin_init', array( $this, 'enforce_required_2fa' ) );
 
@@ -301,43 +293,32 @@ class Turbo_Guard_2FA {
 			return;
 		}
 
-		// Administrators are NEVER hard-redirected. Locking an administrator out
-		// of wp-admin (including the Users screen and every other menu) is a
-		// denial-of-service risk, so admins see a persistent reminder and can
-		// still manage the site and set 2FA up at their own pace.
+		// 2FA setup lives on the Turbo Guard settings page, which requires
+		// manage_options. Users who cannot reach it would only get a dead link,
+		// so the reminder is shown to those who can act on it. We never redirect
+		// or lock the user out of wp-admin — that is a denial-of-service risk.
 		if ( current_user_can( 'manage_options' ) ) {
 			add_action( 'admin_notices', array( $this, 'render_setup_reminder' ) );
-			return;
 		}
-
-		if ( $this->is_within_grace() ) {
-			add_action( 'admin_notices', array( $this, 'render_setup_reminder' ) );
-			return;
-		}
-
-		$pagenow = isset( $GLOBALS['pagenow'] ) ? $GLOBALS['pagenow'] : '';
-		$allowed = array( 'profile.php', 'user-edit.php', 'admin-ajax.php', 'admin-post.php' );
-		if ( in_array( $pagenow, $allowed, true ) ) {
-			return;
-		}
-
-		wp_safe_redirect( admin_url( 'profile.php?turbo_guard_2fa_required=1#turbo-guard-2fa' ) );
-		exit;
 	}
 
 	/**
-	 * Admin notice shown during the 2FA grace period.
+	 * Admin notice reminding a user that their role requires 2FA.
+	 *
+	 * The notice is a warning during the grace window and an error afterwards.
 	 *
 	 * @since 1.1.5
 	 */
 	public function render_setup_reminder() {
+		$urgent = ! $this->is_within_grace();
+
 		printf(
-			'<div class="notice notice-warning"><p>%s</p></div>',
-			sprintf(
-				/* translators: %s: link to the user's profile */
-				esc_html__( 'Turbo Guard: your role requires two-factor authentication. %s before the grace period ends.', 'turbo-guard' ),
-				'<a href="' . esc_url( admin_url( 'profile.php#turbo-guard-2fa' ) ) . '">' . esc_html__( 'Set it up on your profile', 'turbo-guard' ) . '</a>'
-			)
+			'<div class="notice %1$s"><p><strong>%2$s</strong> %3$s <a href="%4$s">%5$s</a></p></div>',
+			$urgent ? 'notice-error' : 'notice-warning',
+			esc_html__( 'Turbo Guard:', 'turbo-guard' ),
+			esc_html__( 'Two-factor authentication is required for your role.', 'turbo-guard' ),
+			esc_url( admin_url( 'admin.php?page=turbo-guard-settings#turbo-guard-2fa' ) ),
+			esc_html__( 'Set it up here.', 'turbo-guard' )
 		);
 	}
 
@@ -657,154 +638,19 @@ class Turbo_Guard_2FA {
 	}
 
 	// =========================================================
-	// PROFILE PAGE
+	// RECOVERY CODES MANAGEMENT
 	// =========================================================
 
 	/**
-	 * Render 2FA setup section on user profile page.
+	 * Regenerate recovery codes for a user.
 	 *
-	 * @since 1.1.0
-	 * @param WP_User $user Current user.
+	 * @since 1.1.5
+	 * @param int $user_id User ID.
+	 * @return string[] New plain-text recovery codes.
 	 */
-	public function render_profile_section( $user ) {
-		// Only admins can edit other users' 2FA. Users can edit their own.
-		if ( $user->ID !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-
-		$enabled        = $this->is_user_enabled( $user->ID );
-		$secret         = $this->get_secret( $user->ID );
-		$new_secret     = $enabled ? $secret : self::generate_secret();
-		$recovery_codes = $this->get_recovery_codes( $user->ID );
-
-		wp_nonce_field( 'turbo_guard_2fa_profile_' . $user->ID, 'turbo_guard_2fa_nonce' );
-		?>
-		<h2 id="turbo-guard-2fa"><?php esc_html_e( 'Two-Factor Authentication (Turbo Guard)', 'turbo-guard' ); ?></h2>
-		<?php if ( $this->is_2fa_required_for( $user ) ) : ?>
-			<div class="notice notice-error inline" style="margin:0 0 12px;">
-				<p>
-					<strong><?php esc_html_e( 'Action required:', 'turbo-guard' ); ?></strong>
-					<?php esc_html_e( 'Two-factor authentication is required for your role. Set it up below to keep access to the dashboard.', 'turbo-guard' ); ?>
-				</p>
-			</div>
-		<?php endif; ?>
-		<table class="form-table">
-			<tr>
-				<th><?php esc_html_e( '2FA Status', 'turbo-guard' ); ?></th>
-				<td>
-					<?php if ( $enabled ) : ?>
-						<span style="color:#16a34a;font-weight:600;">&#10003; <?php esc_html_e( 'Enabled', 'turbo-guard' ); ?></span>
-					<?php else : ?>
-						<span style="color:#9ca3af;"><?php esc_html_e( 'Disabled', 'turbo-guard' ); ?></span>
-					<?php endif; ?>
-				</td>
-			</tr>
-			<?php if ( ! $enabled ) : ?>
-			<tr>
-				<th><?php esc_html_e( 'Manual Setup', 'turbo-guard' ); ?></th>
-				<td>
-					<p class="description">
-						<?php esc_html_e( 'Enter this key manually in Google Authenticator, Authy, or any TOTP app.', 'turbo-guard' ); ?>
-					</p>
-					<p>
-						<code style="background:#f3f4f6;padding:4px 8px;border-radius:4px;user-select:all;">
-							<?php echo esc_html( $new_secret ); ?>
-						</code>
-					</p>
-					<input type="hidden" name="turbo_guard_2fa_secret" value="<?php echo esc_attr( $new_secret ); ?>" />
-					<p style="margin-top:12px;">
-						<label>
-							<strong><?php esc_html_e( 'Verify code to activate:', 'turbo-guard' ); ?></strong><br>
-							<input type="text"
-								name="turbo_guard_2fa_verify"
-								maxlength="6"
-								inputmode="numeric"
-								placeholder="000000"
-								class="regular-text"
-								style="font-size:18px;letter-spacing:.2em;text-align:center;max-width:140px;margin-top:6px;"
-							/>
-						</label>
-					</p>
-					<p>
-						<label>
-							<input type="checkbox" name="turbo_guard_2fa_enable" value="1" />
-							<?php esc_html_e( 'Enable Two-Factor Authentication for my account', 'turbo-guard' ); ?>
-						</label>
-					</p>
-				</td>
-			</tr>
-			<?php else : ?>
-			<tr>
-				<th><?php esc_html_e( 'Recovery Codes', 'turbo-guard' ); ?></th>
-				<td>
-					<?php if ( ! empty( $recovery_codes ) ) : ?>
-						<p class="description">
-							<?php
-							printf(
-								/* translators: %d: remaining code count */
-								esc_html__( '%d recovery codes remaining. Store them safely — each can only be used once.', 'turbo-guard' ),
-								count( $recovery_codes )
-							);
-							?>
-						</p>
-					<?php else : ?>
-						<p style="color:#dc2626;"><?php esc_html_e( 'No recovery codes remaining. Disable and re-enable 2FA to generate new codes.', 'turbo-guard' ); ?></p>
-					<?php endif; ?>
-					<p>
-						<label>
-							<input type="checkbox" name="turbo_guard_2fa_disable" value="1" />
-							<span style="color:#dc2626;"><?php esc_html_e( 'Disable Two-Factor Authentication', 'turbo-guard' ); ?></span>
-						</label>
-					</p>
-				</td>
-			</tr>
-			<?php endif; ?>
-		</table>
-		<?php
-	}
-
-	/**
-	 * Save 2FA profile changes.
-	 *
-	 * @since 1.1.0
-	 * @param int $user_id User ID being updated.
-	 */
-	public function save_profile( $user_id ) {
-		if ( ! isset( $_POST['turbo_guard_2fa_nonce'] ) ) {
-			return;
-		}
-
-		if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['turbo_guard_2fa_nonce'] ) ), 'turbo_guard_2fa_profile_' . $user_id ) ) {
-			return;
-		}
-
-		if ( $user_id !== get_current_user_id() && ! current_user_can( 'manage_options' ) ) {
-			return;
-		}
-
-		// Disable 2FA.
-		if ( ! empty( $_POST['turbo_guard_2fa_disable'] ) ) {
-			$this->disable_for_user( $user_id );
-			return;
-		}
-
-		// Enable 2FA — verify the code first.
-		if ( ! empty( $_POST['turbo_guard_2fa_enable'] ) ) {
-			$secret = isset( $_POST['turbo_guard_2fa_secret'] ) ? sanitize_text_field( wp_unslash( $_POST['turbo_guard_2fa_secret'] ) ) : '';
-			$verify = isset( $_POST['turbo_guard_2fa_verify'] ) ? preg_replace( '/\D/', '', sanitize_text_field( wp_unslash( $_POST['turbo_guard_2fa_verify'] ) ) ) : '';
-
-			if ( $secret && $verify && $this->verify_totp( $secret, $verify ) ) {
-				$recovery = $this->enable_for_user( $user_id, $secret );
-				// Show recovery codes in a transient — displayed on next page load.
-				set_transient( 'turbo_guard_2fa_new_codes_' . $user_id, $recovery, 60 );
-				add_action( 'user_profile_update_errors', function( $errors ) {
-					$errors->add( 'turbo_guard_2fa_enabled', __( 'Turbo Guard: Two-Factor Authentication enabled! Save your recovery codes now.', 'turbo-guard' ), 'info' );
-				} );
-			} else {
-				add_action( 'user_profile_update_errors', function( $errors ) {
-					$errors->add( 'turbo_guard_2fa_invalid', __( 'Turbo Guard: Invalid verification code — 2FA was NOT enabled. Please try again.', 'turbo-guard' ) );
-				} );
-			}
-		}
+	public function regenerate_recovery_codes( $user_id ) {
+		$recovery = self::generate_recovery_codes();
+		update_user_meta( $user_id, self::META_RECOVERY, $recovery );
+		return $recovery;
 	}
 }

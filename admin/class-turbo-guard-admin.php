@@ -58,6 +58,11 @@ class Turbo_Guard_Admin {
 		add_action( 'wp_ajax_turbo_guard_save_settings', array( $this, 'ajax_save_settings' ) );
 		add_action( 'wp_ajax_turbo_guard_get_dashboard_stats', array( $this, 'ajax_get_dashboard_stats' ) );
 
+		// Two-Factor Authentication AJAX endpoints.
+		add_action( 'wp_ajax_turbo_guard_2fa_enable', array( $this, 'ajax_2fa_enable' ) );
+		add_action( 'wp_ajax_turbo_guard_2fa_disable', array( $this, 'ajax_2fa_disable' ) );
+		add_action( 'wp_ajax_turbo_guard_2fa_regenerate', array( $this, 'ajax_2fa_regenerate' ) );
+
 		// GSC AJAX endpoints.
 		add_action( 'wp_ajax_turbo_guard_gsc_get_urls', array( $this, 'ajax_gsc_get_urls' ) );
 		add_action( 'wp_ajax_turbo_guard_gsc_remove_urls', array( $this, 'ajax_gsc_remove_urls' ) );
@@ -229,11 +234,25 @@ class Turbo_Guard_Admin {
 			TURBO_GUARD_VERSION
 		);
 
+		// Enqueue the local QR generator (TOTP setup) on the settings page only.
+		$turbo_guard_is_settings = ( strpos( $hook, 'turbo-guard-settings' ) !== false );
+		$turbo_guard_deps        = array( 'jquery' );
+		if ( $turbo_guard_is_settings ) {
+			wp_enqueue_script(
+				'turbo-guard-qrcode',
+				TURBO_GUARD_PLUGIN_URL . 'admin/js/qrcode.js',
+				array(),
+				TURBO_GUARD_VERSION,
+				true
+			);
+			$turbo_guard_deps[] = 'turbo-guard-qrcode';
+		}
+
 		// Enqueue JS.
 		wp_enqueue_script(
 			'turbo-guard-admin',
 			TURBO_GUARD_PLUGIN_URL . 'admin/js/turbo-guard-admin-v3.js',
-			array( 'jquery' ),
+			$turbo_guard_deps,
 			TURBO_GUARD_VERSION,
 			true
 		);
@@ -256,6 +275,14 @@ class Turbo_Guard_Admin {
 					'selectFiles'    => __( 'Please select at least one file.', 'turbo-guard' ),
 					'savingSettings' => __( 'Saving...', 'turbo-guard' ),
 					'settingsSaved'  => __( 'Settings saved successfully!', 'turbo-guard' ),
+
+					// Two-Factor Authentication.
+					'tg2faEnterCode'   => __( 'Please enter the 6-digit code from your authenticator app.', 'turbo-guard' ),
+					'tg2faEnabled'     => __( 'Two-factor authentication enabled. Save your recovery codes now — each can be used once.', 'turbo-guard' ),
+					'tg2faInvalid'     => __( 'Invalid code — 2FA was not enabled. Please try again.', 'turbo-guard' ),
+					'tg2faDisabled'    => __( 'Two-factor authentication disabled.', 'turbo-guard' ),
+					'tg2faRegenerated' => __( 'New recovery codes generated. Save them now.', 'turbo-guard' ),
+					'tg2faError'       => __( 'Something went wrong. Please try again.', 'turbo-guard' ),
 
 					// SEO Spam Detector.
 					'seoSpamFound'              => __( 'spam indicator(s) found.', 'turbo-guard' ),
@@ -818,6 +845,91 @@ class Turbo_Guard_Admin {
 		$stats = Turbo_Guard_Settings::get_dashboard_stats();
 
 		wp_send_json_success( $stats );
+	}
+
+	// =========================================================
+	// TWO-FACTOR AUTHENTICATION AJAX HANDLERS
+	// =========================================================
+
+	/**
+	 * Guard the 2FA endpoints: nonce + capability.
+	 *
+	 * @since 1.1.5
+	 */
+	private function guard_2fa_ajax() {
+		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
+		}
+	}
+
+	/**
+	 * AJAX: Enable 2FA for the current user after verifying a TOTP code.
+	 *
+	 * @since 1.1.5
+	 */
+	public function ajax_2fa_enable() {
+		$this->guard_2fa_ajax();
+
+		$secret = isset( $_POST['secret'] ) ? sanitize_text_field( wp_unslash( $_POST['secret'] ) ) : '';
+		$code   = isset( $_POST['code'] ) ? preg_replace( '/\D/', '', sanitize_text_field( wp_unslash( $_POST['code'] ) ) ) : '';
+
+		if ( '' === $secret || '' === $code ) {
+			wp_send_json_error( array( 'message' => __( 'Please enter the 6-digit code from your authenticator app.', 'turbo-guard' ) ) );
+		}
+
+		$turbo_guard_2fa = Turbo_Guard_2FA::get_instance();
+
+		if ( ! $turbo_guard_2fa->verify_totp( $secret, $code ) ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid code — 2FA was not enabled. Please try again.', 'turbo-guard' ) ) );
+		}
+
+		$recovery = $turbo_guard_2fa->enable_for_user( get_current_user_id(), $secret );
+
+		wp_send_json_success(
+			array(
+				'message'  => __( 'Two-factor authentication enabled. Save your recovery codes now — each can be used once.', 'turbo-guard' ),
+				'recovery' => array_values( $recovery ),
+			)
+		);
+	}
+
+	/**
+	 * AJAX: Disable 2FA for the current user.
+	 *
+	 * @since 1.1.5
+	 */
+	public function ajax_2fa_disable() {
+		$this->guard_2fa_ajax();
+
+		Turbo_Guard_2FA::get_instance()->disable_for_user( get_current_user_id() );
+
+		wp_send_json_success( array( 'message' => __( 'Two-factor authentication disabled.', 'turbo-guard' ) ) );
+	}
+
+	/**
+	 * AJAX: Regenerate recovery codes for the current user.
+	 *
+	 * @since 1.1.5
+	 */
+	public function ajax_2fa_regenerate() {
+		$this->guard_2fa_ajax();
+
+		$turbo_guard_2fa = Turbo_Guard_2FA::get_instance();
+
+		if ( ! $turbo_guard_2fa->is_user_enabled( get_current_user_id() ) ) {
+			wp_send_json_error( array( 'message' => __( 'Two-factor authentication is not enabled for your account.', 'turbo-guard' ) ) );
+		}
+
+		$recovery = $turbo_guard_2fa->regenerate_recovery_codes( get_current_user_id() );
+
+		wp_send_json_success(
+			array(
+				'message'  => __( 'New recovery codes generated. Save them now.', 'turbo-guard' ),
+				'recovery' => array_values( $recovery ),
+			)
+		);
 	}
 
 	// =========================================================
