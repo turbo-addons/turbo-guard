@@ -21,6 +21,9 @@ $turbo_guard_circle_color  = $turbo_guard_score >= 90 ? '#16a34a' : ( $turbo_gua
 $turbo_guard_is_pro      = turbo_guard_is_pro();
 $turbo_guard_brand_name  = $turbo_guard_is_pro ? __( 'Turbo Guard Pro', 'turbo-guard' ) : __( 'Turbo Guard', 'turbo-guard' );
 $turbo_guard_brand_badge = $turbo_guard_is_pro ? __( 'Pro', 'turbo-guard' ) : __( 'Free', 'turbo-guard' );
+
+// System environment (WordPress + PHP) version status.
+$turbo_guard_env = isset( $turbo_guard_stats['environment'] ) ? $turbo_guard_stats['environment'] : array();
 ?>
 
 <div class="wrap turbo-guard-dashboard">
@@ -167,6 +170,43 @@ $turbo_guard_brand_badge = $turbo_guard_is_pro ? __( 'Pro', 'turbo-guard' ) : __
 		</div>
 
 	</div><!-- /.turbo-guard-stats-grid -->
+
+	<!-- System Environment Status -->
+	<?php if ( ! empty( $turbo_guard_env ) ) : ?>
+		<div class="turbo-guard-card turbo-guard-system-status">
+			<div class="turbo-guard-card-header">
+				<h2 style="margin:0;border:none;padding:0;"><?php esc_html_e( 'System Environment', 'turbo-guard' ); ?></h2>
+				<span style="font-size:12px;color:#6b7280;"><?php esc_html_e( 'Version &amp; compatibility check', 'turbo-guard' ); ?></span>
+			</div>
+
+			<div class="turbo-guard-env-list">
+				<?php
+				foreach ( $turbo_guard_env as $turbo_guard_item ) :
+					$turbo_guard_is_good = ( 'good' === $turbo_guard_item['status'] );
+					$turbo_guard_state   = $turbo_guard_is_good ? 'ok' : 'warn';
+					?>
+					<div class="turbo-guard-env-item turbo-guard-env-item--<?php echo esc_attr( $turbo_guard_state ); ?>">
+						<span class="turbo-guard-env-dot turbo-guard-env-dot--<?php echo esc_attr( $turbo_guard_state ); ?>"></span>
+						<div class="turbo-guard-env-body">
+							<div class="turbo-guard-env-title">
+								<strong><?php echo esc_html( $turbo_guard_item['name'] ); ?></strong>
+								<span class="turbo-guard-env-version"><?php echo esc_html( $turbo_guard_item['current'] ); ?></span>
+								<span class="turbo-guard-env-badge turbo-guard-env-badge--<?php echo esc_attr( $turbo_guard_state ); ?>">
+									<?php echo $turbo_guard_is_good ? esc_html_e( 'Up to date', 'turbo-guard' ) : esc_html_e( 'Update needed', 'turbo-guard' ); ?>
+								</span>
+							</div>
+							<p class="turbo-guard-env-message"><?php echo esc_html( $turbo_guard_item['message'] ); ?></p>
+						</div>
+						<?php if ( ! empty( $turbo_guard_item['action_url'] ) ) : ?>
+							<a class="button button-small turbo-guard-env-action" href="<?php echo esc_url( $turbo_guard_item['action_url'] ); ?>">
+								<?php echo esc_html( $turbo_guard_item['action_text'] ); ?> →
+							</a>
+						<?php endif; ?>
+					</div>
+				<?php endforeach; ?>
+			</div>
+		</div>
+	<?php endif; ?>
 
 	<!-- Recent Security Events -->
 	<div class="turbo-guard-card">

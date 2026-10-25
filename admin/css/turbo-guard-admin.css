@@ -1248,3 +1248,118 @@
 	font-weight: 500;
 	color: #1f2937;
 }
+
+/* =========================================================
+   Dashboard — System Environment Status
+   ========================================================= */
+
+.turbo-guard-env-list {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.turbo-guard-env-item {
+	display: flex;
+	align-items: center;
+	gap: 14px;
+	padding: 14px 16px;
+	background: var(--tg-gray-50);
+	border: 1px solid var(--tg-gray-200);
+	border-left: 4px solid var(--tg-green);
+	border-radius: var(--tg-radius);
+}
+
+.turbo-guard-env-item--warn {
+	background: var(--tg-orange-light);
+	border-color: #fcd34d;
+	border-left-color: var(--tg-orange);
+}
+
+.turbo-guard-env-dot {
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+
+.turbo-guard-env-dot--ok {
+	background: var(--tg-green);
+	box-shadow: 0 0 0 3px rgba(22,163,74,.15);
+}
+
+.turbo-guard-env-dot--warn {
+	background: var(--tg-orange);
+	box-shadow: 0 0 0 3px rgba(217,119,6,.15);
+}
+
+.turbo-guard-env-body {
+	flex: 1;
+	min-width: 0;
+}
+
+.turbo-guard-env-title {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 8px;
+	margin-bottom: 3px;
+}
+
+.turbo-guard-env-title strong {
+	font-size: 13px;
+	color: var(--tg-gray-800);
+}
+
+.turbo-guard-env-version {
+	font-family: 'SFMono-Regular', Consolas, monospace;
+	font-size: 12px;
+	color: var(--tg-gray-600);
+	background: #fff;
+	padding: 1px 7px;
+	border-radius: 4px;
+	border: 1px solid var(--tg-gray-200);
+}
+
+.turbo-guard-env-badge {
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: .4px;
+	padding: 2px 8px;
+	border-radius: 20px;
+}
+
+.turbo-guard-env-badge--ok {
+	background: var(--tg-green-light);
+	color: var(--tg-green);
+	border: 1px solid #86efac;
+}
+
+.turbo-guard-env-badge--warn {
+	background: #fff;
+	color: var(--tg-orange);
+	border: 1px solid #fcd34d;
+}
+
+.turbo-guard-env-message {
+	margin: 0;
+	font-size: 12px;
+	line-height: 1.5;
+	color: var(--tg-gray-600);
+}
+
+.turbo-guard-env-action {
+	flex-shrink: 0;
+}
+
+@media screen and (max-width: 782px) {
+	.turbo-guard-env-item {
+		flex-wrap: wrap;
+		align-items: flex-start;
+	}
+
+	.turbo-guard-env-action {
+		margin-left: 26px;
+	}
+}

@@ -217,6 +217,138 @@ class Turbo_Guard_Settings {
 	}
 
 	/**
+	 * Get environment (WordPress + PHP) version status for the dashboard.
+	 *
+	 * @since 1.1.6
+	 * @return array {
+	 *     @type array $wordpress WordPress status data.
+	 *     @type array $php       PHP status data.
+	 * }
+	 */
+	public static function get_environment_status() {
+		return array(
+			'wordpress' => self::get_wordpress_status(),
+			'php'       => self::get_php_status(),
+		);
+	}
+
+	/**
+	 * WordPress core version status.
+	 *
+	 * Compares the installed version against the newest version offered by
+	 * the core update transient.
+	 *
+	 * @since 1.1.6
+	 * @return array Status data.
+	 */
+	public static function get_wordpress_status() {
+		$current    = get_bloginfo( 'version' );
+		$latest     = $current;
+		$has_update = false;
+
+		$core_updates = get_site_transient( 'update_core' );
+
+		if ( $core_updates && ! empty( $core_updates->updates ) && is_array( $core_updates->updates ) ) {
+			foreach ( $core_updates->updates as $update ) {
+				if (
+					isset( $update->response, $update->current ) &&
+					'upgrade' === $update->response &&
+					version_compare( $update->current, $current, '>' )
+				) {
+					$latest     = $update->current;
+					$has_update = true;
+					break;
+				}
+			}
+		}
+
+		return array(
+			'name'        => __( 'WordPress', 'turbo-guard' ),
+			'current'     => $current,
+			'latest'      => $latest,
+			'status'      => $has_update ? 'warning' : 'good',
+			'message'     => $has_update
+				? sprintf(
+					/* translators: %s: latest WordPress version */
+					__( 'A newer WordPress version (%s) is available. Please update to keep your site secure.', 'turbo-guard' ),
+					$latest
+				)
+				: __( 'You are running the latest version of WordPress.', 'turbo-guard' ),
+			'action_url'  => $has_update ? admin_url( 'update-core.php' ) : '',
+			'action_text' => $has_update ? __( 'Update WordPress', 'turbo-guard' ) : '',
+		);
+	}
+
+	/**
+	 * PHP version status.
+	 *
+	 * Prefers WordPress' own PHP compatibility check when available, falling
+	 * back to conservative version thresholds on failure.
+	 *
+	 * @since 1.1.6
+	 * @return array Status data.
+	 */
+	public static function get_php_status() {
+		$current      = PHP_VERSION;
+		$recommended  = '8.3';
+		$is_secure    = version_compare( $current, '8.2', '>=' );
+		$is_supported = $is_secure;
+
+		if ( function_exists( 'wp_check_php_version' ) ) {
+			$check = wp_check_php_version();
+
+			if ( is_array( $check ) ) {
+				if ( ! empty( $check['recommended_version'] ) ) {
+					$recommended = $check['recommended_version'];
+				}
+				$is_secure    = ! empty( $check['is_secure'] );
+				$is_supported = ! empty( $check['is_supported'] );
+			}
+		}
+
+		$is_current = ( $is_secure && $is_supported && ! version_compare( $recommended, $current, '>' ) );
+
+		if ( $is_current ) {
+			$message = sprintf(
+				/* translators: %s: current PHP version */
+				__( 'You are running the latest supported PHP version (%s).', 'turbo-guard' ),
+				$current
+			);
+		} elseif ( ! $is_secure ) {
+			$message = sprintf(
+				/* translators: 1: current PHP version, 2: recommended PHP version */
+				__( 'Your PHP version (%1$s) is outdated and no longer receiving security updates. Upgrade to PHP %2$s or newer.', 'turbo-guard' ),
+				$current,
+				$recommended
+			);
+		} elseif ( ! $is_supported ) {
+			$message = sprintf(
+				/* translators: 1: current PHP version, 2: recommended PHP version */
+				__( 'Your PHP version (%1$s) is no longer fully supported. Upgrade to PHP %2$s or newer.', 'turbo-guard' ),
+				$current,
+				$recommended
+			);
+		} else {
+			$message = sprintf(
+				/* translators: 1: current PHP version, 2: recommended PHP version */
+				__( 'A newer PHP version (%2$s) is available. You are running %1$s.', 'turbo-guard' ),
+				$current,
+				$recommended
+			);
+		}
+
+		return array(
+			'name'        => __( 'PHP', 'turbo-guard' ),
+			'current'     => $current,
+			'latest'      => $recommended,
+			'status'      => $is_current ? 'good' : 'warning',
+			'message'     => $message,
+			'action_url'  => $is_current ? '' : 'https://www.php.net/supported-versions.php',
+			'action_text' => $is_current ? '' : __( 'Learn how to upgrade PHP', 'turbo-guard' ),
+		);
+	}
+
+	/**
 	 * Get dashboard statistics.
 	 *
 	 * @since 1.0.0
@@ -261,6 +393,7 @@ class Turbo_Guard_Settings {
 
 		return array(
 			'security_score'      => self::calculate_security_score(),
+			'environment'         => self::get_environment_status(),
 			'latest_scan'         => $latest_scan,
 			'threats_count'       => absint( $threats_count ),
 			'blocks_today'        => absint( $blocks_today ),

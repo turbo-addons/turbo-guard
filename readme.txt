@@ -3,7 +3,7 @@ Contributors: turboaddons, siraji2017, sharifok
 Tags: security, malware, scanner, firewall, 2fa
 Requires at least: 5.6
 Tested up to: 7.1
-Stable tag: 1.1.5
+Stable tag: 1.1.6
 Requires PHP: 7.4
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -202,6 +202,9 @@ Used for Google Search Console integration to detect SEO spam and manage indexed
 
 == Changelog ==
 
+= 1.1.6 =
+* Added: Dashboard now shows a System Environment card with WordPress core version and PHP version compatibility checks
+
 = 1.1.5 =
 * Fixed: scheduled scans now run to completion (resumable, chunked under a time budget) instead of only scanning the first 500 files
 * Performance: the file list is computed once per scan and cached, so each scan chunk no longer re-walks the whole filesystem
@@ -264,5 +267,5 @@ Used for Google Search Console integration to detect SEO spam and manage indexed
 
 == Upgrade Notice ==
 
-= 1.0.0 =
-Initial release.
+= 1.1.6 =
+Dashboard now shows a System Environment card with WordPress core version and PHP version compatibility checks
