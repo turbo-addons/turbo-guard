@@ -144,7 +144,7 @@ class Turbo_Guard_Cleaner {
 		}
 
 		// Create ZIP backup before deletion.
-		$backup_path = self::create_backup( $file_paths );
+		$backup_path = self::backup_files( $file_paths );
 
 		// Delete files.
 		foreach ( $result_ids as $result_id ) {
@@ -234,13 +234,14 @@ class Turbo_Guard_Cleaner {
 	}
 
 	/**
-	 * Create a ZIP backup of given files.
+	 * Create a ZIP backup of the given files.
 	 *
 	 * @since 1.0.0
-	 * @param array $file_paths Map of ID => full path.
+	 * @since 1.1.7 Made public so the SEO Spam Detector can back up files too.
+	 * @param array $file_paths List of absolute file paths (keys are ignored).
 	 * @return string|false Backup ZIP path or false on failure.
 	 */
-	private static function create_backup( array $file_paths ) {
+	public static function backup_files( array $file_paths ) {
 		if ( empty( $file_paths ) || ! class_exists( 'ZipArchive' ) ) {
 			return false;
 		}

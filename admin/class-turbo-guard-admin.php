@@ -66,6 +66,8 @@ class Turbo_Guard_Admin {
 
 		// GSC AJAX endpoints.
 		add_action( 'wp_ajax_turbo_guard_gsc_get_urls', array( $this, 'ajax_gsc_get_urls' ) );
+		add_action( 'wp_ajax_turbo_guard_gsc_scan_sitemap', array( $this, 'ajax_gsc_scan_sitemap' ) );
+		add_action( 'wp_ajax_turbo_guard_gsc_generate_htaccess', array( $this, 'ajax_gsc_generate_htaccess' ) );
 		add_action( 'wp_ajax_turbo_guard_gsc_remove_urls', array( $this, 'ajax_gsc_remove_urls' ) );
 		add_action( 'wp_ajax_turbo_guard_gsc_submit_sitemap', array( $this, 'ajax_gsc_submit_sitemap' ) );
 		add_action( 'wp_ajax_turbo_guard_gsc_disconnect', array( $this, 'ajax_gsc_disconnect' ) );
@@ -83,7 +85,13 @@ class Turbo_Guard_Admin {
 		// SEO Spam Detector AJAX.
 		add_action( 'wp_ajax_turbo_guard_run_seo_spam_scan', array( $this, 'ajax_run_seo_spam_scan' ) );
 		add_action( 'wp_ajax_turbo_guard_delete_spam_post',  array( $this, 'ajax_delete_spam_post' ) );
+		add_action( 'wp_ajax_turbo_guard_delete_spam_file',  array( $this, 'ajax_delete_spam_file' ) );
 		add_action( 'wp_ajax_turbo_guard_ignore_seo_spam',   array( $this, 'ajax_ignore_seo_spam' ) );
+
+		// SEO Spam Detector: infected core file actions (view / delete / fix).
+		add_action( 'wp_ajax_turbo_guard_view_core_file',   array( $this, 'ajax_view_core_file' ) );
+		add_action( 'wp_ajax_turbo_guard_delete_core_file', array( $this, 'ajax_delete_core_file' ) );
+		add_action( 'wp_ajax_turbo_guard_fix_core_file',    array( $this, 'ajax_fix_core_file' ) );
 
 		// Scanner: ignore / unignore file.
 		add_action( 'wp_ajax_turbo_guard_ignore_file',   array( $this, 'ajax_ignore_file' ) );
@@ -299,6 +307,8 @@ class Turbo_Guard_Admin {
 					'seoPermanentUpgrade'       => __( 'Permanent delete is a Pro feature. Upgrade to Turbo Guard Pro, or move the post to Trash instead.', 'turbo-guard' ),
 					'confirmDeleteAllSpamPosts' => __( 'Move all selected spam posts to Trash? This can be undone from the Trash.', 'turbo-guard' ),
 					'confirmIgnoreSeoSpam'      => __( 'Mark this item as safe and exclude it from future scans?', 'turbo-guard' ),
+					'confirmDeleteSpamFile'     => __( 'Delete this spam file? A backup ZIP is created automatically.', 'turbo-guard' ),
+					'confirmDeleteAllSpamFiles' => __( 'Delete all selected spam files? A backup ZIP is created automatically.', 'turbo-guard' ),
 
 					// File Integrity.
 					'checking'               => __( 'Checking...', 'turbo-guard' ),
@@ -986,14 +996,109 @@ class Turbo_Guard_Admin {
 
 		wp_send_json_success(
 			array(
-				'urls'  => $urls,
+				'urls'  => self::build_spam_url_items( $urls ),
 				'count' => count( $urls ),
 			)
 		);
 	}
 
 	/**
+	 * AJAX: Scan the site's own sitemap(s) for spam URLs (no Google OAuth).
+	 *
+	 * This is the zero-setup path: it reuses the SEO Spam Detector's sitemap
+	 * scan, so users get spam detection without creating a Google Cloud project.
+	 *
+	 * @since 1.1.7
+	 */
+	public function ajax_gsc_scan_sitemap() {
+		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
+		}
+
+		$entries = Turbo_Guard_SEO_Spam_Detector::scan_sitemap();
+
+		$items = array();
+		foreach ( $entries as $entry ) {
+			if ( empty( $entry['url'] ) ) {
+				continue;
+			}
+
+			$type = Turbo_Guard_GSC::is_spam_url( $entry['url'] );
+			if ( ! $type ) {
+				$type = 'sitemap';
+			}
+
+			$items[] = array(
+				'url'   => $entry['url'],
+				'spam'  => $type,
+				'label' => Turbo_Guard_GSC::get_spam_label( $type ),
+			);
+		}
+
+		wp_send_json_success(
+			array(
+				'urls'  => $items,
+				'count' => count( $items ),
+			)
+		);
+	}
+
+	/**
+	 * Convert a list of URLs into structured spam items for the GSC page.
+	 *
+	 * Each item is { url, spam (type|false), label } so the front-end uses a
+	 * single server-side source of truth for spam detection (no JS duplication).
+	 *
+	 * @since 1.1.7
+	 * @param array $urls Raw URL strings.
+	 * @return array Structured items.
+	 */
+	private static function build_spam_url_items( $urls ) {
+		$items = array();
+		foreach ( $urls as $url ) {
+			$type = Turbo_Guard_GSC::is_spam_url( $url );
+
+			$items[] = array(
+				'url'   => $url,
+				'spam'  => $type ? $type : false,
+				'label' => $type ? Turbo_Guard_GSC::get_spam_label( $type ) : '',
+			);
+		}
+		return $items;
+	}
+
+	/**
+	 * AJAX: Generate .htaccess 410-Gone blocking rules for the given URLs.
+	 *
+	 * @since 1.1.7
+	 */
+	public function ajax_gsc_generate_htaccess() {
+		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
+
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
+		}
+
+		$urls = Turbo_Guard_GSC::sanitize_url_list( isset( $_POST['urls'] ) ? wp_unslash( (array) $_POST['urls'] ) : array() );
+
+		if ( empty( $urls ) ) {
+			wp_send_json_error( array( 'message' => __( 'No URLs provided.', 'turbo-guard' ) ) );
+		}
+
+		wp_send_json_success(
+			array(
+				'rules' => Turbo_Guard_GSC::build_htaccess_rules( $urls ),
+			)
+		);
+	}
+
+	/**
 	 * AJAX: Submit bulk URL removal requests to Google.
+	 *
+	 * Google has no programmatic URL-removal API for general pages, so this
+	 * returns an honest error and points the user to the 410-Gone workflow.
 	 *
 	 * @since 1.1.0
 	 */
@@ -1004,62 +1109,9 @@ class Turbo_Guard_Admin {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
-		$urls = isset( $_POST['urls'] ) ? array_map( 'esc_url_raw', wp_unslash( (array) $_POST['urls'] ) ) : array();
-
-		if ( empty( $urls ) ) {
-			wp_send_json_error( array( 'message' => __( 'No URLs provided.', 'turbo-guard' ) ) );
-		}
-
-		$gsc        = new Turbo_Guard_GSC();
-		$site_url   = home_url( '/' );
-		$submitted  = 0;
-		$failed     = 0;
-		$last_error = '';
-
-		foreach ( $urls as $url ) {
-			$url = esc_url_raw( $url );
-			if ( ! $url ) {
-				++$failed;
-				continue;
-			}
-
-			$result = $gsc->request_url_removal( $site_url, $url );
-
-			if ( is_wp_error( $result ) ) {
-				++$failed;
-				if ( '' === $last_error ) {
-					$last_error = $result->get_error_message();
-				}
-			} else {
-				++$submitted;
-			}
-
-			// Small delay to avoid rate limiting.
-			usleep( 100000 ); // 0.1 second.
-		}
-
-		// Log the event.
-		Turbo_Guard_Scanner::log_event(
-			'gsc_removal_requested',
-			'info',
-			sprintf(
-				/* translators: 1: submitted count, 2: failed count */
-				__( 'GSC removal requested: %1$d submitted, %2$d failed.', 'turbo-guard' ),
-				$submitted,
-				$failed
-			)
-		);
-
-		wp_send_json_success(
+		wp_send_json_error(
 			array(
-				'submitted'  => $submitted,
-				'failed'     => $failed,
-				'last_error' => $last_error,
-				'message'    => sprintf(
-					/* translators: 1: submitted count */
-					__( 'Removal requested for %d URLs. Google will process within 24-72 hours.', 'turbo-guard' ),
-					$submitted
-				),
+				'message' => __( 'Google no longer provides a programmatic URL-removal API. Block the spam URLs with 410-Gone .htaccess rules (this page) so Google deindexes them on its next crawl, and submit the most critical URLs manually in the Search Console "Removals" tool.', 'turbo-guard' ),
 			)
 		);
 	}
@@ -1360,6 +1412,62 @@ class Turbo_Guard_Admin {
 	}
 
 	/**
+	 * AJAX: Delete a spam file found on disk by the SEO spam scan.
+	 *
+	 * @since 1.1.7 Free tier may delete up to 2 spam files total; Pro is unlimited.
+	 */
+	public function ajax_delete_spam_file() {
+		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
+		}
+
+		$path = isset( $_POST['path'] ) ? sanitize_text_field( wp_unslash( $_POST['path'] ) ) : '';
+		$path = ltrim( str_replace( '\\', '/', $path ), '/' );
+		if ( '' === $path ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid file.', 'turbo-guard' ) ) );
+		}
+
+		// Verify the file is in the current scan results.
+		$results    = Turbo_Guard_SEO_Spam_Detector::get_cached_results();
+		$spam_files = ( is_array( $results ) && ! empty( $results['spam_files'] ) ) ? $results['spam_files'] : array();
+		$paths      = array_map(
+			function ( $f ) {
+				return isset( $f['path'] ) ? (string) $f['path'] : '';
+			},
+			$spam_files
+		);
+
+		if ( ! in_array( $path, $paths, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'This file is not in the current SEO spam scan results. Re-run the scan first.', 'turbo-guard' ) ) );
+		}
+
+		// Free users can only delete a limited number of spam files in total.
+		if ( ! turbo_guard_is_pro() && Turbo_Guard_SEO_Spam_Detector::free_file_deletions_remaining() <= 0 ) {
+			wp_send_json_error(
+				array(
+					'message' => sprintf(
+						/* translators: %s: pro URL */
+						__( 'You have reached the free SEO spam file cleanup limit. <a href="%s">Upgrade to Turbo Guard Pro</a> to delete all spam files.', 'turbo-guard' ),
+						esc_url( turbo_guard_pro_url() )
+					),
+				)
+			);
+		}
+
+		$result = Turbo_Guard_SEO_Spam_Detector::delete_spam_file( $path );
+
+		if ( $result ) {
+			if ( ! turbo_guard_is_pro() ) {
+				Turbo_Guard_SEO_Spam_Detector::increment_free_file_deletions();
+			}
+			wp_send_json_success( array( 'message' => __( 'Spam file deleted.', 'turbo-guard' ) ) );
+		}
+
+		wp_send_json_error( array( 'message' => __( 'Failed to delete file.', 'turbo-guard' ) ) );
+	}
+
+	/**
 	 * AJAX: Mark an SEO spam item as safe (add to ignore list).
 	 *
 	 * @since 1.4.0
@@ -1377,7 +1485,7 @@ class Turbo_Guard_Admin {
 			$key = absint( $key );
 		}
 
-		if ( ! in_array( $bucket, array( 'posts', 'options', 'files' ), true ) || '' === (string) $key ) {
+		if ( ! in_array( $bucket, array( 'posts', 'options', 'files', 'core_files' ), true ) || '' === (string) $key ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid item.', 'turbo-guard' ) ) );
 		}
 
@@ -1388,6 +1496,125 @@ class Turbo_Guard_Admin {
 		}
 
 		wp_send_json_error( array( 'message' => __( 'Failed to ignore item.', 'turbo-guard' ) ) );
+	}
+
+	/**
+	 * AJAX: View the beginning of a core file flagged by the SEO spam scan.
+	 *
+	 * @since 1.5.1
+	 */
+	public function ajax_view_core_file() {
+		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
+		}
+
+		$path = isset( $_POST['path'] ) ? sanitize_text_field( wp_unslash( $_POST['path'] ) ) : '';
+		$path = ltrim( str_replace( '\\', '/', $path ), '/' );
+		if ( '' === $path ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid file.', 'turbo-guard' ) ) );
+		}
+
+		$preview = Turbo_Guard_SEO_Spam_Detector::get_core_file_preview( $path );
+		if ( ! $preview ) {
+			wp_send_json_error( array( 'message' => __( 'The file is no longer available on disk.', 'turbo-guard' ) ) );
+		}
+
+		wp_send_json_success(
+			array(
+				'file_path' => $preview['path'],
+				'content'   => $preview['content'],
+				'truncated' => $preview['truncated'],
+			)
+		);
+	}
+
+	/**
+	 * AJAX: Delete an infected WordPress core file.
+	 *
+	 * @since 1.5.1 Free tier may delete up to 2 infected core files in total;
+	 *              Pro is unlimited.
+	 */
+	public function ajax_delete_core_file() {
+		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
+		}
+
+		$path = isset( $_POST['path'] ) ? sanitize_text_field( wp_unslash( $_POST['path'] ) ) : '';
+		$path = ltrim( str_replace( '\\', '/', $path ), '/' );
+		if ( '' === $path ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid file.', 'turbo-guard' ) ) );
+		}
+
+		// Verify the file is in the current scan results.
+		$results     = Turbo_Guard_SEO_Spam_Detector::get_cached_results();
+		$core_files  = ( is_array( $results ) && ! empty( $results['spam_core_files'] ) ) ? $results['spam_core_files'] : array();
+		$paths       = array_map(
+			function ( $f ) {
+				return isset( $f['path'] ) ? (string) $f['path'] : '';
+			},
+			$core_files
+		);
+
+		if ( ! in_array( $path, $paths, true ) ) {
+			wp_send_json_error( array( 'message' => __( 'This file is not in the current SEO spam scan results. Re-run the scan first.', 'turbo-guard' ) ) );
+		}
+
+		// Free users can only delete a limited number of core files in total.
+		if ( ! turbo_guard_is_pro() && Turbo_Guard_SEO_Spam_Detector::free_core_deletions_remaining() <= 0 ) {
+			wp_send_json_error(
+				array(
+					'message' => sprintf(
+						/* translators: %s: pro URL */
+						__( 'You have reached the free infected core file cleanup limit. <a href="%s">Upgrade to Turbo Guard Pro</a> to delete all infected core files.', 'turbo-guard' ),
+						esc_url( turbo_guard_pro_url() )
+					),
+				)
+			);
+		}
+
+		$result = Turbo_Guard_SEO_Spam_Detector::delete_core_file( $path );
+
+		if ( $result ) {
+			if ( ! turbo_guard_is_pro() ) {
+				Turbo_Guard_SEO_Spam_Detector::increment_free_core_deletions();
+			}
+			wp_send_json_success( array( 'message' => __( 'Infected core file deleted.', 'turbo-guard' ) ) );
+		}
+
+		wp_send_json_error(
+			array(
+				'message' => __( 'This file could not be deleted. It matches the official WordPress core, so restore it instead of deleting it.', 'turbo-guard' ),
+			)
+		);
+	}
+
+	/**
+	 * AJAX: Mark an infected core file as fixed.
+	 *
+	 * Use after restoring the file from a clean WordPress copy. The finding is
+	 * hidden until the next full scan.
+	 *
+	 * @since 1.5.1
+	 */
+	public function ajax_fix_core_file() {
+		check_ajax_referer( 'turbo_guard_admin', 'nonce' );
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
+		}
+
+		$path = isset( $_POST['path'] ) ? sanitize_text_field( wp_unslash( $_POST['path'] ) ) : '';
+		$path = ltrim( str_replace( '\\', '/', $path ), '/' );
+		if ( '' === $path ) {
+			wp_send_json_error( array( 'message' => __( 'Invalid file.', 'turbo-guard' ) ) );
+		}
+
+		if ( Turbo_Guard_SEO_Spam_Detector::mark_core_fixed( $path ) ) {
+			wp_send_json_success( array( 'message' => __( 'Marked as fixed. Restore the file from a clean WordPress copy if you have not done so yet.', 'turbo-guard' ) ) );
+		}
+
+		wp_send_json_error( array( 'message' => __( 'Failed to mark the file as fixed.', 'turbo-guard' ) ) );
 	}
 
 	/**

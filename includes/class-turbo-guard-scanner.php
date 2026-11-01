@@ -606,7 +606,7 @@ class Turbo_Guard_Scanner {
 	 * @since 1.2.2
 	 * @return array Associative array of relative_path => md5_checksum. Empty on failure.
 	 */
-	private static function get_core_manifest() {
+	public static function get_core_manifest() {
 		// Return cached copy if already loaded this request.
 		if ( null !== self::$core_manifest ) {
 			return self::$core_manifest;
@@ -703,6 +703,44 @@ class Turbo_Guard_Scanner {
 
 		$rel = str_replace( $abspath . '/', '', $norm_real );
 		return isset( $manifest[ $rel ] );
+	}
+
+	/**
+	 * Whether a file is an official WordPress core file whose MD5 checksum still
+	 * matches the wordpress.org release exactly.
+	 *
+	 * Unlike is_core_file(), which only checks that the path exists in the
+	 * manifest, this also verifies the file was not modified. Used by the SEO
+	 * spam detector to stop reporting genuine core files (e.g. the PHP files
+	 * that modern WordPress ships in wp-includes/fonts/) as backdoors.
+	 *
+	 * @since 1.5.1
+	 * @param string $norm_real Normalised (forward-slash) realpath of the file.
+	 * @return bool True when the file is unmodified official core code.
+	 */
+	public static function is_unmodified_core_file( $norm_real ) {
+		$manifest = self::get_core_manifest();
+		if ( empty( $manifest ) || ! is_string( $norm_real ) || '' === $norm_real ) {
+			return false;
+		}
+
+		$abspath = str_replace( '\\', '/', (string) realpath( ABSPATH ) );
+		if ( '' === $abspath ) {
+			return false;
+		}
+
+		$rel = str_replace( $abspath . '/', '', $norm_real );
+		if ( ! isset( $manifest[ $rel ] ) || '' === (string) $manifest[ $rel ] ) {
+			return false;
+		}
+
+		if ( ! is_readable( $norm_real ) ) {
+			return false;
+		}
+
+		// phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_md5_file
+		$actual = @md5_file( $norm_real );
+		return is_string( $actual ) && hash_equals( strtolower( (string) $manifest[ $rel ] ), strtolower( $actual ) );
 	}
 
 	/**

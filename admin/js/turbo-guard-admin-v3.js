@@ -1106,42 +1106,79 @@ jQuery( function( $ ) {
 
 var TurboGuardGSC = {
 
-	// All fetched URLs from Google.
+	// All URLs (structured: { url, spam, label } — spam detected server-side).
 	allUrls: [],
 
-	// Spam pattern categories.
-	spamPatterns: {
-		// Numbered folder spam (e.g., /wp-admin/images/581824/).
-		numbered_folders: /\/\d{4,}\//,
-		// Japanese characters.
-		japanese: /[\u3040-\u309f\u30a0-\u30ff\u4e00-\u9faf]/,
-		// Chinese characters.
-		chinese: /[\u4e00-\u9fff\u3400-\u4dbf]/,
-		// PHP in wrong locations.
-		php_in_admin: /\/wp-admin\/(images|css|js)\/.+\.php$/i,
-		// Random hash paths.
-		hash_paths: /\/[a-f0-9]{8,}\//i,
-		// Query-string doorway spam (e.g., /?prizes/194927850).
-		doorway_query: /\?[a-z-]+(\/|%2f)\d{6,}/i,
-	},
-
 	init: function () {
-		if ( $( '#turbo-guard-fetch-urls' ).length === 0 ) {
+		if ( $( '#turbo-guard-scan-site' ).length === 0 ) {
 			return; // Not on GSC page.
 		}
 		this.bindEvents();
 	},
 
 	bindEvents: function () {
+		$( '#turbo-guard-scan-site' ).on( 'click', $.proxy( this.scanSitemap, this ) );
 		$( '#turbo-guard-fetch-urls' ).on( 'click', $.proxy( this.fetchUrls, this ) );
 		$( '#turbo-guard-gsc-select-all' ).on( 'change', $.proxy( this.toggleSelectAll, this ) );
 		$( '#turbo-guard-select-spam-only' ).on( 'click', $.proxy( this.selectSpamOnly, this ) );
-		$( '#turbo-guard-remove-selected' ).on( 'click', $.proxy( this.removeSelected, this ) );
 		$( '#turbo-guard-generate-htaccess' ).on( 'click', $.proxy( this.generateHtaccess, this ) );
+		$( '#turbo-guard-apply-htaccess' ).on( 'click', $.proxy( this.applyHtaccess, this ) );
 		$( '#turbo-guard-copy-htaccess' ).on( 'click', this.copyHtaccess );
 		$( '#turbo-guard-filter-spam' ).on( 'change', $.proxy( this.renderTable, this ) );
 		$( '#turbo-guard-gsc-disconnect' ).on( 'click', $.proxy( this.disconnect, this ) );
 		$( document ).on( 'change', '.turbo-guard-gsc-check', $.proxy( this.updateSelectionCount, this ) );
+	},
+
+	/**
+	 * Scan the site's own sitemap for spam URLs (no Google OAuth needed).
+	 */
+	scanSitemap: function (e) {
+		e.preventDefault();
+
+		var self  = this;
+		var $btn  = $( '#turbo-guard-scan-site' );
+		$btn.prop( 'disabled', true ).text( 'Scanning...' );
+		$( '#turbo-guard-gsc-loading' ).show();
+		$( '#turbo-guard-gsc-notice' ).hide().removeClass( 'notice notice-success notice-error' );
+
+		$.ajax(
+			{
+				url:  turboGuardAdmin.ajaxUrl,
+				type: 'POST',
+				data: {
+					action: 'turbo_guard_gsc_scan_sitemap',
+					nonce:  turboGuardAdmin.nonce
+				},
+				success: function (response) {
+					if (response.success) {
+						self.allUrls = response.data.urls || [];
+						self.renderTable();
+						$( '#turbo-guard-gsc-results' ).show();
+						if (self.allUrls.length === 0) {
+							$( '#turbo-guard-gsc-notice' )
+								.addClass( 'notice notice-success' )
+								.html( '<p>&#10003; No spam URLs found in your sitemap — your site looks clean.</p>' )
+								.show();
+						}
+					} else {
+						$( '#turbo-guard-gsc-notice' )
+							.addClass( 'notice notice-error' )
+							.html( '<p>&#10007; ' + (response.data ? response.data.message : 'Scan failed.') + '</p>' )
+							.show();
+					}
+				},
+				error: function (xhr) {
+					$( '#turbo-guard-gsc-notice' )
+						.addClass( 'notice notice-error' )
+						.html( '<p>Server error: ' + xhr.status + '</p>' )
+						.show();
+				},
+				complete: function () {
+					$( '#turbo-guard-gsc-loading' ).hide();
+					$btn.prop( 'disabled', false ).html( '<span class="dashicons dashicons-search"></span> Scan Site for Spam' );
+				}
+			}
+		);
 	},
 
 	/**
@@ -1192,69 +1229,39 @@ var TurboGuardGSC = {
 	},
 
 	/**
-	 * Check if a URL is suspected spam.
-	 */
-	isSpam: function (url) {
-		for (var key in this.spamPatterns) {
-			if (this.spamPatterns[key].test( url )) {
-				return key;
-			}
-		}
-		return false;
-	},
-
-	/**
-	 * Get spam type label for display.
-	 */
-	getSpamLabel: function (key) {
-		var labels = {
-			numbered_folders: 'SEO Spam (Random Folder)',
-			japanese:         'Japanese Spam',
-			chinese:          'Chinese Spam',
-			php_in_admin:     'PHP in Admin',
-			hash_paths:       'Hash Path Spam',
-			doorway_query:    'SEO Spam (Doorway URL)'
-		};
-		return labels[key] || 'Spam';
-	},
-
-	/**
-	 * Render URL table.
+	 * Render URL table (spam type + label come from the server).
 	 */
 	renderTable: function () {
-		var self           = this;
-		var filterSpam     = $( '#turbo-guard-filter-spam' ).is( ':checked' );
-		var $tbody         = $( '#turbo-guard-url-tbody' );
-		var spamCount      = 0;
-		var displayedCount = 0;
-		var rows           = '';
+		var filterSpam = $( '#turbo-guard-filter-spam' ).is( ':checked' );
+		var $tbody     = $( '#turbo-guard-url-tbody' );
+		var spamCount  = 0;
+		var rows       = '';
 
 		this.allUrls.forEach(
-			function (url) {
-				var spamType = self.isSpam( url );
-				if (spamType) {
+			function (item) {
+				var url  = item.url;
+				var spam = item.spam;
+
+				if (spam) {
 					spamCount++;
 				}
-
-				if (filterSpam && ! spamType) {
+				if (filterSpam && ! spam) {
 					return;
 				}
 
-				displayedCount++;
-				var badgeHtml = spamType
-				? '<span class="turbo-guard-badge turbo-guard-badge-critical">' + self.getSpamLabel( spamType ) + '</span>'
-				: '<span class="turbo-guard-badge turbo-guard-badge-info">Normal</span>';
+				var badgeHtml = spam
+					? '<span class="turbo-guard-badge turbo-guard-badge-critical">' + (item.label || 'Spam') + '</span>'
+					: '<span class="turbo-guard-badge turbo-guard-badge-info">Normal</span>';
 
-				rows += '<tr class="' + (spamType ? 'turbo-guard-spam-row' : '') + '">' +
-				'<td><input type="checkbox" class="turbo-guard-gsc-check" value="' + url + '" data-spam="' + (spamType || '') + '" /></td>' +
-				'<td class="turbo-guard-url-cell"><a href="' + url + '" target="_blank" rel="noopener">' + url + '</a></td>' +
-				'<td><span class="turbo-guard-badge turbo-guard-badge-info">Indexed</span></td>' +
-				'<td>' + badgeHtml + '</td>' +
-				'</tr>';
+				rows += '<tr class="' + (spam ? 'turbo-guard-spam-row' : '') + '">' +
+					'<td><input type="checkbox" class="turbo-guard-gsc-check" value="' + url + '" data-spam="' + (spam || '') + '" /></td>' +
+					'<td class="turbo-guard-url-cell"><a href="' + url + '" target="_blank" rel="noopener">' + url + '</a></td>' +
+					'<td>' + badgeHtml + '</td>' +
+					'</tr>';
 			}
 		);
 
-		$tbody.html( rows || '<tr><td colspan="4" style="text-align:center;padding:20px;">No URLs found matching filter.</td></tr>' );
+		$tbody.html( rows || '<tr><td colspan="3" style="text-align:center;padding:20px;">No URLs found matching filter.</td></tr>' );
 
 		$( '#turbo-guard-url-count' ).text( this.allUrls.length );
 		$( '#turbo-guard-spam-count' ).html(
@@ -1291,7 +1298,7 @@ var TurboGuardGSC = {
 	updateSelectionCount: function () {
 		var count = $( '.turbo-guard-gsc-check:checked' ).length;
 		$( '#turbo-guard-gsc-selection-count' ).text( count + ' selected' );
-		$( '#turbo-guard-remove-selected, #turbo-guard-generate-htaccess' ).prop( 'disabled', count === 0 );
+		$( '#turbo-guard-generate-htaccess, #turbo-guard-apply-htaccess' ).prop( 'disabled', count === 0 );
 	},
 
 	/**
@@ -1308,41 +1315,7 @@ var TurboGuardGSC = {
 	},
 
 	/**
-	 * Submit bulk removal request to Google.
-	 */
-	removeSelected: function (e) {
-		e.preventDefault();
-
-		var urls = this.getSelectedUrls();
-		if (urls.length === 0) {
-			alert( 'Select at least one URL.' ); return; }
-
-		var $notice = $( '#turbo-guard-gsc-notice' );
-
-		// Google deprecated the programmatic URL-removal API, so removals can no
-		// longer be submitted from the dashboard. Show the selected URLs and point
-		// the user to the Search Console "Removals" tool instead.
-		var list = '';
-		urls.forEach(
-			function (url) {
-				list += '<br>' + $( '<div/>' ).text( url ).html();
-			}
-		);
-
-		$notice
-			.removeClass( 'notice-success notice-error notice' )
-			.addClass( 'notice notice-warning' )
-			.html(
-				'<p><strong>&#9888; Google no longer allows programmatic URL removal.</strong> ' +
-				'Copy the ' + urls.length + ' selected URL(s) and submit them in Google Search Console &rarr; ' +
-				'<a href="https://search.google.com/search-console/removals" target="_blank" rel="noopener noreferrer">Removals</a>.</p>' +
-				'<p style="font-family:monospace;font-size:12px;word-break:break-all;">' + list + '</p>'
-			)
-			.show();
-	},
-
-	/**
-	 * Generate .htaccess redirect rules.
+	 * Generate .htaccess 410-Gone blocking rules (server-side).
 	 */
 	generateHtaccess: function (e) {
 		e.preventDefault();
@@ -1351,49 +1324,66 @@ var TurboGuardGSC = {
 		if (urls.length === 0) {
 			alert( 'Select at least one URL.' ); return; }
 
-		var siteUrl = window.location.origin;
-		var rules   = '# Turbo Guard - SEO Spam URL Redirects\n';
-		rules      += '# Generated: ' + new Date().toISOString() + '\n';
-		rules      += '# Redirects spam/malware URLs to homepage to prevent 404 errors\n\n';
-		rules      += '<IfModule mod_rewrite.c>\n';
-		rules      += 'RewriteEngine On\n\n';
+		var $btn = $( '#turbo-guard-generate-htaccess' );
+		$btn.prop( 'disabled', true ).text( 'Generating...' );
 
-		// Build unique path prefixes to avoid massive rule sets.
-		var paths = {};
-		urls.forEach(
-			function (url) {
-				try {
-					var parsed = new URL( url );
-					var path   = parsed.pathname;
-
-					// Get first 2-3 path segments.
-					var parts = path.split( '/' ).filter( Boolean );
-					if (parts.length > 1) {
-						var prefix    = '/' + parts.slice( 0, 2 ).join( '/' ) + '/';
-						paths[prefix] = true;
-					} else {
-						paths[path] = true;
-					}
-				} catch (err) {
+		$.post(
+			turboGuardAdmin.ajaxUrl,
+			{ action: 'turbo_guard_gsc_generate_htaccess', nonce: turboGuardAdmin.nonce, urls: urls },
+			function (r) {
+				$btn.prop( 'disabled', false ).text( 'Generate .htaccess 410 Blocks' );
+				if (r.success) {
+					$( '#turbo-guard-htaccess-code' ).val( r.data.rules );
+					$( '#turbo-guard-htaccess-preview' ).show();
+					$( 'html,body' ).animate( { scrollTop: $( '#turbo-guard-htaccess-preview' ).offset().top - 50 }, 400 );
+				} else {
+					$( '#turbo-guard-gsc-notice' )
+						.removeClass( 'notice-success' )
+						.addClass( 'notice notice-error' )
+						.html( '<p>' + (r.data ? r.data.message : 'Failed to generate rules.') + '</p>' )
+						.show();
 				}
 			}
 		);
+	},
 
-		Object.keys( paths ).forEach(
-			function (path) {
-				rules += '# Redirect: ' + path + '\n';
-				rules += 'RewriteRule ^' + path.replace( /\//g, '\\/' ).replace( /\./g, '\\.' ) + '.*$ ' + siteUrl + '/ [R=301,L]\n\n';
+	/**
+	 * Apply 410-Gone rules to .htaccess directly (Pro).
+	 */
+	applyHtaccess: function (e) {
+		e.preventDefault();
+
+		var urls = this.getSelectedUrls();
+		if (urls.length === 0) {
+			alert( 'Select at least one URL.' ); return; }
+
+		if ( ! window.confirm( 'Write these 410-Gone rules to your .htaccess file? A timestamped backup is saved automatically before writing.' ) ) {
+			return;
+		}
+
+		var $btn = $( '#turbo-guard-apply-htaccess' );
+		$btn.prop( 'disabled', true ).text( 'Applying...' );
+
+		$.post(
+			turboGuardAdmin.ajaxUrl,
+			{ action: 'turbo_guard_gsc_apply_htaccess', nonce: turboGuardAdmin.nonce, urls: urls },
+			function (r) {
+				$btn.prop( 'disabled', false ).text( 'Apply to .htaccess' );
+				if (r.success) {
+					$( '#turbo-guard-gsc-notice' )
+						.removeClass( 'notice-error' )
+						.addClass( 'notice notice-success' )
+						.html( '<p>&#10003; ' + (r.data ? r.data.message : '.htaccess updated.') + '</p>' )
+						.show();
+				} else {
+					$( '#turbo-guard-gsc-notice' )
+						.removeClass( 'notice-success' )
+						.addClass( 'notice notice-error' )
+						.html( '<p>&#10007; ' + (r.data ? r.data.message : 'Failed to update .htaccess.') + '</p>' )
+						.show();
+				}
 			}
 		);
-
-		rules += '</IfModule>\n';
-		rules += '# End Turbo Guard redirects\n';
-
-		$( '#turbo-guard-htaccess-code' ).val( rules );
-		$( '#turbo-guard-htaccess-preview' ).show();
-
-		// Scroll to preview.
-		$( 'html,body' ).animate( { scrollTop: $( '#turbo-guard-htaccess-preview' ).offset().top - 50 }, 400 );
 	},
 
 	/**
@@ -1740,6 +1730,202 @@ jQuery( document ).ready( function( $ ) {
 				}
 			}
 		);
+	} );
+
+	$( document ).on( 'click', '.turbo-guard-delete-spam-file', function() {
+		var $btn = $( this );
+		var path = $btn.data( 'path' );
+		if ( ! path ) {
+			return;
+		}
+		if ( ! window.confirm( strings.confirmDeleteSpamFile || 'Delete this spam file? A backup ZIP is created automatically.' ) ) {
+			return;
+		}
+		$btn.prop( 'disabled', true ).text( strings.deleting || 'Deleting...' );
+		$.post(
+			turboGuardAdmin.ajaxUrl,
+			{ action: 'turbo_guard_delete_spam_file', nonce: turboGuardAdmin.nonce, path: path },
+			function( r ) {
+				if ( r.success ) {
+					$btn.closest( 'tr' ).fadeOut( 300, function() { $( this ).remove(); } );
+				} else {
+					$btn.prop( 'disabled', false ).text( strings.deleteFree || 'Delete' );
+					if ( r.data && r.data.message ) {
+						alert( String( r.data.message ).replace( /<[^>]*>/g, '' ) );
+					}
+				}
+			}
+		);
+	} );
+
+	$( '#turbo-guard-delete-all-spam-files' ).on( 'click', function() {
+		var $btn = $( this );
+		var paths;
+		try {
+			paths = JSON.parse( $btn.attr( 'data-paths' ) || '[]' );
+		} catch ( e ) {
+			paths = [];
+		}
+		if ( ! paths.length ) {
+			return;
+		}
+		if ( ! window.confirm( strings.confirmDeleteAllSpamFiles || 'Delete all selected spam files? A backup ZIP is created automatically.' ) ) {
+			return;
+		}
+		$btn.prop( 'disabled', true ).text( strings.deleting || 'Deleting...' );
+
+		var next = function( idx ) {
+			if ( idx >= paths.length ) {
+				location.reload();
+				return;
+			}
+			$.post(
+				turboGuardAdmin.ajaxUrl,
+				{ action: 'turbo_guard_delete_spam_file', nonce: turboGuardAdmin.nonce, path: paths[idx] },
+				function() { next( idx + 1 ); }
+			);
+		};
+		next( 0 );
+	} );
+
+	/* ---------------------------------------------------------
+	 * SEO Spam Detector — infected WordPress core file actions
+	 * (view / delete / fix). Free tier: 2 deletions, Pro: all.
+	 * --------------------------------------------------------- */
+
+	var coreModal = function() {
+		return $( '#turbo-guard-core-view-modal' );
+	};
+
+	var closeCoreModal = function() {
+		coreModal().hide();
+	};
+
+	$( document ).on( 'click', '.turbo-guard-core-view-close', closeCoreModal );
+	$( document ).on( 'click', '#turbo-guard-core-view-modal', function( e ) {
+		if ( e.target === this ) {
+			closeCoreModal();
+		}
+	} );
+	$( document ).on( 'keyup', function( e ) {
+		if ( e.key === 'Escape' || e.keyCode === 27 ) {
+			closeCoreModal();
+		}
+	} );
+
+	$( document ).on( 'click', '.turbo-guard-view-core-file', function() {
+		var $btn = $( this );
+		var path = $btn.data( 'path' );
+		if ( ! path ) {
+			return;
+		}
+		$btn.prop( 'disabled', true );
+		$.post(
+			turboGuardAdmin.ajaxUrl,
+			{ action: 'turbo_guard_view_core_file', nonce: turboGuardAdmin.nonce, path: path },
+			function( r ) {
+				$btn.prop( 'disabled', false );
+				if ( ! r.success || ! r.data ) {
+					alert( ( r.data && r.data.message ? String( r.data.message ) : 'Could not read the file.' ).replace( /<[^>]*>/g, '' ) );
+					return;
+				}
+				$( '#turbo-guard-core-view-title' ).text( r.data.file_path || path );
+				var $code = $( '#turbo-guard-core-view-code' );
+				$code.text( r.data.content || '' );
+				if ( r.data.truncated ) {
+					$code.append( '\n\n\u2026 (truncated \u2014 showing first 8 KB)' );
+				}
+				coreModal().show();
+			}
+		).fail( function() {
+			$btn.prop( 'disabled', false );
+			alert( 'Server error while loading the file.' );
+		} );
+	} );
+
+	$( document ).on( 'click', '.turbo-guard-delete-core-file', function() {
+		var $btn = $( this );
+		var path = $btn.data( 'path' );
+		if ( ! path ) {
+			return;
+		}
+		if ( ! window.confirm( strings.confirmDeleteCoreFile || 'Delete this infected core file? A backup ZIP is created automatically. Restoring the file from a clean WordPress copy is safer.' ) ) {
+			return;
+		}
+		$btn.prop( 'disabled', true ).text( strings.deleting || 'Deleting...' );
+		$.post(
+			turboGuardAdmin.ajaxUrl,
+			{ action: 'turbo_guard_delete_core_file', nonce: turboGuardAdmin.nonce, path: path },
+			function( r ) {
+				if ( r.success ) {
+					$btn.closest( 'tr' ).fadeOut( 300, function() { $( this ).remove(); } );
+				} else {
+					$btn.prop( 'disabled', false ).text( 'Delete' );
+					alert( ( r.data && r.data.message ? String( r.data.message ) : 'Failed to delete file.' ).replace( /<[^>]*>/g, '' ) );
+				}
+			}
+		).fail( function() {
+			$btn.prop( 'disabled', false ).text( 'Delete' );
+			alert( 'Server error while deleting the file.' );
+		} );
+	} );
+
+	$( '#turbo-guard-delete-all-core-files' ).on( 'click', function() {
+		var $btn = $( this );
+		var paths;
+		try {
+			paths = JSON.parse( $btn.attr( 'data-paths' ) || '[]' );
+		} catch ( e ) {
+			paths = [];
+		}
+		if ( ! paths.length ) {
+			return;
+		}
+		if ( ! window.confirm( strings.confirmDeleteCoreFile || 'Delete all selected infected core files? A backup ZIP is created automatically.' ) ) {
+			return;
+		}
+		$btn.prop( 'disabled', true ).text( strings.deleting || 'Deleting...' );
+
+		var next = function( idx ) {
+			if ( idx >= paths.length ) {
+				location.reload();
+				return;
+			}
+			$.post(
+				turboGuardAdmin.ajaxUrl,
+				{ action: 'turbo_guard_delete_core_file', nonce: turboGuardAdmin.nonce, path: paths[idx] },
+				function() { next( idx + 1 ); }
+			);
+		};
+		next( 0 );
+	} );
+
+	$( document ).on( 'click', '.turbo-guard-fix-core-file', function() {
+		var $btn = $( this );
+		var path = $btn.data( 'path' );
+		if ( ! path ) {
+			return;
+		}
+		if ( ! window.confirm( strings.confirmFixCoreFile || 'Mark this file as fixed? Only do this after restoring it from a clean WordPress copy.' ) ) {
+			return;
+		}
+		$btn.prop( 'disabled', true ).text( 'Saving...' );
+		$.post(
+			turboGuardAdmin.ajaxUrl,
+			{ action: 'turbo_guard_fix_core_file', nonce: turboGuardAdmin.nonce, path: path },
+			function( r ) {
+				if ( r.success ) {
+					$btn.text( strings.fixed || 'Fixed' );
+					$btn.closest( 'tr' ).fadeOut( 600, function() { $( this ).remove(); } );
+				} else {
+					$btn.prop( 'disabled', false ).text( 'Fix' );
+					alert( ( r.data && r.data.message ? String( r.data.message ) : 'Failed to mark the file as fixed.' ).replace( /<[^>]*>/g, '' ) );
+				}
+			}
+		).fail( function() {
+			$btn.prop( 'disabled', false ).text( 'Fix' );
+			alert( 'Server error while updating the file.' );
+		} );
 	} );
 } );
 

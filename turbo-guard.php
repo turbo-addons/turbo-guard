@@ -3,7 +3,7 @@
  * Plugin Name: Turbo Guard – Security & Malware Scanner
  * Plugin URI: https://wp-turbo.com/turbo-guard/
  * Description: Advanced WordPress security with AI-powered malware scanning, WordPress core file manifest verification, firewall, 2FA, vulnerability scanner, file integrity checker, bot protection & SEO spam removal. Detects every threat for free — clean up to 3 files free, then upgrade to Turbo Guard Pro.
- * Version: 1.1.6
+ * Version: 1.1.7
  * Author: Turbo Addons
  * Author URI: https://wp-turbo.com
  * License: GPL-3.0-or-later
@@ -22,11 +22,45 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'TURBO_GUARD_VERSION', '1.1.6' );
+define( 'TURBO_GUARD_VERSION', '1.1.7' );
 define( 'TURBO_GUARD_PLUGIN_FILE', __FILE__ );
 define( 'TURBO_GUARD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TURBO_GUARD_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'TURBO_GUARD_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+
+/**
+ * Show an admin notice when Turbo Guard Pro was deactivated because this
+ * (free) plugin was not active at the time. The Pro plugin stores a transient
+ * flag before deactivating itself; the free plugin reads it here and displays
+ * a dismissible error notice so the user knows what happened.
+ *
+ * This runs in the free plugin because Pro's code stops executing the moment
+ * it deactivates itself — so only an always-active plugin can show the notice.
+ *
+ * @since 1.1.7
+ */
+function turbo_guard_pro_dependency_notice() {
+	if ( ! get_transient( 'turbo_guard_pro_activation_failed' ) ) {
+		return;
+	}
+	delete_transient( 'turbo_guard_pro_activation_failed' );
+	?>
+	<div class="notice notice-error is-dismissible">
+		<p>
+			<strong><?php esc_html_e( 'Turbo Guard Pro could not be activated.', 'turbo-guard' ); ?></strong>
+			<?php
+			printf(
+				/* translators: 1: opening anchor, 2: closing anchor */
+				esc_html__( 'It requires the free %1$sTurbo Guard%2$s plugin to be active first. Turbo Guard is already active — please now reactivate Turbo Guard Pro.', 'turbo-guard' ),
+				'<a href="' . esc_url( admin_url( 'plugins.php' ) ) . '">',
+				'</a>'
+			);
+			?>
+		</p>
+	</div>
+	<?php
+}
+add_action( 'admin_notices', 'turbo_guard_pro_dependency_notice' );
 
 // Free-tier cleanup quota: max files a free user can delete/quarantine per action.
 define( 'TURBO_GUARD_FREE_CLEANUP_LIMIT', 3 );

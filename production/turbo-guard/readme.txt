@@ -1,0 +1,287 @@
+=== Turbo Guard – Security & Malware Scanner ===
+Contributors: turboaddons, siraji2017, sharifok
+Tags: security, malware, scanner, firewall, 2fa
+Requires at least: 5.6
+Tested up to: 7.1
+Stable tag: 1.1.7
+Requires PHP: 7.4
+License: GPL-3.0-or-later
+License URI: https://www.gnu.org/licenses/gpl-3.0.html
+
+WordPress security plugin with malware scanner, firewall, 2FA, vulnerability scanner, and file integrity checker. Free scan, 3 free cleanups.
+
+== Description ==
+
+Turbo Guard is a comprehensive WordPress security plugin built by a team that manages WordPress sites. It solves real problems: malware removal, Japanese/Chinese SEO spam cleanup, vulnerability alerts, file integrity monitoring, and bot protection. Every scan, detection, and list is 100% free — you can clean up to 3 files for free. Upgrade to Turbo Guard Pro to unlock unlimited cleanup, Live Traffic Monitor, AI Security Advisor, and Geo-Fence.
+
+
+= Malware Scanner =
+
+* Full-site scan: PHP, JavaScript, HTML files across wp-content, wp-admin, wp-includes, and WordPress root
+* WordPress Core File Manifest check — compares every file in wp-admin and wp-includes against the official WordPress.org checksums API
+* Detects 50+ malware patterns: eval+base64, C99/R57/WSO/b374k/ALFA web shells, hidden iframes, pharma spam, code obfuscation
+* Detects Japanese, Chinese, and Korean SEO spam text inside PHP files
+* Scans the WordPress database (wp_posts, wp_options) for injected content and rogue admin accounts
+* PHP-in-uploads detection, PHP-in-core-asset-dirs detection
+* Polyglot image backdoor detection — scans image files for embedded PHP
+* Smart false-positive prevention: trusted plugins and themes are never flagged for translation text
+* Chunked AJAX scanning with live progress bar — handles 10,000+ file sites without timeout
+
+= File Integrity and Change Detection =
+
+* Verifies every WordPress core file against official WordPress.org MD5 checksums
+* Detects modified or missing core files
+* File watcher runs every 6 hours via WP-Cron — detects new, modified, and deleted files
+* Baseline snapshot of all wp-content PHP/JS files with MD5 comparison
+* Email alert when new files appear
+
+= One-Click Bulk Malware Cleanup =
+
+* Shows every infected file with path, threat name, severity, and file size
+* Select All Critical button — delete multiple files at once
+* Automatic ZIP backup before any deletion
+* Quarantine option — moves files to a protected directory
+
+= Web Application Firewall =
+
+* Blocks SQL injection, XSS, directory traversal in real time
+* Prevents PHP file uploads
+* Advanced IP blocking: exact IP, CIDR, ranges, wildcards
+* Rate limiting (120 requests per minute per IP)
+* Bad bot blocker: blocks known attack tools (SQLMap, Nikto, WPScan, Nuclei, and more) while always allowing verified search-engine crawlers
+
+= Geo-Fence and Trusted Location =
+
+* Restrict WordPress admin access to specific IP addresses
+* Country-based admin lock: only allow access from your country
+* Block file uploads from untrusted countries
+* One-click trusted IP setup
+
+= Login Security =
+
+* Brute force protection with configurable thresholds and lockout duration
+* Login attempt logging with IP, timestamp, and user agent
+* Email alert when admin logs in from unrecognised IP
+* Auto-blocks attacker IPs in firewall after brute force detection
+
+= Two-Factor Authentication (2FA) =
+
+* TOTP/RFC 6238 — compatible with Google Authenticator, Authy, and all TOTP apps
+* Manual secret key setup on user profile page
+* Recovery codes (8 single-use)
+* Per-user enable/disable
+
+= Vulnerability Scanner =
+
+* Checks all plugins, themes, and WordPress core against WPScan vulnerability database
+* CVSS severity scoring, CVE links, version-aware matching
+* Requires a free WPScan API key for detailed CVE data; without one it falls back to WordPress.org status (flags removed/closed plugins & themes)
+* Email alert when new vulnerabilities are found
+
+= Live Traffic Monitor =
+
+* Logs every HTTP request with bot/human detection
+* Identifies 30+ bots including AI crawlers (GPTBot, ClaudeBot, PerplexityBot)
+* 24-hour stats: total requests, humans, bots, blocked, errors
+* Paginated — handles large traffic volumes
+* One-click IP block from any traffic row
+
+= Site Hardening =
+
+* HTTP security headers (X-Frame-Options, HSTS, X-Content-Type-Options, Referrer-Policy)
+* Hide WordPress version, block user enumeration
+* Optional: disable XML-RPC, restrict REST API, disable file editor
+
+= Google Search Console Cleanup =
+
+* Scans your sitemap for spam URLs with zero setup — no Google account needed
+* Optional Google Search Console connection to see the URLs Google has actually indexed
+* Detects Japanese/Chinese, doorway, and brand-keyword spam URLs
+* Generates .htaccess 410-Gone blocking rules so Google permanently de-indexes spam
+* Sitemap resubmission after cleanup
+
+= Privacy =
+
+Turbo Guard does not send your website files to any external server. Vulnerability checks send only plugin/theme slugs and versions to the WPScan API — and only on manual scans or when scheduled vulnerability scans are enabled in Settings (off by default). The SEO spam scanner reads your site's own sitemap via a local request to the site itself — no external service is contacted. Geo-Fence country blocking sends the visitor IP address to ipapi.co when enabled. 2FA is fully local: TOTP secrets are entered manually in your authenticator app and no QR service is used. GSC integration uses your own Google OAuth credentials. AI analysis (optional OpenAI) sends only anonymised threat type data. No telemetry. No tracking. No account required.
+
+== Installation ==
+
+1. Upload the `turbo-guard` folder to `/wp-content/plugins/`
+2. Activate the plugin through the Plugins menu in WordPress
+3. Go to Turbo Guard in your admin sidebar
+4. Click "Start Full Scan" on the Scanner page
+5. Review results and use "Select Critical Only" then "Delete Selected"
+6. Check the AI Advisor page for personalised security guidance
+
+== Frequently Asked Questions ==
+
+= Is Turbo Guard completely free? =
+
+Yes — all scanning, detection, and protection features are 100% free. The free version can clean up to 3 infected files. Upgrade to Turbo Guard Pro for unlimited cleanup plus Live Traffic Monitor, AI Security Advisor, and Geo-Fence. No account required.
+
+= Will it slow my website? =
+
+No. Scanning runs via AJAX in your browser. The firewall adds negligible overhead.
+
+= My site shows Japanese spam in Google but files are gone. What do I do? =
+
+Use the GSC Cleanup page. Connect Google Search Console, fetch indexed URLs, identify the spam entries, and submit them for removal in Google Search Console's Removals tool.
+
+= Does the File Integrity checker work without internet? =
+
+It downloads checksums from the WordPress.org API on first use and caches them for 12 hours, so repeat checks work offline.
+
+= Can I use this on all my sites? =
+
+Yes. Install on each site. No per-site fees or licence limits.
+
+= Does it conflict with other security plugins? =
+
+Turbo Guard whitelists 15+ popular security plugins (Wordfence, Sucuri, MalCare, iThemes, etc.) to prevent false positive detections. It can run alongside other security plugins without issues.
+
+== Screenshots ==
+
+1. Security Dashboard — score, threats, firewall blocks, scan summary
+2. AI Security Advisor (Pro) — attack campaign analysis, step-by-step fix guide
+3. Malware Scanner — live progress, severity badges, bulk delete with backup
+4. File Integrity — core checksum verification, file watcher, baseline stats
+5. Vulnerability Scanner — CVE listing with CVSS severity and fix versions
+6. Live Traffic (Pro) — paginated log, bot/human detection, filter tabs
+7. Google Search Console Cleanup — OAuth setup, spam URL table, removal request
+8. Geo-Fence Settings (Pro) — trusted IP whitelist, country lock
+9. Firewall Logs — blocked requests with IP blocking options
+10. Settings Page — all features independently configurable
+
+== External Services ==
+
+This plugin connects to external services for certain features. All connections require explicit user action or opt-in.
+
+= WordPress.org API =
+
+Used to verify WordPress core file integrity by comparing checksums.
+* Data sent: WordPress version and locale
+* When: Only when the user runs a malware scan or a file integrity check (including scheduled scans)
+* Service: https://api.wordpress.org/
+* Privacy Policy: https://wordpress.org/about/privacy/
+
+= WPScan Vulnerability Database =
+
+Used to check plugins and themes for known security vulnerabilities.
+* Data sent: Plugin/theme slugs and versions
+* When: Only when the user runs a manual vulnerability scan, or when scheduled vulnerability scans are enabled in Settings (off by default)
+* Service: https://wpscan.com/
+* Terms of Use: https://wpscan.com/terms
+* Privacy Policy: https://automattic.com/privacy/
+
+= ipapi.co (Geo-Fence) =
+
+Used for IP geolocation to support country-based access and upload controls (Geo-Fence).
+* Data sent: Visitor IP address
+* When: Only when geo-fence country features are enabled
+* Service: https://ipapi.co/
+* Terms of Service: https://ipapi.co/terms/
+* Privacy Policy: https://ipapi.co/privacy/
+
+= OpenAI API =
+
+Used to provide AI-powered security analysis and recommendations.
+* Data sent: Anonymized scan results (no personal data or site content)
+* When: Only when user explicitly clicks "AI Analysis" (requires user-provided API key)
+* Service: https://api.openai.com/
+* Terms of Use: https://openai.com/policies/terms-of-use
+* Privacy Policy: https://openai.com/policies/privacy-policy
+
+= Google APIs (Search Console) =
+
+Used for Google Search Console integration to detect SEO spam and manage indexed URLs.
+* Data sent: OAuth tokens, site URL for search analytics queries
+* When: Only when user connects their Google account and initiates GSC features
+* Service: https://developers.google.com/webmaster-tools
+* Terms of Service: https://developers.google.com/terms
+* Privacy Policy: https://policies.google.com/privacy
+
+== Changelog ==
+
+= 1.1.7 =
+* SEO Spam Detector: delete spam files directly from the SEO Spam page (automatic ZIP backup, free tier deletes up to 2 files)
+* SEO Spam Detector: prefix-agnostic doorway spam detection — catches /prize/98254733 and any other auto-generated numeric-ID URLs, regardless of prefix
+* SEO Spam Detector: verifies suspicious URLs by fetching them and confirming they actually serve Japanese keyword content
+* SEO Spam Detector: fixed CJK text inside post content not being detected (broken MySQL regex replaced with PHP-side matching)
+* SEO Spam Detector: fixed WPML compiled Twig cache files being flagged as spam
+* SEO Spam Detector: whole-word brand matching with a refined keyword list — ambiguous common words (coach, pharmacy, casino, slot) no longer cause false positives on template marketplaces and e-commerce sites
+* SEO Spam Detector: scans the whole wp-content directory (not just uploads) and all public post types
+* GSC Cleanup: scan your sitemap for spam URLs with zero setup — no Google Cloud project or OAuth required
+* GSC Cleanup: 410-Gone .htaccess blocking (the correct permanent de-indexing signal, replacing the old 301 redirect)
+* GSC Cleanup: unified server-side spam detection
+* Fixed: honest messaging that Google offers no bulk URL-removal API
+
+= 1.1.6 =
+* Added: Dashboard now shows a System Environment card with WordPress core version and PHP version compatibility checks
+
+= 1.1.5 =
+* Fixed: scheduled scans now run to completion (resumable, chunked under a time budget) instead of only scanning the first 500 files
+* Performance: the file list is computed once per scan and cached, so each scan chunk no longer re-walks the whole filesystem
+* Fixed: "Enable Scanner" now actually gates the automatic malware scan
+* Fixed: "Scan Complete Alerts" and "Threat Alerts" now send emails from the malware scanner (threat alerts fire on critical/high findings only, to avoid false-positive noise)
+* Added: "Scan All Images" and "Scan Outside WordPress" settings (previously hidden/off)
+* Improved: Bot Protection — verified search-engine crawlers (Googlebot, Bingbot, …) are now always allowed and bots spoofing a crawler user agent are blocked via reverse DNS
+* Added: Bot Protection settings — enable/disable, crawler verification, aggressive mode, custom blocked user agents, and a 7-day blocked-request statistic
+* Added: 2FA management entirely inside Turbo Guard → Settings — enable 2FA, require it for roles, set a grace period and remember-device days, and set up your own account with a QR code, manual key and recovery codes in the same panel (removed from the WordPress user profile screen)
+* Security: application passwords are now disabled for users who have 2FA enabled, closing a second-factor bypass via the REST API / XML-RPC
+* Fixed: vulnerability scanner now validates the WPScan key via the `/status` endpoint and reports the real cause — an invalid/expired key (HTTP 401) is no longer confused with an exhausted daily request limit, with the HTTP code shown for support
+* Fixed: uninstall now also removes 2FA user meta and the uploads quarantine/error-log folders
+
+= 1.1.4 =
+* Firewall: inspect raw JSON/XML request bodies and cookies, so REST API and headless payloads are no longer a blind spot
+* Firewall: reduced false positives on the SQL-injection and XSS signatures (hex-colour and "1=1" prose no longer trigger blocks)
+
+
+= 1.1.3 =
+* Fixed: scanner flagged its own backup copies as C99 shell
+* Fixed: legitimate core file wp-includes/css/dist/registry.php flagged as injected PHP
+* Improved: scanner now detects ANY unknown PHP file in wp-admin/wp-includes/root (Wordfence-style), plus obfuscated include and variable-indirection command shells
+* Improved: database scanner detects unknown tables and unknown wp_options rows
+* Improved: vulnerability scanner shows a clear warning and falls back to WordPress.org when the WPScan key is missing/invalid (no more false "0 vulnerabilities")
+* Fixed: core manifest cache is now version-specific (no stale results after a WordPress update)
+
+= 1.1.2 =
+* SEO Spam Detector: detects spam-looking URLs in the site sitemap
+* SEO Spam Detector: scans all posts/pages (no 500-post cap) and JS files in uploads
+* SEO Spam Detector: recoverable Trash cleanup with permanent delete (Pro)
+* SEO Spam Detector: Scan All plugin, theme and database at free
+* SEO Spam Detector: ignore/mark-safe allowlist for posts and files
+* GSC Cleanup: Search Cosol API connection, sitemap fetch and removal request at free.
+* Added scheduled SEO spam scan option and Pro email alerts
+* Added CJK-content override setting to reduce false positives
+
+= 1.1.1 =
+* Update the plugin Dashboard
+* Added more feature
+
+= 1.0.0 =
+* Initial release
+* Malware scanner with 30+ pattern signatures and WordPress core file manifest check
+* AI Security Advisor with attack campaign analysis and step-by-step fix guide
+* File Integrity Checker — verifies WordPress core files against WordPress.org checksums
+* File Watcher — baseline snapshot, detects new/modified/deleted files every 6 hours
+* Web Application Firewall — SQL injection, XSS, directory traversal blocking
+* Login Security — brute force protection, lockout, IP blocking
+* Two-Factor Authentication (TOTP/RFC 6238)
+* Vulnerability Scanner (WPScan API, CVSS scoring)
+* Live Traffic Monitor with bot/human detection
+* Site Hardening (security headers, XML-RPC, user enumeration)
+* Geo-Fence — restrict admin access to trusted IPs or countries
+* Bot Protection — blocks 25+ vulnerability scanners and bad scrapers
+* Google Search Console Cleanup (OAuth, bulk URL removal)
+* One-click bulk malware cleanup with automatic ZIP backup
+* Database scanning (wp_posts, wp_options, rogue admin users)
+* Japanese/Chinese/Korean SEO spam detection
+* Polyglot image backdoor detection
+
+== Upgrade Notice ==
+
+= 1.1.7 =
+SEO spam file cleanup and zero-setup GSC spam detection with 410-Gone de-indexing.
+
+= 1.1.6 =
+Dashboard now shows a System Environment card with WordPress core version and PHP version compatibility checks

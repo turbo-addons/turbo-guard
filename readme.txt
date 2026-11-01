@@ -3,7 +3,7 @@ Contributors: turboaddons, siraji2017, sharifok
 Tags: security, malware, scanner, firewall, 2fa
 Requires at least: 5.6
 Tested up to: 7.1
-Stable tag: 1.1.6
+Stable tag: 1.1.7
 Requires PHP: 7.4
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -94,10 +94,10 @@ Turbo Guard is a comprehensive WordPress security plugin built by a team that ma
 
 = Google Search Console Cleanup =
 
-* Connects to Google Search Console via OAuth
-* Detects indexed SEO spam URLs even when files are deleted from server
-* Lists indexed URLs with one-click spam detection (Japanese/Chinese/doorway)
-* Guides you through Google Search Console's Removals tool for de-indexing
+* Scans your sitemap for spam URLs with zero setup — no Google account needed
+* Optional Google Search Console connection to see the URLs Google has actually indexed
+* Detects Japanese/Chinese, doorway, and brand-keyword spam URLs
+* Generates .htaccess 410-Gone blocking rules so Google permanently de-indexes spam
 * Sitemap resubmission after cleanup
 
 = Privacy =
@@ -202,6 +202,19 @@ Used for Google Search Console integration to detect SEO spam and manage indexed
 
 == Changelog ==
 
+= 1.1.7 =
+* SEO Spam Detector: delete spam files directly from the SEO Spam page (automatic ZIP backup, free tier deletes up to 2 files)
+* SEO Spam Detector: prefix-agnostic doorway spam detection — catches /prize/98254733 and any other auto-generated numeric-ID URLs, regardless of prefix
+* SEO Spam Detector: verifies suspicious URLs by fetching them and confirming they actually serve Japanese keyword content
+* SEO Spam Detector: fixed CJK text inside post content not being detected (broken MySQL regex replaced with PHP-side matching)
+* SEO Spam Detector: fixed WPML compiled Twig cache files being flagged as spam
+* SEO Spam Detector: whole-word brand matching with a refined keyword list — ambiguous common words (coach, pharmacy, casino, slot) no longer cause false positives on template marketplaces and e-commerce sites
+* SEO Spam Detector: scans the whole wp-content directory (not just uploads) and all public post types
+* GSC Cleanup: scan your sitemap for spam URLs with zero setup — no Google Cloud project or OAuth required
+* GSC Cleanup: 410-Gone .htaccess blocking (the correct permanent de-indexing signal, replacing the old 301 redirect)
+* GSC Cleanup: unified server-side spam detection
+* Fixed: honest messaging that Google offers no bulk URL-removal API
+
 = 1.1.6 =
 * Added: Dashboard now shows a System Environment card with WordPress core version and PHP version compatibility checks
 
@@ -266,6 +279,9 @@ Used for Google Search Console integration to detect SEO spam and manage indexed
 * Polyglot image backdoor detection
 
 == Upgrade Notice ==
+
+= 1.1.7 =
+SEO spam file cleanup and zero-setup GSC spam detection with 410-Gone de-indexing.
 
 = 1.1.6 =
 Dashboard now shows a System Environment card with WordPress core version and PHP version compatibility checks
