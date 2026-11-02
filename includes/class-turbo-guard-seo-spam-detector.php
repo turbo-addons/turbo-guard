@@ -45,6 +45,26 @@ class Turbo_Guard_SEO_Spam_Detector {
 	const CJK_RUN_REGEX = '/[\x{3040}-\x{30FF}\x{31F0}-\x{31FF}\x{4E00}-\x{9FFF}\x{3400}-\x{4DBF}\x{AC00}-\x{D7A3}]{3,}/u';
 
 	/**
+	 * Numeric-ID route fragment — matches [0-9]+, [0-9]{6,}, \d+, \d{6,} etc.
+	 *
+	 * Used to spot doorway-generator routes without hardcoding any URL prefix:
+	 * the campaign prefix changes (/products/, /prize/, /gift/, …), but the large
+	 * random numeric ID it serves is the stable, generic signal.
+	 *
+	 * @since 1.6.0
+	 */
+	const NUMERIC_ROUTE_REGEX = '(?:\[0-9\][+*?]|\[0-9\]\{[0-9,]+\}|\\\\d[+*?]|\\\\d\{[0-9,]+\})';
+
+	/**
+	 * Googlebot user-agent — used to defeat user-agent cloaking when fetching
+	 * the site's own sitemap and doorway URLs. Cloaked spam is only served to
+	 * crawlers, so the detector must sometimes ask as Google.
+	 *
+	 * @since 1.6.0
+	 */
+	const GOOGLEBOT_USER_AGENT = 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)';
+
+	/**
 	 * Free-tier limit: number of SEO spam files a free user may delete in total.
 	 *
 	 * @since 1.1.7
@@ -200,8 +220,8 @@ class Turbo_Guard_SEO_Spam_Detector {
 
 			$posts = $wpdb->get_results(
 				$wpdb->prepare(
-					$query,
-					array_merge( $post_types, array( $batch_size, $offset ) ) // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- placeholders built from a fixed post-type list.
+					$query, // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- query placeholders built from a fixed post-type list.
+					array_merge( $post_types, array( $batch_size, $offset ) )
 				)
 			);
 
@@ -748,6 +768,15 @@ class Turbo_Guard_SEO_Spam_Detector {
 						continue;
 					}
 
+					// Doorway generator backdoor dropped into wp-content (uploads or
+					// a misc dir): numeric-ID route, bot-cloaked remote fetch, base64
+					// CJK payload, CJK variable names, or a dense keyword cluster.
+					// This is specific enough to be safe in uploads and catches a
+					// backdoor that has no plain CJK, eval() or base64_decode().
+					if ( self::looks_like_doorway_generator( $content ) ) {
+						$reasons[] = 'Doorway spam generator in wp-content';
+					}
+
 					// CJK alone is only suspicious when the site is not CJK-language.
 					// Require a spam keyword OR ≥5 distinct runs to avoid false positives
 					// on files with a single translated word or stray CJK glyph.
@@ -862,6 +891,16 @@ class Turbo_Guard_SEO_Spam_Detector {
 			}
 		}
 
+		// 1c. Base64/gzip-encoded CJK payload. Doorway generators store their
+		//     Japanese/Chinese spam as a base64 blob (often gzip-compressed) so
+		//     the spam text never appears as plain CJK in the file. Decoding the
+		//     blob is a definitive, generic signal — it needs no static word list
+		//     and no knowledge of the doorway URL prefix, which changes between
+		//     campaigns (/products/, /prize/, /gift/, …).
+		if ( self::has_base64_encoded_cjk( $content ) ) {
+			return true;
+		}
+
 		// 2. Numeric-ID doorway generation. Two shapes, with different confidence:
 		//    (a) A rewrite RULE that maps a numeric-ID segment to a custom query
 		//        var — the definitive path-doorway backdoor:
@@ -882,7 +921,7 @@ class Turbo_Guard_SEO_Spam_Detector {
 		//    *detect* exactly those patterns. So shape (b) is only confirmed by
 		//    actual Japanese/Chinese content — never by base64/eval alone.
 		// Numeric route capture — [0-9]+ / [0-9]* / [0-9]{6,} / \d+ / \d{6,} etc.
-		$numeric_route = '(?:\[0-9\][+*?]|\[0-9\]\{[0-9,]+\}|\\\\d[+*?]|\\\\d\{[0-9,]+\})';
+		$numeric_route = self::NUMERIC_ROUTE_REGEX;
 
 		// WordPress core (class-wp-post-type.php) registers its own numeric
 		// pagination rule ("…/{pagination_base}/([0-9]{1,})/?$"). That is a
@@ -912,17 +951,156 @@ class Turbo_Guard_SEO_Spam_Detector {
 		}
 
 		// Shape (b): query-string doorway — request hook + numeric, confirmed only
-		// by real Japanese/Chinese content (see above).
+		// by real Japanese/Chinese content (see above). When not confirmed, fall
+		// through to the remote-fetch check rather than returning false.
 		$has_numeric = (bool) preg_match( '/' . $numeric_route . '/', $content );
 		if ( $has_numeric ) {
 			$has_route = (bool) preg_match( '/add_query_var|template_redirect|parse_request|pre_get_posts/i', $content );
 			if ( $has_route ) {
 				$japanese_runs = (int) preg_match_all( self::CJK_RUN_REGEX, $content, $m );
-				return $japanese_runs >= 3;
+				if ( $japanese_runs >= 3 ) {
+					return true;
+				}
+			}
+		}
+
+		// 3. Remote-fetch doorway generator — the backdoor pulls the Japanese/
+		//    Chinese spam from an attacker's server at request time, so the file
+		//    itself has NO CJK text and NO base64 payload. Its behaviour is the
+		//    signature: cloak for crawlers (user-agent check) + fetch external
+		//    content + route by request + serve it. Prefix-agnostic, no word list.
+		if ( self::looks_like_remote_fetch_doorway( $content ) ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Whether a file is a remote-fetch doorway spam generator.
+	 *
+	 * The most common modern Japanese/Chinese SEO-spam backdoor keeps no spam
+	 * content in the file at all: at request time it detects a crawler, fetches
+	 * spam HTML from an attacker-controlled server, and serves it. Because the
+	 * payload is remote, neither plain CJK scanning nor base64 decoding can see
+	 * it — only the backdoor's behaviour can. This looks for the four-way
+	 * combination that is essentially unique to these doorways:
+	 *
+	 *   1. Bot cloaking  — reads the user-agent and checks a crawler keyword.
+	 *   2. Remote fetch  — pulls content from an external http(s)/ftp URL.
+	 *   3. Request route — numeric-ID route or REQUEST_URI/QUERY_STRING read.
+	 *   4. Serve         — echoes/prints the fetched payload.
+	 *
+	 * Legitimate plugins fetch remote content (license checks, feeds, CDN) and
+	 * check bots (analytics, caching), but they never combine all four inside a
+	 * single request handler — that combination is the doorway signature.
+	 *
+	 * @since 1.6.0
+	 * @param string $content File content.
+	 * @return bool
+	 */
+	private static function looks_like_remote_fetch_doorway( $content ) {
+		// 1. Bot cloaking: reads the user-agent AND checks for a crawler keyword.
+		$reads_ua = (bool) preg_match( '/HTTP_USER_AGENT|USER_AGENT/i', $content );
+		if ( ! $reads_ua ) {
+			return false;
+		}
+		$bot_cloak = (bool) preg_match(
+			'/googlebot|bingbot|yandex|baidu|duckduck|sogou|slurp|ia_archiver|petalbot|spider|crawler|\bbot\b/i',
+			$content
+		);
+		if ( ! $bot_cloak ) {
+			return false;
+		}
+
+		// 2. Remote content fetch (the payload source).
+		$remote_fetch = (bool) preg_match(
+			'/(?:file_get_contents|fopen|readfile)\s*\(\s*[\'"](?:https?|ftp):\/\//i',
+			$content
+		)
+			|| (bool) preg_match( '/curl_(?:init|exec|setopt|multi_init)/i', $content )
+			|| (bool) preg_match( '/wp_remote_(?:get|post|request)/i', $content )
+			|| (bool) preg_match( '/fsockopen\s*\(/i', $content );
+		if ( ! $remote_fetch ) {
+			return false;
+		}
+
+		// 3. Request routing: numeric-ID route, or an explicit request read.
+		$request_route = (bool) preg_match( '/' . self::NUMERIC_ROUTE_REGEX . '/', $content )
+			|| (bool) preg_match( '/REQUEST_URI|QUERY_STRING|HTTP_REFERER|HTTP_HOST|\$_REQUEST|\$_GET|\$_POST/i', $content );
+
+		// 4. Serve: output the fetched payload.
+		$serves = (bool) preg_match( '/\b(?:echo|print|readfile|passthru)\b/i', $content );
+
+		// All four must hold. This is deliberately strict: the request route or
+		// serve check alone would drag in legitimate security/analytics plugins.
+		return $request_route && $serves;
+	}
+
+	/**
+	 * Whether a file contains base64- (or gzip-) encoded CJK spam content.
+	 *
+	 * Japanese/Chinese SEO-spam doorways routinely hide their payload as a
+	 * base64-encoded blob (sometimes gzip-compressed first) so the spam text is
+	 * invisible to plain-text CJK scanning. This decodes base64-looking string
+	 * literals and flags any that expand to a run of CJK characters — a
+	 * definitive, generic signal that depends on no static word list and no
+	 * knowledge of the doorway URL prefix (which varies between campaigns).
+	 *
+	 * @since 1.6.0
+	 * @param string $content File content.
+	 * @return bool
+	 */
+	private static function has_base64_encoded_cjk( $content ) {
+		$content = (string) $content;
+
+		// Extract candidate base64 string literals. A minimum of 40 chars keeps
+		// the number of decode attempts small and avoids coincidental matches.
+		if ( ! preg_match_all( '/[\'"]([A-Za-z0-9+\/]{40,}={0,2})[\'"]/', $content, $matches ) ) {
+			return false;
+		}
+
+		$candidates = array_slice( array_unique( $matches[1] ), 0, 300 );
+
+		foreach ( $candidates as $encoded ) {
+			$decoded = @base64_decode( $encoded, true ); // phpcs:ignore
+			if ( ! is_string( $decoded ) || '' === $decoded ) {
+				continue;
+			}
+
+			if ( self::contains_cjk_run( $decoded ) ) {
+				return true;
+			}
+
+			// The payload may be gzip-compressed before encoding
+			// (e.g. gzinflate( base64_decode( ... ) )).
+			foreach ( array( 'gzinflate', 'gzuncompress', 'gzdecode' ) as $inflate ) {
+				if ( ! function_exists( $inflate ) ) {
+					continue;
+				}
+				$plain = @call_user_func( $inflate, $decoded ); // phpcs:ignore
+				if ( is_string( $plain ) && '' !== $plain && self::contains_cjk_run( $plain ) ) {
+					return true;
+				}
 			}
 		}
 
 		return false;
+	}
+
+	/**
+	 * Whether a decoded blob contains a run of CJK text.
+	 *
+	 * @since 1.6.0
+	 * @param string $text Decoded text.
+	 * @return bool
+	 */
+	private static function contains_cjk_run( $text ) {
+		$text = (string) $text;
+		if ( '' === $text || ! preg_match( '//u', $text ) ) {
+			return false; // Empty or not valid UTF-8 (e.g. binary image data).
+		}
+		return (bool) preg_match( self::CJK_RUN_REGEX, $text );
 	}
 
 	/**
@@ -980,33 +1158,31 @@ class Turbo_Guard_SEO_Spam_Detector {
 
 		$urls = self::extract_sitemap_urls( $sitemap_url, 0 );
 
+		// Fetch the sitemap a second time as Googlebot. Attackers cloak their
+		// sitemap so crawlers see spam URLs that normal visitors never do — the
+		// difference between the two passes is exactly the cloaked doorway set.
+		$gbot_urls = self::extract_sitemap_urls( $sitemap_url, 0, self::GOOGLEBOT_USER_AGENT );
+		$gbot_only = array_diff( $gbot_urls, $urls );
+
 		// Doorway candidates are collected so a small sample can be fetched and
 		// verified for actual Japanese content below (prefix-agnostic signal).
 		$doorway_candidates = array();
 
 		foreach ( $urls as $entry_url ) {
-			$path = (string) wp_parse_url( $entry_url, PHP_URL_PATH );
-			if ( '' === $path ) {
-				continue;
-			}
-
-			$reasons = array();
-
-			if ( ! self::is_cjk_site() && preg_match( self::CJK_REGEX, rawurldecode( $path ) ) ) {
-				$reasons[] = 'CJK characters in URL';
-			}
-
-			if ( self::is_doorway_spam_url( $entry_url ) ) {
-				$reasons[]      = 'Auto-generated doorway spam URL (numeric ID signature)';
-				$doorway_candidates[] = $entry_url;
-			}
-
-			$url_keyword = self::has_spam_keyword( rawurldecode( $path ) );
-			if ( $url_keyword ) {
-				$reasons[] = 'Spam keyword in URL: ' . $url_keyword;
-			}
-
+			$reasons = self::classify_sitemap_url( $entry_url, $doorway_candidates );
 			if ( ! empty( $reasons ) ) {
+				$entries[] = array(
+					'url'     => $entry_url,
+					'reasons' => $reasons,
+				);
+			}
+		}
+
+		// Cloaked entries: only present when the sitemap is fetched as Googlebot.
+		foreach ( $gbot_only as $entry_url ) {
+			$reasons = self::classify_sitemap_url( $entry_url, $doorway_candidates );
+			if ( ! empty( $reasons ) ) {
+				$reasons[] = 'Cloaked sitemap entry (served to Googlebot only)';
 				$entries[] = array(
 					'url'     => $entry_url,
 					'reasons' => $reasons,
@@ -1041,6 +1217,42 @@ class Turbo_Guard_SEO_Spam_Detector {
 
 		// Bound the result set — doorway campaigns can inject thousands of URLs.
 		return array_slice( $entries, 0, 500 );
+	}
+
+	/**
+	 * Classify a single sitemap URL as spam (or not), returning the reasons.
+	 *
+	 * Also appends any doorway-spam URL to the (by-reference) candidates list so
+	 * the caller can content-verify a sample of them.
+	 *
+	 * @since 1.6.0
+	 * @param string $entry_url          Full URL from a <loc> entry.
+	 * @param array  $doorway_candidates Doorway URLs collected so far (mutated).
+	 * @return array Reasons (empty if the URL is clean).
+	 */
+	private static function classify_sitemap_url( $entry_url, &$doorway_candidates ) {
+		$reasons = array();
+
+		$path = (string) wp_parse_url( $entry_url, PHP_URL_PATH );
+		if ( '' === $path ) {
+			return $reasons;
+		}
+
+		if ( ! self::is_cjk_site() && preg_match( self::CJK_REGEX, rawurldecode( $path ) ) ) {
+			$reasons[] = 'CJK characters in URL';
+		}
+
+		if ( self::is_doorway_spam_url( $entry_url ) ) {
+			$reasons[]            = 'Auto-generated doorway spam URL (numeric ID signature)';
+			$doorway_candidates[] = $entry_url;
+		}
+
+		$url_keyword = self::has_spam_keyword( rawurldecode( $path ) );
+		if ( $url_keyword ) {
+			$reasons[] = 'Spam keyword in URL: ' . $url_keyword;
+		}
+
+		return $reasons;
 	}
 
 	/**
@@ -1102,7 +1314,7 @@ class Turbo_Guard_SEO_Spam_Detector {
 				array(
 					'timeout'     => 4,
 					'redirection' => 2,
-					'user-agent'  => 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+					'user-agent'  => self::GOOGLEBOT_USER_AGENT,
 				)
 			);
 
@@ -1128,18 +1340,26 @@ class Turbo_Guard_SEO_Spam_Detector {
 	 * Recursively extract <loc> URLs from a sitemap or sitemap index.
 	 *
 	 * @since 1.4.0
-	 * @param string $url   Sitemap URL.
-	 * @param int    $depth Recursion depth.
+	 * @param string $url        Sitemap URL.
+	 * @param int    $depth      Recursion depth.
+	 * @param string $user_agent Optional User-Agent to send. Pass the Googlebot
+	 *                           UA to see the cloaked sitemap that attackers serve
+	 *                           only to crawlers.
 	 * @return array URL strings.
 	 */
-	private static function extract_sitemap_urls( $url, $depth ) {
+	private static function extract_sitemap_urls( $url, $depth, $user_agent = '' ) {
 		$urls = array();
 
 		if ( $depth > 1 ) {
 			return $urls; // Only follow one level of sitemap index.
 		}
 
-		$resp = wp_remote_get( $url, array( 'timeout' => 10, 'redirection' => 3 ) );
+		$args = array( 'timeout' => 10, 'redirection' => 3 );
+		if ( '' !== $user_agent ) {
+			$args['user-agent'] = $user_agent;
+		}
+
+		$resp = wp_remote_get( $url, $args );
 		if ( is_wp_error( $resp ) ) {
 			return $urls;
 		}
@@ -1157,7 +1377,7 @@ class Turbo_Guard_SEO_Spam_Detector {
 			foreach ( $child_maps as $child ) {
 				$child = trim( html_entity_decode( $child ) );
 				if ( $child ) {
-					$urls = array_merge( $urls, self::extract_sitemap_urls( $child, $depth + 1 ) );
+					$urls = array_merge( $urls, self::extract_sitemap_urls( $child, $depth + 1, $user_agent ) );
 				}
 			}
 			return array_unique( $urls );

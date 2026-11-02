@@ -146,6 +146,12 @@ $turbo_guard_is_pro      = turbo_guard_is_pro();
 					<span class="dashicons dashicons-yes-alt" style="font-size:52px;width:52px;height:52px;color:#16a34a;display:block;margin:0 auto 12px;"></span>
 					<strong style="font-size:16px;color:#14532d;"><?php esc_html_e( 'No SEO spam found on this site!', 'turbo-guard' ); ?></strong>
 					<p style="color:#6b7280;margin-top:8px;font-size:13px;">
+						<?php esc_html_e( 'No spam posts, files, options or backdoors were found on the server.', 'turbo-guard' ); ?>
+					</p>
+					<p style="color:#92400e;margin-top:6px;font-size:12px;">
+						<?php esc_html_e( 'Note: cloaked doorway spam can be indexed in Google with no trace left on your server (it is fetched from a remote server only when Googlebot visits). If Google shows Japanese/Chinese results for your domain, connect Google Search Console in GSC Cleanup to find the exact URLs.', 'turbo-guard' ); ?>
+					</p>
+					<p style="color:#6b7280;margin-top:8px;font-size:13px;">
 						<?php
 						printf(
 							/* translators: %s: Google site search URL */

@@ -1081,7 +1081,7 @@ class Turbo_Guard_Admin {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
-		$urls = Turbo_Guard_GSC::sanitize_url_list( isset( $_POST['urls'] ) ? wp_unslash( (array) $_POST['urls'] ) : array() );
+		$urls = Turbo_Guard_GSC::sanitize_url_list( isset( $_POST['urls'] ) ? wp_unslash( (array) $_POST['urls'] ) : array() ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitized by Turbo_Guard_GSC::sanitize_url_list() (scheme validation + control-char strip); esc_url_raw() is deliberately avoided because it mangles CJK/percent-encoded URLs.
 
 		if ( empty( $urls ) ) {
 			wp_send_json_error( array( 'message' => __( 'No URLs provided.', 'turbo-guard' ) ) );

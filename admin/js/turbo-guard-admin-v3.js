@@ -1157,7 +1157,7 @@ var TurboGuardGSC = {
 						if (self.allUrls.length === 0) {
 							$( '#turbo-guard-gsc-notice' )
 								.addClass( 'notice notice-success' )
-								.html( '<p>&#10003; No spam URLs found in your sitemap — your site looks clean.</p>' )
+								.html( '<p>&#10003; No spam URLs found in your sitemap.</p><p>Note: cloaked doorway spam is often <em>not</em> in your sitemap. Connect Google Search Console and click "Fetch Indexed URLs from Google" to see what Google has actually indexed.</p>' )
 								.show();
 						}
 					} else {
