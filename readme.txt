@@ -142,11 +142,14 @@ Turbo Guard whitelists 15+ popular security plugins (Wordfence, Sucuri, MalCare,
 == Screenshots ==
 
 1. Security Dashboard — score, threats, firewall blocks, scan summary
-2. AI Security Advisor (Pro) — attack campaign analysis, step-by-step fix guide
-3. Malware Scanner — live progress, severity badges, bulk delete with backup
-4. File Integrity — core checksum verification, file watcher, baseline stats
-5. Vulnerability Scanner — CVE listing with CVSS severity and fix versions
-6. Live Traffic (Pro) — paginated log, bot/human detection, filter tabs
+2. Malware Scanner - Scan malware list with action button
+3. Malware Cleanup — After Cleanup the site
+4. Firewall  — Rate Limiting
+5. Login Security - 2 fector authenticator setup
+6. Live Traffic  — paginated log, bot/human detection, filter tabs
+7. Geo-Fence & Trusted Location — Trusted IP whitelist, country lock
+8. Search Console Scanner — Scan spamming url and deindexed
+
 7. Google Search Console Cleanup — OAuth setup, spam URL table, removal request
 8. Geo-Fence Settings (Pro) — trusted IP whitelist, country lock
 9. Firewall Logs — blocked requests with IP blocking options
