@@ -150,10 +150,6 @@ Turbo Guard whitelists 15+ popular security plugins (Wordfence, Sucuri, MalCare,
 7. Geo-Fence & Trusted Location — Trusted IP whitelist, country lock
 8. Search Console Scanner — Scan spamming url and deindexed
 
-7. Google Search Console Cleanup — OAuth setup, spam URL table, removal request
-8. Geo-Fence Settings (Pro) — trusted IP whitelist, country lock
-9. Firewall Logs — blocked requests with IP blocking options
-10. Settings Page — all features independently configurable
 
 == External Services ==
 
