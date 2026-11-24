@@ -57,7 +57,7 @@ if ( ! function_exists( 'home_url' ) ) {
 
 if ( ! function_exists( 'wp_parse_url' ) ) {
     function wp_parse_url( $url, $component = -1 ) {
-        return parse_url( $url, $component );
+        return parse_url( $url, $component ); // phpcs:ignore WordPress.WP.AlternativeFunctions.parse_url_parse_url -- this IS the wp_parse_url() stub; calling wp_parse_url() here would recurse.
     }
 }
 
@@ -75,7 +75,7 @@ if ( ! function_exists( 'wp_upload_dir' ) ) {
 
 if ( ! function_exists( 'wp_strip_all_tags' ) ) {
     function wp_strip_all_tags( $text ) {
-        return strip_tags( $text );
+        return strip_tags( $text ); // phpcs:ignore WordPress.WP.AlternativeFunctions.strip_tags_strip_tags -- this IS the wp_strip_all_tags() stub; calling it here would recurse.
     }
 }
 
@@ -111,13 +111,13 @@ if ( ! function_exists( 'absint' ) ) {
 
 if ( ! function_exists( 'sanitize_text_field' ) ) {
     function sanitize_text_field( $str ) {
-        return trim( strip_tags( $str ) );
+        return trim( wp_strip_all_tags( $str ) );
     }
 }
 
 if ( ! function_exists( 'current_time' ) ) {
     function current_time( $type ) {
-        return ( 'mysql' === $type ) ? date( 'Y-m-d H:i:s' ) : time();
+        return ( 'mysql' === $type ) ? gmdate( 'Y-m-d H:i:s' ) : time();
     }
 }
 

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_var_export -- test file: var_export() only formats assertion failure messages; tests/ is not shipped.
 /**
  * Preservation Tests — SEO Spam Detector
  *
