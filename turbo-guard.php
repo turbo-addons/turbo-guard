@@ -3,7 +3,7 @@
  * Plugin Name: Turbo Guard – Security & Malware Scanner
  * Plugin URI: https://wp-turbo.com/turbo-guard/
  * Description: Advanced WordPress security with AI-powered malware scanning, WordPress core file manifest verification, firewall, 2FA, vulnerability scanner, file integrity checker, bot protection & SEO spam removal. Detects every threat for free — clean up to 3 files free, then upgrade to Turbo Guard Pro.
- * Version: 1.1.7
+ * Version: 1.1.8
  * Author: Turbo Addons
  * Author URI: https://wp-turbo.com
  * License: GPL-3.0-or-later
@@ -22,7 +22,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Define plugin constants.
-define( 'TURBO_GUARD_VERSION', '1.1.7' );
+define( 'TURBO_GUARD_VERSION', '1.1.8' );
 define( 'TURBO_GUARD_PLUGIN_FILE', __FILE__ );
 define( 'TURBO_GUARD_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TURBO_GUARD_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
@@ -138,6 +138,31 @@ function turbo_guard_is_pro() {
  *
  * @since 1.4.0
  */
+/**
+ * Current time on the database server's clock, as a timestamp comparable with
+ * strtotime() of Turbo Guard's log DATETIME columns.
+ *
+ * The log tables fill `created_at` with MySQL CURRENT_TIMESTAMP and expire rows
+ * with NOW(), i.e. the database server's clock. That clock is often neither UTC
+ * nor the WordPress timezone, so comparing those values with PHP's time() or
+ * current_time() shows "6 hours ago" for a fresh row and can make temporary IP
+ * blocks expire the moment they are created. Use this as the reference "now"
+ * for anything stored or compared on the database clock.
+ *
+ * @since 1.1.8
+ * @return int
+ */
+function turbo_guard_db_now() {
+	static $offset = null;
+	if ( null === $offset ) {
+		global $wpdb;
+		$db_now = $wpdb->get_var( 'SELECT NOW()' ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+		$parsed = $db_now ? strtotime( $db_now . ' UTC' ) : false;
+		$offset = $parsed ? $parsed - time() : 0;
+	}
+	return time() + $offset;
+}
+
 function turbo_guard_clear_site_cache() {
 	// WordPress object cache.
 	wp_cache_flush();

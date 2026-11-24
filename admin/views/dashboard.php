@@ -229,7 +229,7 @@ $turbo_guard_env = isset( $turbo_guard_stats['environment'] ) ? $turbo_guard_sta
 					<?php foreach ( $turbo_guard_stats['recent_events'] as $turbo_guard_event ) : ?>
 						<tr>
 							<td style="color:#9ca3af;font-size:12px;">
-								<?php echo esc_html( human_time_diff( strtotime( $turbo_guard_event->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?>
+								<?php echo esc_html( human_time_diff( strtotime( $turbo_guard_event->created_at . ' UTC' ), turbo_guard_db_now() ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?>
 							</td>
 							<td class="turbo-guard-event-message"><?php echo esc_html( $turbo_guard_event->message ); ?></td>
 							<td>

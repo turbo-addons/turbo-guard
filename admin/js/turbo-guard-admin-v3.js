@@ -1604,36 +1604,54 @@ jQuery( document ).ready( function( $ ) {
 		var $btn     = $( this ).prop( 'disabled', true );
 		var $loading = $( '#turbo-guard-seo-scanning' );
 		var $notice  = $( '#turbo-guard-seo-notice' );
+		var labels   = {
+			prepare:  strings.seoStepPrepare || 'Preparing file checksums...',
+			database: strings.seoStepDatabase || 'Checking posts, options and .htaccess...',
+			files:    strings.seoStepFiles || 'Checking files on disk...',
+			core:     strings.seoStepCore || 'Checking WordPress core files...',
+			finish:   strings.seoStepFinish || 'Saving results...'
+		};
+		var $label = $loading.find( '.turbo-guard-seo-step' );
+		if ( ! $label.length ) {
+			$label = $( '<p class="turbo-guard-seo-step" style="margin:8px 0 0;color:#6b7280;font-size:12px;"></p>' ).appendTo( $loading );
+		}
+		var fail = function( text ) {
+			$notice.addClass( 'notice notice-error' ).html( '<p>&#10007; ' + text + '</p>' ).show();
+			$btn.prop( 'disabled', false );
+			$loading.hide();
+		};
+		var done = function( total ) {
+			var msg = total > 0
+				? '&#9888; ' + total + ' ' + ( strings.seoSpamFound || 'spam indicator(s) found.' )
+				: '&#10003; ' + ( strings.noSeoSpamFound || 'No SEO spam found.' );
+			$notice.addClass( 'notice notice-' + ( total > 0 ? 'error' : 'success' ) ).html( '<p>' + msg + '</p>' ).show();
+			$btn.prop( 'disabled', false );
+			$loading.hide();
+			setTimeout( function() { location.reload(); }, 1500 );
+		};
+		// Run the scan one short step per request (avoids host time limits).
+		var runStep = function( step ) {
+			$label.text( labels[ step ] || '' );
+			$.ajax( {
+				url: turboGuardAdmin.ajaxUrl, type: 'POST', timeout: 120000,
+				data: { action: 'turbo_guard_run_seo_spam_scan', nonce: turboGuardAdmin.nonce, step: step },
+				success: function( r ) {
+					if ( ! r.success ) {
+						fail( r.data && r.data.message ? r.data.message : ( strings.seoScanFailed || 'Scan failed.' ) );
+						return;
+					}
+					if ( r.data.next ) {
+						runStep( r.data.next );
+					} else {
+						done( r.data.total || 0 );
+					}
+				},
+				error: function( xhr ) { fail( 'Server error: ' + xhr.status ); }
+			} );
+		};
 		$loading.show();
 		$notice.hide().removeClass( 'notice-success notice-error notice' );
-		$.ajax( {
-			url: turboGuardAdmin.ajaxUrl, type: 'POST', timeout: 60000,
-			data: { action: 'turbo_guard_run_seo_spam_scan', nonce: turboGuardAdmin.nonce },
-			success: function( r ) {
-				if ( r.success ) {
-					var msg = r.data.total > 0
-						? '&#9888; ' + r.data.total + ' ' + ( strings.seoSpamFound || 'spam indicator(s) found.' )
-						: '&#10003; ' + ( strings.noSeoSpamFound || 'No SEO spam found.' );
-					$notice
-						.addClass( 'notice notice-' + ( r.data.total > 0 ? 'error' : 'success' ) )
-						.html( '<p>' + msg + '</p>' )
-						.show();
-					setTimeout( function() { location.reload(); }, 1500 );
-				} else {
-					$notice
-						.addClass( 'notice notice-error' )
-						.html( '<p>&#10007; ' + ( r.data ? r.data.message : ( strings.seoScanFailed || 'Scan failed.' ) ) + '</p>' )
-						.show();
-				}
-			},
-			error: function( xhr ) {
-				$notice
-					.addClass( 'notice notice-error' )
-					.html( '<p>&#10007; Server error: ' + xhr.status + '</p>' )
-					.show();
-			},
-			complete: function() { $btn.prop( 'disabled', false ); $loading.hide(); }
-		} );
+		runStep( 'prepare' );
 	} );
 
 	var doDeleteSpamPost = function( id, mode, nonce, $btn ) {
@@ -1991,7 +2009,9 @@ jQuery( function( $ ) {
 					showNotice( '\u2717 ' + ( r.data ? r.data.message : 'Failed.' ), 'error' );
 				}
 			}
-		).always( function() { $btn.prop( 'disabled', false ).text( strings.runCheckNow || 'Run Check Now' ); } );
+		).fail( function( xhr ) {
+			showNotice( '\u2717 Server error: ' + xhr.status, 'error' );
+		} ).always( function() { $btn.prop( 'disabled', false ).text( strings.runCheckNow || 'Run Check Now' ); } );
 	} );
 
 	$( '#tg-run-watcher' ).on( 'click', function() {
@@ -2007,26 +2027,42 @@ jQuery( function( $ ) {
 					showNotice( '\u2717 ' + ( r.data ? r.data.message : 'Failed.' ), 'error' );
 				}
 			}
-		).always( function() { $btn.prop( 'disabled', false ).text( strings.runNow || 'Run Now' ); } );
+		).fail( function( xhr ) {
+			showNotice( '\u2717 Server error: ' + xhr.status, 'error' );
+		} ).always( function() { $btn.prop( 'disabled', false ).text( strings.runNow || 'Run Now' ); } );
 	} );
 
 	$( '#tg-rebuild-baseline' ).on( 'click', function() {
 		if ( ! window.confirm( strings.confirmRebuildBaseline || 'Rebuild baseline? This marks all current files as trusted. Only do this on a clean site.' ) ) {
 			return;
 		}
-		var $btn = $( this ).prop( 'disabled', true ).text( strings.building || 'Building...' );
-		$.post(
-			turboGuardAdmin.ajaxUrl,
-			{ action: 'turbo_guard_rebuild_baseline', nonce: turboGuardAdmin.nonce },
-			function( r ) {
-				if ( r.success ) {
-					showNotice( '\u2713 ' + r.data.message, 'success' );
-					setTimeout( function() { location.reload(); }, 1500 );
-				} else {
+		var $btn  = $( this ).prop( 'disabled', true ).text( strings.building || 'Building...' );
+		var reset = function() { $btn.prop( 'disabled', false ).text( strings.rebuildBaseline || 'Rebuild Baseline' ); };
+		// Resumable build: each request hashes a time-boxed batch of files.
+		var step = function( more ) {
+			$.post(
+				turboGuardAdmin.ajaxUrl,
+				{ action: 'turbo_guard_rebuild_baseline', nonce: turboGuardAdmin.nonce, 'continue': more ? 1 : 0 }
+			).done( function( r ) {
+				if ( ! r.success ) {
 					showNotice( '\u2717 ' + ( r.data ? r.data.message : 'Failed.' ), 'error' );
+					reset();
+					return;
 				}
-			}
-		).always( function() { $btn.prop( 'disabled', false ).text( strings.rebuildBaseline || 'Rebuild Baseline' ); } );
+				if ( ! r.data.done ) {
+					$btn.text( ( strings.building || 'Building...' ) + ' ' + r.data.processed.toLocaleString() + ' / ' + r.data.total.toLocaleString() );
+					step( true );
+					return;
+				}
+				showNotice( '\u2713 ' + r.data.message, 'success' );
+				reset();
+				setTimeout( function() { location.reload(); }, 1500 );
+			} ).fail( function( xhr ) {
+				showNotice( '\u2717 Server error: ' + xhr.status, 'error' );
+				reset();
+			} );
+		};
+		step( false );
 	} );
 
 	// Toggle automatic integrity features (file watcher / daily core check).

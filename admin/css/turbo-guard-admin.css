@@ -974,6 +974,112 @@
 	line-height: 1.5;
 }
 
+.tg-notice-code {
+	font-weight: 600;
+	color: var(--tg-gray-800);
+	background: #fff;
+	border: 1px dashed var(--tg-blue);
+	padding: 1px 6px;
+	border-radius: 3px;
+	user-select: all;
+}
+
+.tg-notice-icon.dashicons {
+	width: 22px;
+	height: 22px;
+	font-size: 22px;
+	color: var(--tg-blue);
+}
+
+/* ---- Black Friday variant (1.1.8) ---- */
+.turbo-guard-remote-notice--blackfriday {
+	align-items: center;
+	gap: 16px;
+	padding: 16px 18px;
+	border-left: 0;
+	border: 1px solid #3a3320;
+	background:
+		radial-gradient(circle at 92% 20%, rgba(250, 204, 21, .16), transparent 45%),
+		linear-gradient(120deg, #0b0b0f 0%, #17171f 60%, #221d0e 100%);
+	box-shadow: 0 6px 20px rgba(0, 0, 0, .25);
+	overflow: hidden;
+}
+.turbo-guard-remote-notice--blackfriday::before {
+	content: "";
+	position: absolute;
+	inset: 0 0 auto 0;
+	height: 3px;
+	background: repeating-linear-gradient(90deg, #facc15 0 18px, #0b0b0f 18px 36px);
+}
+.tg-notice-badge {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 78px;
+	height: 78px;
+	border-radius: 50%;
+	background: #facc15;
+	color: #0b0b0f;
+	font-size: 18px;
+	font-weight: 800;
+	line-height: 1.05;
+	text-align: center;
+	letter-spacing: -.02em;
+	transform: rotate(-8deg);
+	box-shadow: 0 0 0 4px rgba(250, 204, 21, .25);
+}
+.tg-notice-eyebrow {
+	flex-basis: 100%;
+	font-size: 11px;
+	font-weight: 700;
+	letter-spacing: .16em;
+	text-transform: uppercase;
+	color: #facc15;
+}
+.turbo-guard-remote-notice--blackfriday .tg-notice-title {
+	font-size: 16px;
+	font-weight: 700;
+	color: #fff;
+}
+.turbo-guard-remote-notice--blackfriday .tg-notice-message {
+	color: #d4d4d8;
+}
+.turbo-guard-remote-notice--blackfriday .tg-notice-code {
+	color: #facc15;
+	background: rgba(250, 204, 21, .08);
+	border-color: #facc15;
+	letter-spacing: .06em;
+}
+.turbo-guard-remote-notice--blackfriday .tg-notice-cta.button,
+.turbo-guard-remote-notice--blackfriday .tg-notice-cta.button:focus {
+	background: #facc15;
+	border-color: #facc15;
+	color: #0b0b0f;
+	font-weight: 700;
+	font-size: 13px;
+	padding: 4px 16px;
+	box-shadow: none;
+}
+.turbo-guard-remote-notice--blackfriday .tg-notice-cta.button:hover {
+	background: #fde047;
+	border-color: #fde047;
+	color: #0b0b0f;
+}
+.turbo-guard-remote-notice--blackfriday .tg-notice-dismiss {
+	color: #a1a1aa;
+	align-self: flex-start;
+}
+.turbo-guard-remote-notice--blackfriday .tg-notice-dismiss:hover {
+	color: #fff;
+}
+@media (max-width: 600px) {
+	.tg-notice-badge { width: 60px; height: 60px; font-size: 14px; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.turbo-guard-remote-notice { animation: none; }
+}
+
 /* =========================================================
    SEO Spam — Delete Modal
    ========================================================= */

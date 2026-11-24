@@ -1324,6 +1324,25 @@ class Turbo_Guard_Admin {
 			wp_send_json_error( array( 'message' => __( 'Permission denied.', 'turbo-guard' ) ) );
 		}
 
+		// Step mode (1.1.8+): the admin JS runs the scan one short step per
+		// request so it never hits the host's request time limit.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+		$step = isset( $_POST['step'] ) ? sanitize_key( wp_unslash( $_POST['step'] ) ) : '';
+		if ( '' !== $step ) {
+			$out = Turbo_Guard_SEO_Spam_Detector::run_scan_step( $step );
+			if ( ! empty( $out['error'] ) ) {
+				wp_send_json_error( array( 'message' => __( 'Invalid scan step.', 'turbo-guard' ) ) );
+			}
+			if ( null === $out['next'] ) {
+				$out['message'] = sprintf(
+					/* translators: %d: number of spam indicators found */
+					__( 'Scan complete. %d spam indicator(s) found.', 'turbo-guard' ),
+					isset( $out['total'] ) ? (int) $out['total'] : 0
+				);
+			}
+			wp_send_json_success( $out );
+		}
+
 		$results = Turbo_Guard_SEO_Spam_Detector::run_scan();
 
 		wp_send_json_success( array(

@@ -8,7 +8,7 @@
 // ─── Constants ────────────────────────────────────────────────────────────────
 define( 'ABSPATH', __DIR__ . '/../' );
 define( 'WP_CONTENT_DIR', __DIR__ . '/../' );
-define( 'TURBO_GUARD_VERSION', '1.1.7' );
+define( 'TURBO_GUARD_VERSION', '1.1.8' );
 define( 'TURBO_GUARD_PLUGIN_DIR', __DIR__ . '/../' );
 define( 'TURBO_GUARD_PLUGIN_FILE', __DIR__ . '/../turbo-guard.php' );
 define( 'TURBO_GUARD_PLUGIN_URL', 'http://localhost/' );

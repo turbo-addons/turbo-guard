@@ -124,34 +124,105 @@ class Turbo_Guard_SEO_Spam_Detector {
 	 * @return array Scan results.
 	 */
 	public static function run_scan() {
-		// Clear the site cache before scanning so results are fresh.
-		turbo_guard_clear_site_cache();
+		foreach ( self::scan_steps() as $step ) {
+			self::run_scan_step( $step );
+		}
+		$results = get_transient( 'turbo_guard_seo_spam_results' );
+		return is_array( $results ) ? $results : array( 'total' => 0 );
+	}
 
-		// Always clear old cached results before running fresh.
-		delete_transient( 'turbo_guard_seo_spam_results' );
-		$results = array(
-			'spam_posts'      => array(),
-			'spam_options'    => array(),
-			'htaccess_hacks'  => array(),
-			'spam_files'      => array(),
-			'spam_core_files' => array(),
-			'google_link'     => '',
-			'total'           => 0,
-			'scanned_at'      => current_time( 'mysql' ),
-		);
+	/**
+	 * Ordered scan steps. Each step fits comfortably in one short request, so
+	 * the admin scan works on hosts with 30-60 s request limits (a single
+	 * request used to exceed them on large sites and return HTTP 500).
+	 *
+	 * @since 1.1.8
+	 * @return string[]
+	 */
+	public static function scan_steps() {
+		return array( 'prepare', 'database', 'files', 'core', 'finish' );
+	}
 
-		$results['spam_posts']      = self::scan_posts_for_spam();
-		$results['spam_options']    = self::scan_options_for_spam();
-		$results['htaccess_hacks']  = self::scan_htaccess();
-		$results['spam_files']      = self::scan_disk_for_spam();
-		$results['spam_core_files'] = self::scan_core_for_spam();
-		$results['google_link']     = self::build_google_check_url();
+	/**
+	 * Run one scan step and keep partial results between requests.
+	 *
+	 * prepare  - warm the core manifest and the known-good file index (network)
+	 * database - spam posts, contaminated options, .htaccess hacks
+	 * files    - spam / doorway files on disk
+	 * core     - doorway backdoors injected into WordPress core
+	 * finish   - store results, log, notify
+	 *
+	 * @since 1.1.8
+	 * @param string $step Step slug from scan_steps().
+	 * @return array { step: string, next: string|null, total?: int }
+	 */
+	public static function run_scan_step( $step ) {
+		$steps = self::scan_steps();
+		$pos   = array_search( $step, $steps, true );
+		if ( false === $pos ) {
+			return array( 'step' => $step, 'next' => null, 'error' => 'invalid_step' );
+		}
 
-		$results['total'] = count( $results['spam_posts'] )
-			+ count( $results['spam_options'] )
-			+ count( $results['htaccess_hacks'] )
-			+ count( $results['spam_files'] )
-			+ count( $results['spam_core_files'] );
+		$partial_key = 'turbo_guard_seo_spam_partial';
+		$partial     = 'prepare' === $step ? array() : get_transient( $partial_key );
+		if ( ! is_array( $partial ) ) {
+			$partial = array();
+		}
+
+		switch ( $step ) {
+			case 'prepare':
+				// Clear the site cache so results are fresh, then warm the slow
+				// network-backed caches used by the file and core steps.
+				turbo_guard_clear_site_cache();
+				delete_transient( 'turbo_guard_seo_spam_results' );
+				if ( class_exists( 'Turbo_Guard_Scanner' ) ) {
+					Turbo_Guard_Scanner::get_core_manifest();
+				}
+				if ( class_exists( 'Turbo_Guard_Known_Files' ) ) {
+					Turbo_Guard_Known_Files::get_index();
+				}
+				$partial = array( 'scanned_at' => current_time( 'mysql' ) );
+				break;
+			case 'database':
+				$partial['spam_posts']     = self::scan_posts_for_spam();
+				$partial['spam_options']   = self::scan_options_for_spam();
+				$partial['htaccess_hacks'] = self::scan_htaccess();
+				break;
+			case 'files':
+				$partial['spam_files'] = self::scan_disk_for_spam();
+				break;
+			case 'core':
+				$partial['spam_core_files'] = self::scan_core_for_spam();
+				break;
+			case 'finish':
+				delete_transient( $partial_key );
+				$results = self::finish_scan( $partial );
+				return array( 'step' => $step, 'next' => null, 'total' => $results['total'] );
+		}
+
+		set_transient( $partial_key, $partial, HOUR_IN_SECONDS );
+		return array( 'step' => $step, 'next' => $steps[ $pos + 1 ] );
+	}
+
+	/**
+	 * Assemble, store, log and announce the scan results.
+	 *
+	 * @since 1.1.8
+	 * @param array $partial Results collected by the scan steps.
+	 * @return array Final results.
+	 */
+	private static function finish_scan( $partial ) {
+		$keys    = array( 'spam_posts', 'spam_options', 'htaccess_hacks', 'spam_files', 'spam_core_files' );
+		$results = array();
+		foreach ( $keys as $key ) {
+			$results[ $key ] = isset( $partial[ $key ] ) ? (array) $partial[ $key ] : array();
+		}
+		$results['google_link'] = self::build_google_check_url();
+		$results['total']       = 0;
+		$results['scanned_at']  = isset( $partial['scanned_at'] ) ? $partial['scanned_at'] : current_time( 'mysql' );
+		foreach ( $keys as $key ) {
+			$results['total'] += count( $results[ $key ] );
+		}
 
 		// Cache for 6 hours.
 		set_transient( 'turbo_guard_seo_spam_results', $results, 6 * HOUR_IN_SECONDS );

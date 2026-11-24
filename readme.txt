@@ -3,7 +3,7 @@ Contributors: turboaddons, siraji2017, sharifok
 Tags: security, malware, scanner, firewall, 2fa
 Requires at least: 5.6
 Tested up to: 7.1
-Stable tag: 1.1.7
+Stable tag: 1.1.8
 Requires PHP: 7.4
 License: GPL-3.0-or-later
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -201,6 +201,17 @@ Used for Google Search Console integration to detect SEO spam and manage indexed
 
 == Changelog ==
 
+= 1.1.8 =
+* Improved: SEO Spam scan runs in short steps, so it no longer times out (HTTP 500) on large sites or hosts with strict request limits
+* Improved: File Watcher baseline builds in resumable steps with a live progress counter (fixes HTTP 500 on sites with thousands of files)
+* Added: File Watcher results card on the Integrity page lists new, modified and deleted files from the last run
+* Fixed: File Watcher no longer re-reports a modified file on every later change
+* Fixed: Firewall rate limiting now counts parallel requests correctly, so request floods are blocked
+* Improved: plugin and theme checksums are fetched in parallel, making the SEO spam scan much faster on sites with many plugins
+* Fixed: Vulnerability Scanner no longer caches failed lookups, which could make a vulnerable item look clean
+* Fixed: Vulnerability Scanner no longer flags vulnerabilities introduced in versions newer than the one installed
+* Fixed: wrong "time ago" and block-expiry times on the Firewall and Dashboard pages
+
 = 1.1.7 =
 * SEO Spam Detector: delete spam files directly from the SEO Spam page (automatic ZIP backup, free tier deletes up to 2 files)
 * SEO Spam Detector: prefix-agnostic doorway spam detection — catches /prize/98254733 and any other auto-generated numeric-ID URLs, regardless of prefix
@@ -278,6 +289,9 @@ Used for Google Search Console integration to detect SEO spam and manage indexed
 * Polyglot image backdoor detection
 
 == Upgrade Notice ==
+
+= 1.1.8 =
+SEO spam scan and File Watcher no longer time out on large sites. Firewall rate limiting now blocks parallel request floods.
 
 = 1.1.7 =
 SEO spam file cleanup and zero-setup GSC spam detection with 410-Gone de-indexing.

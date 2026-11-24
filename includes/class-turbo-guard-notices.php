@@ -6,10 +6,8 @@
  *
  * LOCAL-ONLY: this class makes no external HTTP requests. It does not fetch
  * any remote JSON feed and never contacts a third-party server. Notices are
- * expected to be registered locally by the plugin itself; `get_notices()`
- * currently returns an empty array (no notices are shipped with the plugin).
- * The dismiss AJAX handler and render hook point remain available so local
- * notices can be rendered later without any network dependency.
+ * registered locally in `get_notices()`, each with a fixed start/end time,
+ * and are shown only to free users (never when Turbo Guard Pro is active).
  *
  * @package TurboGuard
  * @since   1.3.0
@@ -77,26 +75,80 @@ class Turbo_Guard_Notices {
 	/**
 	 * Get all local notices.
 	 *
-	 * Always returns an empty array — no remote feed exists and no local
-	 * notices are currently registered. No network request is ever made.
+	 * Each notice: id, type, title, message, code (optional promo code),
+	 * cta_text, cta_url, start / end (UTC timestamps). No network request.
 	 *
 	 * @since 1.3.0
-	 * @return array Array of notice arrays (always empty).
+	 * @since 1.1.8 Black Friday / Cyber Monday 2026 offer.
+	 * @return array Array of notice arrays.
 	 */
 	public function get_notices() {
-		return array();
+		$notices = array(
+			array(
+				'id'       => 'bfcm2026',
+				'type'     => 'blackfriday',
+				'eyebrow'  => __( 'Black Friday · Cyber Monday', 'turbo-guard' ),
+				'badge'    => __( '50% OFF', 'turbo-guard' ),
+				'title'    => __( 'Is this site protected? Free malware scan with Turbo Guard — 50% off this Friday', 'turbo-guard' ),
+				'message'  => __( 'Black Friday: get 50% off Turbo Guard Pro for unlimited cleanup, Live Traffic, AI Security Advisor and Geo-Fence. Use code', 'turbo-guard' ),
+				'code'     => 'FSBFCM2026',
+				'cta_text' => __( 'Get 50% Off Pro', 'turbo-guard' ),
+				'cta_url'  => add_query_arg(
+					array(
+						'utm_source'   => 'plugin',
+						'utm_medium'   => 'dashboard-notice',
+						'utm_campaign' => 'bfcm2026',
+					),
+					turbo_guard_pro_url()
+				),
+				// Shown until the end of Cyber Monday (30 Nov 2026) in every time zone.
+				'start'    => gmmktime( 0, 0, 0, 11, 1, 2026 ),
+				'end'      => gmmktime( 23, 59, 59, 12, 1, 2026 ),
+			),
+		);
+
+		/**
+		 * Filter the local notice list.
+		 *
+		 * @since 1.1.8
+		 * @param array $notices Notice arrays.
+		 */
+		return (array) apply_filters( 'turbo_guard_notices', $notices );
 	}
 
 	/**
 	 * Return notices that should be shown to the current user right now.
 	 *
-	 * Local-only: delegates to `get_notices()`, which is always empty.
+	 * Promotions are for free users only: nothing is shown when Pro is
+	 * active. Notices outside their time window, or dismissed by this user,
+	 * are skipped.
 	 *
 	 * @since 1.3.0
-	 * @return array Filtered, active notices (always empty).
+	 * @return array Filtered, active notices.
 	 */
 	public function get_active_notices() {
-		return $this->get_notices();
+		if ( turbo_guard_is_pro() || ! current_user_can( 'manage_options' ) ) {
+			return array();
+		}
+
+		$now       = time();
+		$dismissed = $this->get_dismissed_ids();
+		$active    = array();
+
+		foreach ( $this->get_notices() as $notice ) {
+			if ( empty( $notice['id'] ) || in_array( $notice['id'], $dismissed, true ) ) {
+				continue;
+			}
+			if ( ! empty( $notice['start'] ) && $now < (int) $notice['start'] ) {
+				continue;
+			}
+			if ( ! empty( $notice['end'] ) && $now > (int) $notice['end'] ) {
+				continue;
+			}
+			$active[] = $notice;
+		}
+
+		return $active;
 	}
 
 	// =========================================================
@@ -149,6 +201,51 @@ class Turbo_Guard_Notices {
 		if ( empty( $notices ) ) {
 			return;
 		}
+
+		foreach ( $notices as $notice ) {
+			$this->render_single_notice( $notice );
+		}
+	}
+
+	/**
+	 * Render one notice banner.
+	 *
+	 * @since 1.1.8
+	 * @param array $notice Notice array from get_notices().
+	 */
+	private function render_single_notice( $notice ) {
+		$id   = sanitize_key( $notice['id'] );
+		$type = isset( $notice['type'] ) ? sanitize_key( $notice['type'] ) : 'info';
+		?>
+		<div id="tg-notice-<?php echo esc_attr( $id ); ?>" class="turbo-guard-remote-notice turbo-guard-remote-notice--<?php echo esc_attr( $type ); ?>" role="region" aria-label="<?php esc_attr_e( 'Turbo Guard offer', 'turbo-guard' ); ?>">
+			<?php if ( ! empty( $notice['badge'] ) ) : ?>
+				<span class="tg-notice-badge"><?php echo esc_html( $notice['badge'] ); ?></span>
+			<?php else : ?>
+				<span class="tg-notice-icon dashicons dashicons-shield-alt" aria-hidden="true"></span>
+			<?php endif; ?>
+			<div class="tg-notice-body">
+				<?php if ( ! empty( $notice['eyebrow'] ) ) : ?>
+					<span class="tg-notice-eyebrow"><?php echo esc_html( $notice['eyebrow'] ); ?></span>
+				<?php endif; ?>
+				<span class="tg-notice-title"><?php echo esc_html( $notice['title'] ); ?></span>
+				<span class="tg-notice-message">
+					<?php echo esc_html( $notice['message'] ); ?>
+					<?php if ( ! empty( $notice['code'] ) ) : ?>
+						<code class="tg-notice-code"><?php echo esc_html( $notice['code'] ); ?></code>
+					<?php endif; ?>
+				</span>
+				<?php if ( ! empty( $notice['cta_url'] ) ) : ?>
+					<a class="button button-primary tg-notice-cta" href="<?php echo esc_url( $notice['cta_url'] ); ?>" target="_blank" rel="noopener noreferrer">
+						<?php echo esc_html( $notice['cta_text'] ); ?>
+					</a>
+				<?php endif; ?>
+			</div>
+			<button type="button" class="tg-notice-dismiss"
+				data-notice-id="<?php echo esc_attr( $id ); ?>"
+				data-nonce="<?php echo esc_attr( wp_create_nonce( 'tg_dismiss_notice_' . $id ) ); ?>"
+				aria-label="<?php esc_attr_e( 'Dismiss this offer', 'turbo-guard' ); ?>">&times;</button>
+		</div>
+		<?php
 	}
 
 	// =========================================================
@@ -161,7 +258,7 @@ class Turbo_Guard_Notices {
 	 * @since 1.3.0
 	 */
 	public function ajax_dismiss_notice() {
-		$notice_id = isset( $_POST['notice_id'] ) ? sanitize_key( $_POST['notice_id'] ) : '';
+		$notice_id = isset( $_POST['notice_id'] ) ? sanitize_key( wp_unslash( $_POST['notice_id'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified below.
 
 		if ( ! $notice_id ) {
 			wp_send_json_error( array( 'message' => 'Missing notice ID.' ) );

@@ -1,5 +1,14 @@
 # Agent Instructions — turbo-guard
 
+## Product Knowledge Base
+
+- Before answering questions about this product (features, pricing, competitors,
+  positioning, support, marketing), read `PRODUCT-KNOWLEDGE.md` in this same
+  folder. It is the single source of truth for what Turbo Guard (free) and
+  Turbo Guard Pro (premium add-on) do.
+- It is also safe to share with other AI tools: upload it to Claude, ChatGPT,
+  Cursor, or Copilot as the product's knowledge base.
+
 ## Git: never commit without explicit permission
 
 - NEVER run `git commit`, `git commit --amend`, `git push`, `git tag`, or create a

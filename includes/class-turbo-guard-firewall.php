@@ -366,13 +366,16 @@ class Turbo_Guard_Firewall {
 	/**
 	 * Advance a fixed-window request counter for the current IP.
 	 *
-	 * Uses a true fixed 60-second window — not a self-renewing sliding window,
-	 * which under continuous traffic would never expire. Prefers the object
-	 * cache (Redis/Memcached) so a busy site does not pay a database write on
-	 * every request, and falls back to a transient only when no persistent
-	 * object cache is installed.
+	 * Uses a true fixed window (the bucket id is derived from the clock), so it
+	 * never renews itself under continuous traffic. The increment is ATOMIC:
+	 * with a persistent object cache it uses wp_cache_incr() (atomic in Redis /
+	 * Memcached); otherwise a single `UPDATE … LAST_INSERT_ID(option_value + 1)`
+	 * on the options table. The previous read-modify-write of a transient lost
+	 * increments when requests arrived in parallel, so a burst sent over several
+	 * connections (as real flood tools do) was undercounted and never blocked.
 	 *
 	 * @since 1.1.4
+	 * @since 1.1.8 Atomic increment.
 	 * @param string $key    Cache key for this counter.
 	 * @param int    $window Window size in seconds.
 	 * @param int    $limit  Requests allowed per window.
@@ -381,36 +384,63 @@ class Turbo_Guard_Firewall {
 	 *               current request count for the window.
 	 */
 	private function check_rate_window( $key, $window, $limit ) {
-		$state = wp_using_ext_object_cache()
-			? wp_cache_get( $key, 'turbo_guard' )
-			: get_transient( $key );
-
-		$now     = time();
-		$crossed = false;
-
-		if ( is_array( $state ) && ( $now - (int) $state['start'] ) < $window ) {
-			$previous = (int) $state['count'];
-			++$state['count'];
-			$crossed = ( $previous <= $limit && (int) $state['count'] > $limit );
-		} else {
-			// New window (or first request) — reset the counter.
-			$state = array(
-				'start' => $now,
-				'count' => 1,
-			);
-		}
+		$window = max( 1, (int) $window );
+		$bucket = $key . '_' . (int) floor( time() / $window );
 
 		if ( wp_using_ext_object_cache() ) {
-			wp_cache_set( $key, $state, 'turbo_guard', $window );
+			wp_cache_add( $bucket, 0, 'turbo_guard', $window * 2 );
+			$count = (int) wp_cache_incr( $bucket, 1, 'turbo_guard' );
 		} else {
-			set_transient( $key, $state, $window );
+			$count = self::increment_db_counter( $bucket, $window * 2 );
 		}
 
 		return array(
-			'exceeded' => (int) $state['count'] > $limit,
-			'crossed'  => $crossed,
-			'count'    => (int) $state['count'],
+			'exceeded' => $count > $limit,
+			'crossed'  => ( $count === $limit + 1 ), // Exactly one request sees this value.
+			'count'    => $count,
 		);
+	}
+
+	/**
+	 * Atomically increment a counter stored as a transient row and return the
+	 * value written by THIS request.
+	 *
+	 * The row is created with INSERT IGNORE (atomic on the unique option_name
+	 * key) and incremented with LAST_INSERT_ID(expr), which makes MySQL return
+	 * this connection's own result even when other requests increment the same
+	 * row at the same moment. The matching _transient_timeout_ row lets core's
+	 * expired-transient cleanup remove old buckets.
+	 *
+	 * @since 1.1.8
+	 * @param string $name Transient name.
+	 * @param int    $ttl  Lifetime in seconds.
+	 * @return int
+	 */
+	private static function increment_db_counter( $name, $ttl ) {
+		global $wpdb;
+
+		$option  = '_transient_' . $name;
+		$timeout = '_transient_timeout_' . $name;
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery
+		$wpdb->query(
+			$wpdb->prepare(
+				"INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no'), (%s, '0', 'no')",
+				$timeout,
+				(string) ( time() + (int) $ttl ),
+				$option
+			)
+		);
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->options} SET option_value = LAST_INSERT_ID( CAST( option_value AS UNSIGNED ) + 1 ) WHERE option_name = %s",
+				$option
+			)
+		);
+		$count = (int) $wpdb->get_var( 'SELECT LAST_INSERT_ID()' );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery
+
+		return max( 1, $count );
 	}
 
 	/**
@@ -784,7 +814,8 @@ class Turbo_Guard_Firewall {
 
 		$expires_at = null;
 		if ( $duration ) {
-			$expires_at = gmdate( 'Y-m-d H:i:s', time() + absint( $duration ) );
+			// expires_at is compared with NOW() (database clock), so compute it on that clock.
+			$expires_at = gmdate( 'Y-m-d H:i:s', turbo_guard_db_now() + absint( $duration ) );
 		}
 
 		$inserted = $wpdb->replace(

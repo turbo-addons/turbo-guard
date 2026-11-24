@@ -132,11 +132,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 						<tr>
 							<td><code><?php echo esc_html( $turbo_guard_blocked_ip->ip_address ); ?></code></td>
 							<td><?php echo esc_html( $turbo_guard_blocked_ip->reason ? $turbo_guard_blocked_ip->reason : '—' ); ?></td>
-							<td><?php echo esc_html( human_time_diff( strtotime( $turbo_guard_blocked_ip->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?></td>
+							<td><?php echo esc_html( human_time_diff( strtotime( $turbo_guard_blocked_ip->created_at . ' UTC' ), turbo_guard_db_now() ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?></td>
 							<td>
 								<?php
 								if ( $turbo_guard_blocked_ip->expires_at ) {
-									echo esc_html( human_time_diff( current_time( 'timestamp' ), strtotime( $turbo_guard_blocked_ip->expires_at ) ) );
+									echo esc_html( human_time_diff( turbo_guard_db_now(), strtotime( $turbo_guard_blocked_ip->expires_at . ' UTC' ) ) );
 								} else {
 									esc_html_e( 'Permanent', 'turbo-guard' );
 								}
@@ -175,7 +175,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<tbody>
 					<?php foreach ( $turbo_guard_recent_blocks as $turbo_guard_block ) : ?>
 						<tr>
-							<td><?php echo esc_html( human_time_diff( strtotime( $turbo_guard_block->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?></td>
+							<td><?php echo esc_html( human_time_diff( strtotime( $turbo_guard_block->created_at . ' UTC' ), turbo_guard_db_now() ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?></td>
 							<td><code><?php echo esc_html( $turbo_guard_block->ip_address ); ?></code></td>
 							<td><small><?php echo esc_html( $turbo_guard_block->request_uri ); ?></small></td>
 							<td><?php echo esc_html( $turbo_guard_block->block_reason ); ?></td>
@@ -212,7 +212,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<tbody>
 					<?php foreach ( $turbo_guard_recent_rate_limits as $turbo_guard_rate_limit_row ) : ?>
 						<tr>
-							<td><?php echo esc_html( human_time_diff( strtotime( $turbo_guard_rate_limit_row->created_at ), current_time( 'timestamp' ) ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?></td>
+							<td><?php echo esc_html( human_time_diff( strtotime( $turbo_guard_rate_limit_row->created_at . ' UTC' ), turbo_guard_db_now() ) . ' ' . __( 'ago', 'turbo-guard' ) ); ?></td>
 							<td><code><?php echo esc_html( $turbo_guard_rate_limit_row->ip_address ); ?></code></td>
 							<td>
 								<?php

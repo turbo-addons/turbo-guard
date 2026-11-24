@@ -324,7 +324,83 @@ class Turbo_Guard_Integrity {
 	 * @return int Number of files in baseline.
 	 */
 	public static function build_baseline() {
-		$baseline  = array();
+		// Cron / activation: no browser waiting, so run the steps back to back.
+		$state = self::build_baseline_step( true, 0 );
+		while ( empty( $state['done'] ) ) {
+			$state = self::build_baseline_step( false, 0 );
+		}
+		return (int) $state['total'];
+	}
+
+	/**
+	 * Option holding an in-progress baseline build (not autoloaded).
+	 */
+	const BASELINE_JOB_OPTION = 'turbo_guard_file_baseline_job';
+
+	/**
+	 * Build the baseline in resumable, time-boxed steps.
+	 *
+	 * Hashing every PHP/JS file in themes, plugins and uploads can take longer
+	 * than a host allows a single request to run (it returned HTTP 500 after
+	 * ~40 s on a site with 11,000 files). The admin button therefore calls this
+	 * repeatedly: the first call lists the files, each following call hashes as
+	 * many as fit in the time budget, and the last call stores the baseline.
+	 *
+	 * @since 1.1.8
+	 * @param bool $reset  Start a new build (lists the files).
+	 * @param int  $budget Seconds to spend hashing in this call (0 = no limit).
+	 * @return array { done: bool, processed: int, total: int }
+	 */
+	public static function build_baseline_step( $reset = false, $budget = 15 ) {
+		$job = $reset ? null : get_option( self::BASELINE_JOB_OPTION );
+
+		if ( ! is_array( $job ) || empty( $job['files'] ) ) {
+			$job = array(
+				'files'    => self::list_watched_files(),
+				'pos'      => 0,
+				'baseline' => array(),
+			);
+		}
+
+		$start = microtime( true );
+		$total = count( $job['files'] );
+		while ( $job['pos'] < $total ) {
+			$path = $job['files'][ $job['pos'] ];
+			++$job['pos'];
+			if ( ! is_file( $path ) ) {
+				continue;
+			}
+			$job['baseline'][ $path ] = array(
+				'size'  => filesize( $path ),
+				'mtime' => filemtime( $path ),
+				'md5'   => md5_file( $path ),
+			);
+			if ( $budget > 0 && ( microtime( true ) - $start ) >= $budget ) {
+				break;
+			}
+		}
+
+		if ( $job['pos'] >= $total ) {
+			update_option( self::BASELINE_OPTION, $job['baseline'], false );
+			update_option( 'turbo_guard_baseline_built_at', current_time( 'mysql' ) );
+			delete_option( self::BASELINE_JOB_OPTION );
+			delete_option( 'turbo_guard_watcher_last_result' );
+			return array( 'done' => true, 'processed' => $total, 'total' => count( $job['baseline'] ) );
+		}
+
+		update_option( self::BASELINE_JOB_OPTION, $job, false );
+		return array( 'done' => false, 'processed' => (int) $job['pos'], 'total' => $total );
+	}
+
+	/**
+	 * Every PHP/JS/HTML file the watcher tracks (themes, plugins, uploads,
+	 * mu-plugins), excluding Turbo Guard itself.
+	 *
+	 * @since 1.1.8
+	 * @return string[] Absolute paths.
+	 */
+	private static function list_watched_files() {
+		$files     = array();
 		$scan_dirs = array(
 			get_theme_root(),
 			WP_PLUGIN_DIR,
@@ -355,21 +431,14 @@ class Turbo_Guard_Integrity {
 					if ( $own_plugin && strpos( realpath( $path ), $own_plugin ) === 0 ) {
 						continue;
 					}
-					$baseline[ $path ] = array(
-						'size'  => $file->getSize(),
-						'mtime' => $file->getMTime(),
-						'md5'   => md5_file( $path ),
-					);
+					$files[] = $path;
 				}
 			} catch ( Exception $e ) {
 				// Skip unreadable directories.
 			}
 		}
 
-		update_option( self::BASELINE_OPTION, $baseline, false );
-		update_option( 'turbo_guard_baseline_built_at', current_time( 'mysql' ) );
-
-		return count( $baseline );
+		return $files;
 	}
 
 	/**
@@ -432,6 +501,7 @@ class Turbo_Guard_Integrity {
 
 		$new_count      = 0;
 		$modified_count = 0;
+		$fresh_md5      = array(); // path => md5 computed during this run.
 		$deleted_count  = 0;
 		$changes        = array();
 		$upload_base    = realpath( wp_upload_dir()['basedir'] );
@@ -458,6 +528,7 @@ class Turbo_Guard_Integrity {
 			) {
 				// Size or mtime changed — verify with MD5 to avoid false positives from cache plugins.
 				$current_md5 = md5_file( $path );
+				$fresh_md5[ $path ] = $current_md5;
 				if ( $current_md5 !== $baseline[ $path ]['md5'] ) {
 					++$modified_count;
 					$changes[] = array( 'path' => $path, 'status' => 'modified', 'severity' => 'high' );
@@ -501,11 +572,36 @@ class Turbo_Guard_Integrity {
 			$new_baseline[ $path ] = array(
 				'size'  => $info['size'],
 				'mtime' => $info['mtime'],
-				'md5'   => isset( $baseline[ $path ] ) ? $baseline[ $path ]['md5'] : md5_file( $path ),
+				// Store the hash of the file as it is NOW. Keeping the old hash for a
+				// modified file re-reported it on every later mtime change.
+				'md5'   => isset( $fresh_md5[ $path ] ) ? $fresh_md5[ $path ] : ( isset( $baseline[ $path ] ) ? $baseline[ $path ]['md5'] : md5_file( $path ) ),
 			);
 		}
 		update_option( self::BASELINE_OPTION, $new_baseline, false );
 		update_option( 'turbo_guard_watcher_last_run', current_time( 'mysql' ) );
+
+		// Keep the last run's findings so the admin page can list them (the
+		// "Run Now" notice disappears when the page reloads).
+		$listed = array();
+		foreach ( array_slice( $changes, 0, 50 ) as $change ) {
+			$listed[] = array(
+				'path'     => str_replace( wp_normalize_path( ABSPATH ), '', wp_normalize_path( $change['path'] ) ),
+				'status'   => $change['status'],
+				'severity' => $change['severity'],
+			);
+		}
+		update_option(
+			'turbo_guard_watcher_last_result',
+			array(
+				'new'      => $new_count,
+				'modified' => $modified_count,
+				'deleted'  => $deleted_count,
+				'changes'  => $listed,
+				'more'     => max( 0, count( $changes ) - count( $listed ) ),
+				'run_at'   => current_time( 'mysql' ),
+			),
+			false
+		);
 
 		return array(
 			'new'      => $new_count,
@@ -594,11 +690,25 @@ class Turbo_Guard_Integrity {
 			wp_send_json_error( array( 'message' => 'Permission denied.' ) );
 		}
 
-		$count = self::build_baseline();
+		// Resumable (1.1.8+): the admin JS calls this until done, so large sites
+		// never exceed the host's request time limit.
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- verified above.
+		$continue = ! empty( $_POST['continue'] );
+		$state    = self::build_baseline_step( ! $continue, 15 );
+
+		if ( empty( $state['done'] ) ) {
+			wp_send_json_success( array(
+				'done'      => false,
+				'processed' => $state['processed'],
+				'total'     => $state['total'],
+			) );
+		}
 
 		wp_send_json_success( array(
-			'count'   => $count,
-			'message' => sprintf( 'Baseline rebuilt. %d files tracked.', $count ),
+			'done'    => true,
+			'count'   => $state['total'],
+			/* translators: %d: number of files tracked */
+			'message' => sprintf( __( 'Baseline rebuilt. %d files tracked.', 'turbo-guard' ), $state['total'] ),
 		) );
 	}
 

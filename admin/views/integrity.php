@@ -18,6 +18,7 @@ $turbo_guard_watcher_last    = $turbo_guard_watcher_last_run;
 $turbo_guard_baseline_at     = $turbo_guard_baseline_built_at;
 $turbo_guard_watcher_auto    = get_option( 'turbo_guard_file_watcher_enabled', 'yes' );
 $turbo_guard_integrity_auto  = get_option( 'turbo_guard_integrity_check_enabled', 'yes' );
+$turbo_guard_watch_result    = get_option( 'turbo_guard_watcher_last_result', array() );
 ?>
 
 <div class="wrap turbo-guard-integrity">
@@ -153,6 +154,60 @@ $turbo_guard_integrity_auto  = get_option( 'turbo_guard_integrity_check_enabled'
 		</div>
 
 	</div>
+
+	<?php if ( ! empty( $turbo_guard_watch_result['changes'] ) ) : ?>
+	<div class="turbo-guard-card">
+		<h2 style="color:#b45309;">
+			<span class="dashicons dashicons-visibility" style="color:#b45309;vertical-align:middle;margin-right:6px;"></span>
+			<?php
+			printf(
+				/* translators: 1: new files, 2: modified files, 3: deleted files */
+				esc_html__( 'File Watcher: %1$d new, %2$d modified, %3$d deleted', 'turbo-guard' ),
+				absint( $turbo_guard_watch_result['new'] ),
+				absint( $turbo_guard_watch_result['modified'] ),
+				absint( $turbo_guard_watch_result['deleted'] )
+			);
+			?>
+		</h2>
+		<p style="color:#6b7280;font-size:13px;margin-bottom:16px;">
+			<?php
+			printf(
+				/* translators: %s: date/time of the watcher run */
+				esc_html__( 'Changes since the previous baseline, found on %s. New PHP files in uploads are critical. If you did not make these changes, scan the site now.', 'turbo-guard' ),
+				esc_html( isset( $turbo_guard_watch_result['run_at'] ) ? $turbo_guard_watch_result['run_at'] : '' )
+			);
+			?>
+		</p>
+		<table class="widefat">
+			<thead>
+				<tr>
+					<th><?php esc_html_e( 'File', 'turbo-guard' ); ?></th>
+					<th style="width:110px;"><?php esc_html_e( 'Change', 'turbo-guard' ); ?></th>
+				</tr>
+			</thead>
+			<tbody>
+				<?php foreach ( $turbo_guard_watch_result['changes'] as $turbo_guard_wc ) : ?>
+				<tr>
+					<td><code><?php echo esc_html( $turbo_guard_wc['path'] ); ?></code></td>
+					<td>
+						<span class="turbo-guard-badge turbo-guard-badge-<?php echo esc_attr( 'critical' === $turbo_guard_wc['severity'] ? 'critical' : ( 'high' === $turbo_guard_wc['severity'] ? 'high' : 'medium' ) ); ?>">
+							<?php echo esc_html( ucfirst( $turbo_guard_wc['status'] ) ); ?>
+						</span>
+					</td>
+				</tr>
+				<?php endforeach; ?>
+			</tbody>
+		</table>
+		<?php if ( ! empty( $turbo_guard_watch_result['more'] ) ) : ?>
+			<p style="color:#6b7280;font-size:12px;margin-top:8px;">
+				<?php
+				/* translators: %d: number of further changes not listed */
+				printf( esc_html__( '+ %d more changes (see Dashboard → Recent Events).', 'turbo-guard' ), absint( $turbo_guard_watch_result['more'] ) );
+				?>
+			</p>
+		<?php endif; ?>
+	</div>
+	<?php endif; ?>
 
 	<?php if ( $turbo_guard_ir && ! empty( $turbo_guard_ir['results'] ) ) : ?>
 	<div class="turbo-guard-card">

@@ -247,7 +247,11 @@ class Turbo_Guard_Vuln_Scanner {
 			}
 		}
 
-		set_transient( $cache_key, $vulns, self::CACHE_TTL );
+		// Never cache a failed lookup (rate limit, timeout): it would make the
+		// item look clean on every scan until the cache expires. @since 1.1.8
+		if ( ! is_wp_error( $result ) ) {
+			set_transient( $cache_key, $vulns, self::CACHE_TTL );
+		}
 		return $vulns;
 	}
 
@@ -278,7 +282,11 @@ class Turbo_Guard_Vuln_Scanner {
 			}
 		}
 
-		set_transient( $cache_key, $vulns, self::CACHE_TTL );
+		// Never cache a failed lookup (rate limit, timeout): it would make the
+		// item look clean on every scan until the cache expires. @since 1.1.8
+		if ( ! is_wp_error( $result ) ) {
+			set_transient( $cache_key, $vulns, self::CACHE_TTL );
+		}
 		return $vulns;
 	}
 
@@ -300,14 +308,29 @@ class Turbo_Guard_Vuln_Scanner {
 		$slug   = str_replace( '.', '', $version );
 		$result = self::api_request( '/wordpresses/' . rawurlencode( $slug ), $api_key );
 
+		// The endpoint takes the version without dots (e.g. 714) but keys the
+		// response by the dotted version (e.g. "7.1.4"). @since 1.1.8
+		$entry = array();
+		if ( ! is_wp_error( $result ) && is_array( $result ) ) {
+			if ( isset( $result[ $version ] ) ) {
+				$entry = $result[ $version ];
+			} elseif ( isset( $result[ $slug ] ) ) {
+				$entry = $result[ $slug ];
+			}
+		}
+
 		$vulns = array();
-		if ( ! is_wp_error( $result ) && isset( $result[ $slug ]['vulnerabilities'] ) ) {
-			foreach ( $result[ $slug ]['vulnerabilities'] as $v ) {
+		if ( ! empty( $entry['vulnerabilities'] ) && is_array( $entry['vulnerabilities'] ) ) {
+			foreach ( $entry['vulnerabilities'] as $v ) {
 				$vulns[] = self::normalise_vuln( $v );
 			}
 		}
 
-		set_transient( $cache_key, $vulns, self::CACHE_TTL );
+		// Never cache a failed lookup (rate limit, timeout): it would make the
+		// item look clean on every scan until the cache expires. @since 1.1.8
+		if ( ! is_wp_error( $result ) ) {
+			set_transient( $cache_key, $vulns, self::CACHE_TTL );
+		}
 		return $vulns;
 	}
 
@@ -508,6 +531,12 @@ class Turbo_Guard_Vuln_Scanner {
 	 * @return bool True if the installed version is affected.
 	 */
 	private static function affects_version( $vuln, $version ) {
+		// Vulnerabilities introduced in a later version (e.g. "6.2 - 6.2.3")
+		// cannot affect an older install. @since 1.1.8
+		if ( ! empty( $vuln['introduced_in'] ) && version_compare( $version, $vuln['introduced_in'], '<' ) ) {
+			return false;
+		}
+
 		// If no fixed-in data, assume it affects the current version.
 		if ( empty( $vuln['fixed_in'] ) ) {
 			return true;
@@ -527,7 +556,7 @@ class Turbo_Guard_Vuln_Scanner {
 	private static function normalise_vuln( $raw ) {
 		return array(
 			'id'         => $raw['id'] ?? '',
-			'title'      => $raw['title'] ?? __( 'Unknown vulnerability', 'turbo-guard' ),
+			'title'      => isset( $raw['title'] ) ? trim( $raw['title'] ) : __( 'Unknown vulnerability', 'turbo-guard' ),
 			'type'       => $raw['vuln_type'] ?? 'UNKNOWN',
 			'fixed_in'   => $raw['fixed_in'] ?? null,
 			'cvss'       => $raw['cvss'] ?? null,

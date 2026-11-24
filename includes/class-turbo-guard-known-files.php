@@ -164,39 +164,92 @@ class Turbo_Guard_Known_Files {
 	 */
 	private static function build_index() {
 		$index = array();
+		$jobs  = array(); // index prefix => array( type, slug, version )
 
 		// ---- Plugins -------------------------------------------------
 		if ( ! function_exists( 'get_plugins' ) ) {
 			require_once ABSPATH . 'wp-admin/includes/plugin.php';
 		}
 
-		$plugins = get_plugins();
-		foreach ( $plugins as $plugin_file => $data ) {
+		foreach ( get_plugins() as $plugin_file => $data ) {
 			$slug = self::plugin_slug( $plugin_file );
-			if ( ! $slug ) {
-				continue;
-			}
-
-			$version = isset( $data['Version'] ) ? $data['Version'] : '';
-			$files   = self::fetch_checksums( 'plugin', $slug, $version );
-
-			foreach ( $files as $rel => $md5 ) {
-				$index[ 'plugins/' . $slug . '/' . $rel ] = $md5;
+			if ( $slug && ! empty( $data['Version'] ) ) {
+				$jobs[ 'plugins/' . $slug . '/' ] = array( 'plugin', $slug, $data['Version'] );
 			}
 		}
 
 		// ---- Themes --------------------------------------------------
-		$themes = wp_get_themes();
-		foreach ( $themes as $slug => $theme ) {
+		foreach ( wp_get_themes() as $slug => $theme ) {
 			$version = $theme->get( 'Version' );
-			$files   = self::fetch_checksums( 'theme', $slug, $version );
+			if ( $version ) {
+				$jobs[ 'themes/' . $slug . '/' ] = array( 'theme', $slug, $version );
+			}
+		}
 
+		foreach ( self::fetch_all_checksums( $jobs ) as $prefix => $files ) {
 			foreach ( $files as $rel => $md5 ) {
-				$index[ 'themes/' . $slug . '/' . $rel ] = $md5;
+				$index[ $prefix . $rel ] = $md5;
 			}
 		}
 
 		return $index;
+	}
+
+	/**
+	 * Fetch the checksum lists for many plugins/themes at once.
+	 *
+	 * Requests run in parallel (WordPress' bundled Requests library), so a site
+	 * with 20 plugins waits for roughly one round-trip instead of 20 in a row.
+	 * Building the index sequentially took 20+ seconds on such sites and pushed
+	 * the SEO spam scan past the host's request time limit (HTTP 500).
+	 *
+	 * @since 1.1.8
+	 * @param array $jobs prefix => array( type, slug, version ).
+	 * @return array prefix => array( relative path => md5 ).
+	 */
+	private static function fetch_all_checksums( $jobs ) {
+		$out = array();
+		if ( empty( $jobs ) ) {
+			return $out;
+		}
+
+		$requests_class = class_exists( '\WpOrg\Requests\Requests' ) ? '\WpOrg\Requests\Requests' : ( class_exists( 'Requests' ) ? 'Requests' : '' );
+		if ( '' === $requests_class || ! method_exists( $requests_class, 'request_multiple' ) ) {
+			foreach ( $jobs as $prefix => $job ) {
+				$out[ $prefix ] = self::fetch_checksums( $job[0], $job[1], $job[2] );
+			}
+			return $out;
+		}
+
+		$requests = array();
+		foreach ( $jobs as $prefix => $job ) {
+			$requests[ $prefix ] = array(
+				'url'     => self::checksums_url( $job[0], $job[1], $job[2] ),
+				'type'    => 'GET',
+				'headers' => array(),
+				'options' => array(
+					'timeout'   => 8,
+					'useragent' => 'Turbo Guard WordPress Security Plugin',
+				),
+			);
+		}
+
+		try {
+			$responses = call_user_func( array( $requests_class, 'request_multiple' ), $requests );
+		} catch ( \Exception $e ) {
+			$responses = array();
+		}
+
+		foreach ( $jobs as $prefix => $job ) {
+			$r = isset( $responses[ $prefix ] ) ? $responses[ $prefix ] : null;
+			if ( is_object( $r ) && ! ( $r instanceof \Exception ) && isset( $r->status_code ) && 200 === (int) $r->status_code ) {
+				$out[ $prefix ] = self::parse_checksums( $r->body );
+			} else {
+				$out[ $prefix ] = array(); // Premium/unknown plugin, or network error - not verifiable.
+			}
+		}
+
+		return $out;
 	}
 
 	/**
@@ -231,15 +284,8 @@ class Turbo_Guard_Known_Files {
 			return array();
 		}
 
-		$url = sprintf(
-			'https://downloads.wordpress.org/%s-checksums/%s/%s.json',
-			$type,
-			rawurlencode( $slug ),
-			rawurlencode( $version )
-		);
-
 		$response = wp_remote_get(
-			$url,
+			self::checksums_url( $type, $slug, $version ),
 			array(
 				'timeout'    => 8,
 				'user-agent' => 'Turbo Guard WordPress Security Plugin',
@@ -247,20 +293,50 @@ class Turbo_Guard_Known_Files {
 		);
 
 		if ( is_wp_error( $response ) || 200 !== (int) wp_remote_retrieve_response_code( $response ) ) {
-			return array(); // Premium/unknown plugin, or network error — not verifiable.
+			return array(); // Premium/unknown plugin, or network error - not verifiable.
 		}
 
-		$json = json_decode( wp_remote_retrieve_body( $response ), true );
+		return self::parse_checksums( wp_remote_retrieve_body( $response ) );
+	}
+
+	/**
+	 * wordpress.org checksum URL for a plugin/theme version.
+	 *
+	 * @since 1.1.8
+	 * @param string $type    'plugin' or 'theme'.
+	 * @param string $slug    Repository slug.
+	 * @param string $version Installed version.
+	 * @return string
+	 */
+	private static function checksums_url( $type, $slug, $version ) {
+		return sprintf(
+			'https://downloads.wordpress.org/%s-checksums/%s/%s.json',
+			$type,
+			rawurlencode( $slug ),
+			rawurlencode( $version )
+		);
+	}
+
+	/**
+	 * Parse a wordpress.org checksum JSON body into relative path => md5.
+	 *
+	 * "files" is a map of relative_path => hashes. Two known formats:
+	 *   - plugin checksums: { "md5": "...", "sha256": "..." }
+	 *   - theme checksums:  a plain md5 string
+	 * Some paths map to an ARRAY of hashes (a file that differs across release
+	 * branches). Keep the value as-is so check_file() can compare against every
+	 * known hash instead of crashing.
+	 *
+	 * @since 1.1.8
+	 * @param string $body JSON body.
+	 * @return array
+	 */
+	private static function parse_checksums( $body ) {
+		$json = json_decode( (string) $body, true );
 		if ( ! is_array( $json ) || empty( $json['files'] ) || ! is_array( $json['files'] ) ) {
 			return array();
 		}
 
-		// "files" is a map of relative_path => hashes. Two known formats:
-		//   - plugin checksums: { "md5": "...", "sha256": "..." }
-		//   - theme checksums:  a plain md5 string
-		// Some paths map to an ARRAY of hashes (a file that differs across
-		// release branches). Keep the value as-is so check_file() can compare
-		// against every known hash instead of crashing.
 		$files = array();
 		foreach ( $json['files'] as $rel => $hashes ) {
 			if ( is_array( $hashes ) ) {
